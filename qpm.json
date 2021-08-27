@@ -1,0 +1,33 @@
+{
+  "sharedDir": "shared",
+  "dependenciesDir": "extern",
+  "info": {
+    "name": "QuestUI Components",
+    "id": "questui_components",
+    "version": "0.1.0",
+    "url": null,
+    "additionalData": {}
+  },
+  "dependencies": [
+    {
+      "id": "beatsaber-hook",
+      "versionRange": "*",
+      "additionalData": {
+        "extraFiles": [
+          "src/inline-hook"
+        ]
+      }
+    },
+    {
+      "id": "questui",
+      "versionRange": "^0.10",
+      "additionalData": {}
+    },
+    {
+      "id": "codegen",
+      "versionRange": "^0.12",
+      "additionalData": {}
+    }
+  ],
+  "additionalData": {}
+}
