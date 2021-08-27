@@ -37,30 +37,26 @@ extern "C" void setup(ModInfo& info) {
     getLogger().info("Completed setup!");
 }
 
-template<typename T>
-struct PtrHolder {
-    T* ptr;
-
-    PtrHolder(T *ptr) : ptr(ptr) {}
-};
-
 void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling){
     getLogger().info("DidActivate: %p, %d, %d, %d", self, firstActivation, addedToHierarchy, screenSystemEnabling);
 
     if (firstActivation) {
         // keep these pointers alive so the lambdas can capture them. These would usually be instance fields in a ViewCoordinator
-        auto* container = new PtrHolder<ScrollableContainer>(nullptr);
-        auto* newText = new PtrHolder<Text>(nullptr);
-        int* count = new int(0);
+        static ScrollableContainer* container;
+        static Text* newText;
+        static int count = 0;
 
         // We can use new because ComponentWrapper takes ownership of the pointer
         // A component will then only be freed if the parent is freed
         // We then make sure the parent never dies by never freeing
         // A better way of doing this is tying the highest parent to a ViewCoordinator or anything else
 
+        // CLion why
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedValue"
         auto* view = new ViewComponent{self->get_transform(), {
             .children = {
-                    container->ptr = new ScrollableContainer {{
+                    container = new ScrollableContainer {{
                         new HoverHint("hint", new Text("hi!")),
                         (new Text("this is cool! Pink Cute!"))->craftLater([](Text* text){
                             auto data = text->getData();
@@ -70,27 +66,28 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                         }),
                         new HoverHint("hintee", new Text("hello from other world!")),
                         new HoverHint("another hintee", new Text("this is cooler!!")),
-                        new Button("Click me!", [newText, container, count](Button* button, UnityEngine::Transform* parentTransform) {
-                            if (!newText->ptr) {
-                                newText->ptr = new Text("New text!");
-                                container->ptr->addToHierarchy(newText->ptr);
+                        new Button("Click me!", [](Button* button, UnityEngine::Transform* parentTransform) {
+                            if (!newText) {
+                                newText = new Text("New text!");
+                                container->addToHierarchy(newText);
                             } else {
-                                (*count)++;
-                                auto data = (newText->ptr)->getData();
-                                data.text = "someOtherText" + std::to_string(*count);
-                                (newText->ptr)->mutateData(data);
-                                (newText->ptr)->doUpdate();
+                                count++;
+                                auto data = (newText)->getData();
+                                data.text = "someOtherText" + std::to_string(count);
+                                newText->mutateData(data);
+                                newText->doUpdate();
                             }
 
                             // Update button text
                             auto buttonData = button->getData();
-                            buttonData.text = "Clicked: " + std::to_string(*count);
+                            buttonData.text = "Clicked: " + std::to_string(count);
                             button->mutateData(buttonData);
                             button->doUpdate();
                         })
                     }}
             }
         }};
+#pragma clang diagnostic pop
 
         view->render();
 
