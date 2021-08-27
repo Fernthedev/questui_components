@@ -3,6 +3,7 @@
 #include <optional>
 #include <memory>
 #include <utility>
+#include <string>
 
 namespace UnityEngine {
     class Transform;
@@ -22,8 +23,21 @@ virtual clazz* craftLater(std::function<void(clazz *)> const& callback) { \
     protected:
         friend class ComponentRenderer;
 
+        bool rendered = false;
+
+        virtual void markAsRendered() {
+            rendered = true;
+        }
+
+        virtual void ensureRenderOnce() {
+            if (rendered) {
+                throw std::runtime_error("Component " + std::string(typeid(this).name()) + " has already been rendered");
+            }
+        }
+
         UnityEngine::Transform* transform;
 
+        // TODO: Rename to create?
         /**
          * @brief
          * @param parentTransform
@@ -34,31 +48,26 @@ virtual clazz* craftLater(std::function<void(clazz *)> const& callback) { \
         virtual ~Component() = default;
 
         [[nodiscard]] UnityEngine::Transform* getTransform() const { return transform; }
-    };
 
-    // TODO: What to do with this?
-    class IRenderOnce {
-    protected:
-        friend class ComponentRenderer;
-
-        bool rendered = false;
-
-        virtual void markAsRendered() {
-            rendered = true;
-        }
-    public:
         [[nodiscard]] bool isRendered() const { return rendered; }
     };
 
+    class UpdateableComponentBase {
+    protected:
+        virtual void update() = 0;
+    public:
+        virtual void doUpdate() = 0;
+    };
+
     template<class T>
-    class UpdateableComponent {
+    class UpdateableComponent : public UpdateableComponentBase {
     protected:
         T data;
 
         // allow one initial update
         bool updated = true;
 
-        virtual void update() = 0;
+        void update() override = 0;
     public:
         T getData() {
             return data;
@@ -69,7 +78,7 @@ virtual clazz* craftLater(std::function<void(clazz *)> const& callback) { \
             updated = true;
         }
 
-        virtual void doUpdate() {
+        void doUpdate() override {
             if (!updated) return;
 
             update();
@@ -79,13 +88,18 @@ virtual clazz* craftLater(std::function<void(clazz *)> const& callback) { \
 
 
     class ComponentPtrWrapper {
+    private:
+        std::shared_ptr<Component> component;
+
     public:
 //        template<class F>
 //        ComponentPtrWrapper(F&& comp) : component(std::forward(comp)) {}
 
         ComponentPtrWrapper(Component* comp) : component(comp) {}
 
-        const std::shared_ptr<Component> component;
+        [[nodiscard]] const std::shared_ptr<Component> &getComponent() const {
+            return component;
+        }
 
         explicit operator bool() const noexcept {
             return static_cast<bool>(component);

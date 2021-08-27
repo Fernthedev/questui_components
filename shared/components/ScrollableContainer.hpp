@@ -8,20 +8,15 @@
 
 namespace QuestUI_Components {
 
-    class ScrollableContainer : public Component, public ComponentRenderer {
+    class ScrollableContainer : public Component, public Container {
     public:
-        explicit ScrollableContainer(std::vector<ComponentWrapper> children) : children(std::move(children)) {}
-
-
-        void addMultipleToHierarchy(std::vector<ComponentWrapper> component);
-
-        inline void addToHierarchy(ComponentWrapper component) {
-            addMultipleToHierarchy({std::move(component)});
+        explicit ScrollableContainer(std::vector<ComponentWrapper> children) {
+            renderChildren = std::move(children);
         }
-    protected:
-        UnityEngine::Transform* render(UnityEngine::Transform *parentTransform) override;
 
-    private:
-        std::vector<ComponentWrapper> children;
+    protected:
+        void renderComponentInContainer(ComponentWrapper &comp) override;
+
+        UnityEngine::Transform* render(UnityEngine::Transform *parentTransform) override;
     };
 }

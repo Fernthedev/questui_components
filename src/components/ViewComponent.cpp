@@ -1,14 +1,13 @@
 #include "components/ViewComponent.hpp"
 
 void QuestUI_Components::ViewComponent::render() {
-    std::vector<ComponentWrapper> childrenCopy(viewComponentData.children);
-    viewComponentData.children.clear();
-    addMultipleToHierarchy(childrenCopy);
+    rendered = true;
+    for (auto& comp : renderChildren)
+        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
 }
 
-void QuestUI_Components::ViewComponent::addMultipleToHierarchy(std::vector<ComponentWrapper> components) {
-    for (auto& component : components) {
-        renderComponent(component, const_cast<UnityEngine::Transform*>(transform));
-        viewComponentData.children.emplace_back(component);
+void QuestUI_Components::ViewComponent::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {
+    if (rendered) {
+        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
     }
 }

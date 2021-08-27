@@ -29,7 +29,7 @@ namespace QuestUI_Components {
         std::optional<UnityEngine::UI::Image*> image;
     };
 
-    class Button : public Component, public IRenderOnce, public UpdateableComponent<MutableButtonData> {
+    class Button : public Component, public UpdateableComponent<MutableButtonData> {
     public:
         using onClickCallback = std::function<void(UnityEngine::Transform*)>;
 
@@ -54,7 +54,7 @@ namespace QuestUI_Components {
         UnityEngine::UI::Button* uiButton = nullptr;
         TMPro::TextMeshProUGUI* uiButtonText = nullptr;
 
-        std::optional<InitButtonData> buttonData;
-        onClickCallback onClick;
+        const std::optional<InitButtonData> buttonData;
+        const onClickCallback onClick;
     };
 }

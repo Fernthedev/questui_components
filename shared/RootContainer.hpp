@@ -18,24 +18,16 @@ namespace QuestUI_Components {
          * @brief Used to cheat accessibility
          * @param comp
          */
-        static inline UnityEngine::Transform* renderComponent(Component& comp, UnityEngine::Transform* transform) {
-            return comp.render(transform);
-        }
+        static UnityEngine::Transform* renderComponent(ComponentWrapper& comp, UnityEngine::Transform* transform) {
+            if (comp->isRendered()) {
+                if (auto updateableComponent = std::dynamic_pointer_cast<UpdateableComponentBase>(comp.getComponent())) {
+                    updateableComponent->doUpdate();
+                }
 
-        /**
-         * @brief Used to cheat accessibility
-         * @param comp
-         */
-        static inline UnityEngine::Transform* renderComponent(ComponentWrapper& comp, UnityEngine::Transform* transform) {
-            return comp->render(transform);
-        }
-
-        /**
-         * @brief Used to cheat accessibility
-         * @param comp
-         */
-        static inline UnityEngine::Transform* justRenderComponent(Component& comp, UnityEngine::Transform* transform) {
-            return comp.render(transform);
+                return comp->transform;
+            } else {
+                return justRenderComponent(comp, transform);
+            }
         }
 
         /**
@@ -45,5 +37,25 @@ namespace QuestUI_Components {
         static inline UnityEngine::Transform* justRenderComponent(ComponentWrapper& comp, UnityEngine::Transform* transform) {
             return comp->render(transform);
         }
+    };
+
+    class Container : public ComponentRenderer {
+    public:
+        virtual void addMultipleToHierarchy(std::vector<ComponentWrapper> components) {
+            for (auto& component : components) {
+                renderComponentInContainer(component);
+                renderChildren.emplace_back(component);
+            }
+        }
+
+        inline void addToHierarchy(ComponentWrapper component) {
+            addMultipleToHierarchy({std::move(component)});
+        }
+
+    protected:
+        // Keep children alive
+        std::vector<ComponentWrapper> renderChildren;
+
+        virtual void renderComponentInContainer(ComponentWrapper& comp) = 0;
     };
 }

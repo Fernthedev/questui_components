@@ -17,7 +17,7 @@ namespace QuestUI_Components {
         UnityEngine::Transform* render(UnityEngine::Transform *parentTransform) override;
 
     private:
-        std::string_view text;
+        const std::string_view text;
         ComponentWrapper child;
     };
 }

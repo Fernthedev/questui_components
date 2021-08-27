@@ -22,7 +22,7 @@ namespace QuestUI_Components {
         std::optional<UnityEngine::Color> color = std::nullopt;
     };
 
-    class Text : public Component, public IRenderOnce, public UpdateableComponent<MutableTextData> {
+    class Text : public Component, public UpdateableComponent<MutableTextData> {
     public:
         struct InitialTextData {
             bool italic = true;
@@ -40,7 +40,7 @@ namespace QuestUI_Components {
         void update() override;
 
     private:
-        std::optional<InitialTextData> initialTextData;
+        const std::optional<InitialTextData> initialTextData;
         TMPro::TextMeshProUGUI* textUI = nullptr;
     };
 }

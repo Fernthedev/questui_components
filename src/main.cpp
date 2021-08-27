@@ -64,8 +64,7 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                         new HoverHint("hint", new Text("hi!")),
                         (new Text("this is cool! Pink Cute!"))->craftLater([](Text* text){
                             auto data = text->getData();
-                            data.color = UnityEngine::Color(255.0f / 255.0f, 61.0f / 255.0f, 171.0f / 255.0f);
-                            data.color = UnityEngine::Color::get_magenta();
+                            data.color = UnityEngine::Color(255.0f / 255.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f);
                             text->mutateData(data);
                             // we don't update here because it hasn't rendered, this is called before rendering
                         }),

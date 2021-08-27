@@ -10,17 +10,15 @@ UnityEngine::Transform* QuestUI_Components::ScrollableContainer::render(UnityEng
 
     transform = scrollableContainer->get_transform();
 
-    std::vector<ComponentWrapper> childrenCopy(children);
-    children.clear();
-    addMultipleToHierarchy(childrenCopy);
+    rendered = true;
+    for (auto& comp : renderChildren)
+        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
 
     return transform;
 }
 
-void QuestUI_Components::ScrollableContainer::addMultipleToHierarchy(std::vector<ComponentWrapper> components) {
-    for (auto& component : components) {
-        getLogger().debug("Transform name: %s", to_utf8(csstrtostr(transform->get_name())).c_str());
-        renderComponent(component, const_cast<UnityEngine::Transform*>(transform));
-        children.emplace_back(component);
+void QuestUI_Components::ScrollableContainer::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {
+    if (rendered) {
+        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
     }
 }
