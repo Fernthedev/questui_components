@@ -31,7 +31,7 @@ namespace QuestUI_Components {
 
     class Button : public Component, public UpdateableComponent<MutableButtonData> {
     public:
-        using onClickCallback = std::function<void(UnityEngine::Transform*)>;
+        using onClickCallback = std::function<void(Button* button, UnityEngine::Transform*)>;
 
         struct InitButtonData {
             std::string_view buttonTemplate;

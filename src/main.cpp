@@ -70,7 +70,7 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                         }),
                         new HoverHint("hintee", new Text("hello from other world!")),
                         new HoverHint("another hintee", new Text("this is cooler!!")),
-                        new Button("Click me!", [newText, container, count](UnityEngine::Transform* parentTransform) {
+                        new Button("Click me!", [newText, container, count](Button* button, UnityEngine::Transform* parentTransform) {
                             if (!newText->ptr) {
                                 newText->ptr = new Text("New text!");
                                 container->ptr->addToHierarchy(newText->ptr);
@@ -81,11 +81,21 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                                 (newText->ptr)->mutateData(data);
                                 (newText->ptr)->doUpdate();
                             }
+
+                            // Update button text
+                            auto buttonData = button->getData();
+                            buttonData.text = "Clicked: " + std::to_string(*count);
+                            button->mutateData(buttonData);
+                            button->doUpdate();
                         })
                     }}
             }
         }};
 
+        view->render();
+
+        // Multiple renders should simply just update, not crash or duplicate.
+        view->render();
         view->render();
     }
 }

@@ -13,7 +13,7 @@ using namespace QuestUI;
 UnityEngine::Transform* QuestUI_Components::Button::render(UnityEngine::Transform *parentTransform) {
     onClickCallback click = onClick; // copy
     std::function<void()> callback = [=]{
-        click(parentTransform);
+        click(this, parentTransform);
     };
 
     if (buttonData) {
