@@ -3,8 +3,9 @@
 #include "questui/shared/BeatSaberUI.hpp"
 
 using namespace QuestUI;
+using namespace QuestUI_Components;
 
-UnityEngine::Transform* QuestUI_Components::Text::render(UnityEngine::Transform *parentTransform) {
+Component* QuestUI_Components::Text::render(UnityEngine::Transform *parentTransform) {
     if (initialTextData) {
         textUI = BeatSaberUI::CreateText(parentTransform, std::string(data.text), initialTextData->italic, initialTextData->anchoredPosition, initialTextData->sizeDelta);
     } else {
@@ -16,7 +17,7 @@ UnityEngine::Transform* QuestUI_Components::Text::render(UnityEngine::Transform 
     markAsRendered();
     update();
 
-    return transform;
+    return this;
 }
 
 void QuestUI_Components::Text::update() {

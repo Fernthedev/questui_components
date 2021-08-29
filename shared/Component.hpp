@@ -39,11 +39,15 @@ virtual clazz* craftLater(std::function<void(clazz *)> const& callback) { \
 
         // TODO: Rename to create?
         /**
-         * @brief
-         * @param parentTransform
-         * @return
+         * @brief This is called on the main thread when the component will be placed in game.
+         *
+         * Use the constructor to initialize components on a different thread.
+         *
+         * @param parentTransform The transform of the parent component that is in game
+         * @return The component that was rendered. Return this or another component.
+         * The parent component is not guaranteed to take ownership of what is returned however.
          */
-        virtual UnityEngine::Transform* render(UnityEngine::Transform* parentTransform) = 0;
+        virtual Component* render(UnityEngine::Transform* parentTransform) = 0;
     public:
         virtual ~Component() = default;
 

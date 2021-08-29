@@ -4,8 +4,9 @@
 #include "main.hpp"
 
 using namespace QuestUI;
+using namespace QuestUI_Components;
 
-UnityEngine::Transform* QuestUI_Components::ScrollableContainer::render(UnityEngine::Transform *parentTransform) {
+Component* QuestUI_Components::ScrollableContainer::render(UnityEngine::Transform *parentTransform) {
     UnityEngine::GameObject* scrollableContainer = BeatSaberUI::CreateScrollableSettingsContainer(parentTransform);
 
     transform = scrollableContainer->get_transform();
@@ -14,7 +15,7 @@ UnityEngine::Transform* QuestUI_Components::ScrollableContainer::render(UnityEng
     for (auto& comp : renderChildren)
         renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
 
-    return transform;
+    return this;
 }
 
 void QuestUI_Components::ScrollableContainer::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {

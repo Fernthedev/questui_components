@@ -4,8 +4,9 @@
 #include "main.hpp"
 
 using namespace QuestUI;
+using namespace QuestUI_Components;
 
-UnityEngine::Transform* QuestUI_Components::Modal::render(UnityEngine::Transform *parentTransform) {
+Component* QuestUI_Components::Modal::render(UnityEngine::Transform *parentTransform) {
 
     std::function<void(HMUI::ModalView*)> callbackWrapper = nullptr;
 
@@ -30,7 +31,7 @@ UnityEngine::Transform* QuestUI_Components::Modal::render(UnityEngine::Transform
     for (auto& comp : renderChildren)
         renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
 
-    return transform;
+    return this;
 }
 
 void QuestUI_Components::Modal::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {

@@ -12,6 +12,8 @@
 #include "components/layouts/VerticalLayoutGroup.hpp"
 #include "components/layouts/HorizontalLayoutGroup.hpp"
 
+#include "TestComponent.hpp"
+
 using namespace QuestUI;
 using namespace QuestUI_Components;
 
@@ -54,10 +56,6 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
         // We then make sure the parent never dies by never freeing
         // A better way of doing this is tying the highest parent to a ViewCoordinator or anything else
 
-        ComponentPtrWrapper ptr([]{
-            return new Button("HI!");
-        });
-
         // CLion why
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedValue"
@@ -99,6 +97,8 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                                 modal->show();
                             });
                         }},
+                        // Custom component
+                        new TestComponent("pink cute eris cute"),
 
 
                         new HoverHint("hintee", new Text("hello from other world!")),

@@ -47,7 +47,7 @@ namespace QuestUI_Components {
         CONSTRUCT_AFTER_COMPONENT(Button)
     protected:
         void update() override;
-        UnityEngine::Transform* render(UnityEngine::Transform *parentTransform) override;
+        Component* render(UnityEngine::Transform *parentTransform) override;
 
         // Constructor time
     private:

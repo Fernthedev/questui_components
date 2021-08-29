@@ -14,7 +14,7 @@ namespace QuestUI_Components {
         explicit HoverHint(std::string_view hint, ComponentWrapper child) : text(hint), child(std::move(child)) {}
 
     protected:
-        UnityEngine::Transform* render(UnityEngine::Transform *parentTransform) override;
+        Component* render(UnityEngine::Transform *parentTransform) override;
 
     private:
         const std::string text;

@@ -9,8 +9,9 @@
 #include "TMPro/TextMeshProUGUI.hpp"
 
 using namespace QuestUI;
+using namespace QuestUI_Components;
 
-UnityEngine::Transform* QuestUI_Components::Button::render(UnityEngine::Transform *parentTransform) {
+Component* QuestUI_Components::Button::render(UnityEngine::Transform *parentTransform) {
     onClickCallback click = onClick; // copy
     std::function<void()> callback = [=]{
         click(this, parentTransform);
@@ -28,7 +29,7 @@ UnityEngine::Transform* QuestUI_Components::Button::render(UnityEngine::Transfor
     markAsRendered();
     update();
 
-    return transform;
+    return this;
 }
 
 void QuestUI_Components::Button::update() {

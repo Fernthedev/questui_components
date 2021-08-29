@@ -4,8 +4,9 @@
 #include "main.hpp"
 
 using namespace QuestUI;
+using namespace QuestUI_Components;
 
-UnityEngine::Transform* QuestUI_Components::VerticalLayoutGroup::render(UnityEngine::Transform *parentTransform) {
+Component* QuestUI_Components::VerticalLayoutGroup::render(UnityEngine::Transform *parentTransform) {
     verticalLayoutGroup = BeatSaberUI::CreateVerticalLayoutGroup(parentTransform);
 
     transform = verticalLayoutGroup->get_transform();
@@ -14,7 +15,7 @@ UnityEngine::Transform* QuestUI_Components::VerticalLayoutGroup::render(UnityEng
     for (auto& comp : renderChildren)
         renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
 
-    return transform;
+    return this;
 }
 
 void QuestUI_Components::VerticalLayoutGroup::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {

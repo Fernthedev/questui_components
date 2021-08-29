@@ -18,15 +18,15 @@ namespace QuestUI_Components {
          * @brief Used to cheat accessibility
          * @param comp
          */
-        static UnityEngine::Transform* renderComponent(ComponentWrapper& comp, UnityEngine::Transform* transform) {
+        static Component* renderComponent(ComponentWrapper& comp, UnityEngine::Transform* transform) {
             if (comp->isRendered()) {
                 if (auto updateableComponent = std::dynamic_pointer_cast<UpdateableComponentBase>(comp.getComponent())) {
                     updateableComponent->doUpdate();
                 }
 
-                return comp->transform;
+                return comp.getComponent().get();
             } else {
-                return justRenderComponent(comp, transform);
+                return justRenderComponent(comp.getComponent().get(), transform);
             }
         }
 
@@ -34,8 +34,16 @@ namespace QuestUI_Components {
          * @brief Used to cheat accessibility
          * @param comp
          */
-        static inline UnityEngine::Transform* justRenderComponent(ComponentWrapper& comp, UnityEngine::Transform* transform) {
-            return comp->render(transform);
+        static inline Component* justRenderComponent(Component* comp, UnityEngine::Transform* transform) {
+            auto compRendered = comp->render(transform);
+
+            // TODO: Should we do this?
+            // Recursively render.
+            if (compRendered != comp) {
+                return justRenderComponent(compRendered, transform);
+            }
+
+            return compRendered;
         }
     };
 

@@ -36,7 +36,7 @@ namespace QuestUI_Components {
         CONSTRUCT_AFTER_COMPONENT(Text)
 
     protected:
-        UnityEngine::Transform* render(UnityEngine::Transform *parentTransform) override;
+        Component* render(UnityEngine::Transform *parentTransform) override;
         void update() override;
 
     private:

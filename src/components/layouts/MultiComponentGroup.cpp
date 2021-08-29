@@ -1,4 +1,4 @@
-#include "components/layouts/GridLayoutGroup.hpp"
+#include "components/layouts/MultiComponentGroup.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
 #include "main.hpp"
@@ -6,10 +6,8 @@
 using namespace QuestUI;
 using namespace QuestUI_Components;
 
-Component* QuestUI_Components::GridLayoutGroup::render(UnityEngine::Transform *parentTransform) {
-    gridLayoutGroup = BeatSaberUI::CreateGridLayoutGroup(parentTransform);
-
-    transform = gridLayoutGroup->get_transform();
+Component* QuestUI_Components::MultiComponentGroup::render(UnityEngine::Transform *parentTransform) {
+    transform = parentTransform;
 
     rendered = true;
     for (auto& comp : renderChildren)
@@ -18,7 +16,7 @@ Component* QuestUI_Components::GridLayoutGroup::render(UnityEngine::Transform *p
     return this;
 }
 
-void QuestUI_Components::GridLayoutGroup::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {
+void QuestUI_Components::MultiComponentGroup::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {
     if (rendered) {
         renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
     }

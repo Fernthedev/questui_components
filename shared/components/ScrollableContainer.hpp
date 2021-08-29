@@ -15,6 +15,6 @@ namespace QuestUI_Components {
     protected:
         void renderComponentInContainer(ComponentWrapper &comp) override;
 
-        UnityEngine::Transform* render(UnityEngine::Transform *parentTransform) override;
+        Component* render(UnityEngine::Transform *parentTransform) override;
     };
 }

@@ -3,7 +3,9 @@
 #include "questui/shared/BeatSaberUI.hpp"
 
 using namespace QuestUI;
+using namespace QuestUI_Components;
 
-UnityEngine::Transform* QuestUI_Components::HoverHint::render(UnityEngine::Transform *parentTransform) {
-    return transform = BeatSaberUI::AddHoverHint(renderComponent(child, parentTransform)->get_gameObject(), std::string(text))->get_transform();
+Component* QuestUI_Components::HoverHint::render(UnityEngine::Transform *parentTransform) {
+    transform = BeatSaberUI::AddHoverHint(renderComponent(child, parentTransform)->getTransform()->get_gameObject(), std::string(text))->get_transform();
+    return this;
 }

@@ -12,15 +12,13 @@ namespace UnityEngine::UI {
 
 namespace QuestUI_Components {
 
-    class GridLayoutGroup : public Component, public Container {
+    class MultiComponentGroup : public Component, public Container {
     public:
-        explicit GridLayoutGroup(std::initializer_list<ComponentWrapper> children) : Container(children) {}
+        explicit MultiComponentGroup(std::initializer_list<ComponentWrapper> children) : Container(children) {}
 
     protected:
         void renderComponentInContainer(ComponentWrapper &comp) override;
 
         Component* render(UnityEngine::Transform *parentTransform) override;
-
-        UnityEngine::UI::GridLayoutGroup* gridLayoutGroup = nullptr;
     };
 }
