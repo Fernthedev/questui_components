@@ -26,8 +26,8 @@ namespace QuestUI_Components {
     public:
         struct InitialTextData {
             bool italic = true;
-            UnityEngine::Vector2 anchoredPosition;
-            UnityEngine::Vector2 sizeDelta;
+            UnityEngine::Vector2 anchoredPosition = {0.0f, 0.0f};
+            UnityEngine::Vector2 sizeDelta = {60.0f, 10.0f};
         };
         explicit Text(std::string_view text, std::optional<InitialTextData> textData = std::nullopt) : initialTextData(textData) {
             data.text = text;
