@@ -8,6 +8,7 @@
 #include "components/HoverHint.hpp"
 #include "components/ViewComponent.hpp"
 #include "components/Button.hpp"
+#include "components/Modal.hpp"
 
 using namespace QuestUI;
 using namespace QuestUI_Components;
@@ -51,6 +52,10 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
         // We then make sure the parent never dies by never freeing
         // A better way of doing this is tying the highest parent to a ViewCoordinator or anything else
 
+        ComponentPtrWrapper ptr([]{
+            return new Button("HI!");
+        });
+
         // CLion why
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedValue"
@@ -64,6 +69,38 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                             text->mutateData(data);
                             // we don't update here because it hasn't rendered, this is called before rendering
                         }),
+
+                        // we can create components using lambdas too
+                        {[]{
+                            Modal* modal = (new Modal(
+                                    {
+                                        new Text("Look at me!")
+                                    }, nullptr,
+                                    Modal::ModalInitData{
+                                        .sizeDelta = {80.0f, 80.0f}
+                                    }
+                            ))->craftLater([](Modal* modal){
+                                // we need the modal pointer, so use the lambda
+                                modal->addToHierarchy(
+                                        new Button("Close!", [modal](Button* button, UnityEngine::Transform* parentTransform){
+                                            modal->dismiss();
+                                        })
+                                    );
+                            });
+
+
+
+                            return new Button("More info!", [modal](Button* button, UnityEngine::Transform* parentTransform) {
+                                // Add to `container` on click because `container` at modal construction is null
+                                if (!modal->isRendered()) {
+                                    container->addToHierarchy(modal);
+                                }
+
+                                modal->show();
+                            });
+                        }},
+
+
                         new HoverHint("hintee", new Text("hello from other world!")),
                         new HoverHint("another hintee", new Text("this is cooler!!")),
                         new Button("Click me!", [](Button* button, UnityEngine::Transform* parentTransform) {
