@@ -52,7 +52,11 @@ namespace QuestUI_Components {
             addMultipleToHierarchy({std::move(component)});
         }
 
+        Container() = default;
+
     protected:
+        Container(std::initializer_list<ComponentWrapper> children) : renderChildren(children) {}
+
         // Keep children alive
         std::vector<ComponentWrapper> renderChildren;
 

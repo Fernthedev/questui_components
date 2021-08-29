@@ -26,19 +26,15 @@ namespace QuestUI_Components {
             bool dismissOnBlockerClicked = true;
         };
 
-        explicit Modal(std::vector<ComponentWrapper> children, BlockerClickedCallback onBlockerClicked,
+        explicit Modal(std::initializer_list<ComponentWrapper> children, BlockerClickedCallback onBlockerClicked,
                        ModalInitData initData) :
                        onBlockerClicked(std::move(onBlockerClicked)),
-                       initData(std::make_optional(initData)) {
-            renderChildren = std::move(children);
-        }
+                       initData(std::make_optional(initData)), Container(children) {}
 
-        explicit Modal(std::vector<ComponentWrapper> children, BlockerClickedCallback onBlockerClicked,
+        explicit Modal(std::initializer_list<ComponentWrapper> children, BlockerClickedCallback onBlockerClicked,
                        std::optional<ModalInitData> initData = std::nullopt) :
                        onBlockerClicked(std::move(onBlockerClicked)),
-                       initData(initData) {
-            renderChildren = std::move(children);
-        }
+                       initData(initData), Container(children) {}
 
         void dismiss();
         void show();
