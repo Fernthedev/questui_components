@@ -9,6 +9,8 @@
 #include "components/ViewComponent.hpp"
 #include "components/Button.hpp"
 #include "components/Modal.hpp"
+#include "components/layouts/VerticalLayoutGroup.hpp"
+#include "components/layouts/HorizontalLayoutGroup.hpp"
 
 using namespace QuestUI;
 using namespace QuestUI_Components;
@@ -72,20 +74,18 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
 
                         // we can create components using lambdas too
                         {[]{
-                            Modal* modal = (new Modal(
-                                    {
-                                        new Text("Look at me!")
-                                    }, nullptr,
-                                    Modal::ModalInitData{
-                                        .sizeDelta = {80.0f, 80.0f}
-                                    }
-                            ))->craftLater([](Modal* modal){
-                                // we need the modal pointer, so use the lambda
-                                modal->addToHierarchy(
+                            Modal* modal = (new Modal({}, nullptr))->craftLater([](Modal* modal){
+                                auto* horizontalWrapper = new HorizontalLayoutGroup({
+                                    new VerticalLayoutGroup({
+                                        new Text("Look at me!"),
                                         new Button("Close!", [modal](Button* button, UnityEngine::Transform* parentTransform){
                                             modal->dismiss();
                                         })
-                                    );
+                                    })
+                                });
+
+                                // we need the modal pointer, so use the lambda
+                                modal->addToHierarchy(horizontalWrapper);
                             });
 
 
