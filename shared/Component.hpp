@@ -97,6 +97,8 @@ virtual clazz* craftLater(std::function<void(clazz *)> const& callback) { \
 
         ComponentPtrWrapper(Component* comp) : component(comp) {}
 
+        ComponentPtrWrapper(std::function<Component*()> functionalInit) : component(functionalInit()) {}
+
         [[nodiscard]] const std::shared_ptr<Component> &getComponent() const {
             return component;
         }
