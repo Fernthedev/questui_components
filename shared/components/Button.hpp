@@ -23,7 +23,7 @@ namespace QuestUI_Components {
 
     struct MutableButtonData {
         // Mutable variables
-        std::string_view text;
+        std::string text;
         bool enabled = true;
         bool interactable = true;
         std::optional<UnityEngine::UI::Image*> image;
@@ -34,7 +34,7 @@ namespace QuestUI_Components {
         using onClickCallback = std::function<void(Button* button, UnityEngine::Transform*)>;
 
         struct InitButtonData {
-            std::string_view buttonTemplate;
+            std::string buttonTemplate;
             UnityEngine::Vector2 anchoredPosition;
             UnityEngine::Vector2 sizeDelta;
         };

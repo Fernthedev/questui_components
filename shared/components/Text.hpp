@@ -17,7 +17,7 @@ namespace TMPro {
 namespace QuestUI_Components {
 
     struct MutableTextData {
-        std::string_view text;
+        std::string text;
         bool enabled = true;
         std::optional<UnityEngine::Color> color = std::nullopt;
     };
