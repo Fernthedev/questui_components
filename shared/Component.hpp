@@ -77,8 +77,15 @@ virtual clazz* craftLater(std::function<void(clazz *)> const& callback) { \
             return data;
         }
 
+        // TODO: Remove?
+        [[deprecated("Use the functional mutateData instead, it's nicer <3")]]
         void mutateData(T newData) {
             data = std::move(newData);
+            updated = true;
+        }
+
+        void mutateData(std::function<T(T)> updateLambda) {
+            data = updateLambda(data);
             updated = true;
         }
 

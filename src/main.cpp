@@ -64,9 +64,10 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                     container = new ScrollableContainer {{
                         new HoverHint("hint", new Text("hi!")),
                         (new Text("this is cool! Pink Cute!"))->craftLater([](Text* text){
-                            auto data = text->getData();
-                            data.color = UnityEngine::Color(255.0f / 255.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f);
-                            text->mutateData(data);
+                            text->mutateData([](MutableTextData data) {
+                                data.color = UnityEngine::Color(255.0f / 255.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f);
+                                return data;
+                            });
                             // we don't update here because it hasn't rendered, this is called before rendering
                         }),
 
@@ -109,16 +110,18 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                                 container->addToHierarchy(newText);
                             } else {
                                 count++;
-                                auto data = (newText)->getData();
-                                data.text = "someOtherText" + std::to_string(count);
-                                newText->mutateData(data);
+                                newText->mutateData([](MutableTextData data){
+                                    data.text = "someOtherText" + std::to_string(count);
+                                    return data;
+                                });
                                 newText->doUpdate();
                             }
 
                             // Update button text
-                            auto buttonData = button->getData();
-                            buttonData.text = "Clicked: " + std::to_string(count);
-                            button->mutateData(buttonData);
+                            button->mutateData([](MutableButtonData data){
+                                data.text = "Clicked: " + std::to_string(count);
+                                return data;
+                            });
                             button->doUpdate();
                         })
                     }}
