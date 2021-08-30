@@ -2,6 +2,7 @@
 
 #include "questui/shared/QuestUI.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
+#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 
 #include "components/Text.hpp"
 #include "components/ScrollableContainer.hpp"
@@ -56,84 +57,90 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
         // We then make sure the parent never dies by never freeing
         // A better way of doing this is tying the highest parent to a ViewCoordinator or anything else
 
-        // CLion why
+        // async UI!
+
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnusedValue"
-        auto* view = new ViewComponent{self->get_transform(), {
-            .children = {
-                    container = new ScrollableContainer {{
-                        new HoverHint("hint", new Text("hi!")),
-                        (new Text("this is cool! Pink Cute!"))->craftLater([](Text* text){
-                            text->mutateData([](MutableTextData data) {
-                                data.color = UnityEngine::Color(255.0f / 255.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f);
-                                return data;
-                            });
-                            // we don't update here because it hasn't rendered, this is called before rendering
-                        }),
-
-                        // we can create components using lambdas too
-                        {[]{
-                            Modal* modal = (new Modal({}, nullptr))->craftLater([](Modal* modal){
-                                auto* horizontalWrapper = new HorizontalLayoutGroup({
-                                    new VerticalLayoutGroup({
-                                        new Text("Look at me!"),
-                                        new Button("Close!", [modal](Button* button, UnityEngine::Transform* parentTransform){
-                                            modal->dismiss();
-                                        })
-                                    })
-                                });
-
-                                // we need the modal pointer, so use the lambda
-                                modal->addToHierarchy(horizontalWrapper);
-                            });
-
-
-
-                            return new Button("More info!", [modal](Button* button, UnityEngine::Transform* parentTransform) {
-                                // Add to `container` on click because `container` at modal construction is null
-                                if (!modal->isRendered()) {
-                                    container->addToHierarchy(modal);
-                                }
-
-                                modal->show();
-                            });
-                        }},
-                        // Custom component
-                        new TestComponent("pink cute eris cute"),
-
-
-                        new HoverHint("hintee", new Text("hello from other world!")),
-                        new HoverHint("another hintee", new Text("this is cooler!!")),
-                        new Button("Click me!", [](Button* button, UnityEngine::Transform* parentTransform) {
-                            if (!newText) {
-                                newText = new Text("New text!");
-                                container->addToHierarchy(newText);
-                            } else {
-                                count++;
-                                newText->mutateData([](MutableTextData data){
-                                    data.text = "someOtherText" + std::to_string(count);
+#pragma clang diagnostic ignored "-Wunused-value"
+        std::thread([self]{
+            // CLion why
+            auto* view = new ViewComponent{self->get_transform(), {
+                .children = {
+                        container = new ScrollableContainer {{
+                            new HoverHint("hint", new Text("hi!")),
+                            (new Text("this is cool! Pink Cute!"))->craftLater([](Text* text){
+                                text->mutateData([](MutableTextData data) {
+                                    data.color = UnityEngine::Color(255.0f / 255.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f);
                                     return data;
                                 });
-                                newText->doUpdate();
-                            }
+                                // we don't update here because it hasn't rendered, this is called before rendering
+                            }),
 
-                            // Update button text
-                            button->mutateData([](MutableButtonData data){
-                                data.text = "Clicked: " + std::to_string(count);
-                                return data;
-                            });
-                            button->doUpdate();
-                        })
-                    }}
-            }
-        }};
+                            // we can create components using lambdas too
+                            {[]{
+                                Modal* modal = (new Modal({}, nullptr))->craftLater([](Modal* modal){
+                                    auto* horizontalWrapper = new HorizontalLayoutGroup({
+                                        new VerticalLayoutGroup({
+                                            new Text("Look at me!"),
+                                            new Button("Close!", [modal](Button* button, UnityEngine::Transform* parentTransform){
+                                                modal->dismiss();
+                                            })
+                                        })
+                                    });
+
+                                    // we need the modal pointer, so use the lambda
+                                    modal->addToHierarchy(horizontalWrapper);
+                                });
+
+
+
+                                return new Button("More info!", [modal](Button* button, UnityEngine::Transform* parentTransform) {
+                                    // Add to `container` on click because `container` at modal construction is null
+                                    if (!modal->isRendered()) {
+                                        container->addToHierarchy(modal);
+                                    }
+
+                                    modal->show();
+                                });
+                            }},
+                            // Custom component
+                            new TestComponent("pink cute eris cute"),
+
+
+                            new HoverHint("hintee", new Text("hello from other world!")),
+                            new HoverHint("another hintee", new Text("this is cooler!!")),
+                            new Button("Click me!", [](Button* button, UnityEngine::Transform* parentTransform) {
+                                if (!newText) {
+                                    newText = new Text("New text!");
+                                    container->addToHierarchy(newText);
+                                } else {
+                                    count++;
+                                    newText->mutateData([](MutableTextData data){
+                                        data.text = "someOtherText" + std::to_string(count);
+                                        return data;
+                                    });
+                                    newText->doUpdate();
+                                }
+
+                                // Update button text
+                                button->mutateData([](MutableButtonData data){
+                                    data.text = "Clicked: " + std::to_string(count);
+                                    return data;
+                                });
+                                button->doUpdate();
+                            })
+                        }}
+                }
+            }};
+
+            QuestUI::MainThreadScheduler::Schedule([view]{
+                view->render();
+
+                // Multiple renders should simply just update, not crash or duplicate.
+                view->render();
+                view->render();
+            });
+        }).detach();
 #pragma clang diagnostic pop
-
-        view->render();
-
-        // Multiple renders should simply just update, not crash or duplicate.
-        view->render();
-        view->render();
     }
 }
 
