@@ -12,6 +12,7 @@
 #include "components/Modal.hpp"
 #include "components/layouts/VerticalLayoutGroup.hpp"
 #include "components/layouts/HorizontalLayoutGroup.hpp"
+#include "components/settings/ToggleSetting.hpp"
 
 #include "TestComponent.hpp"
 
@@ -104,6 +105,16 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                             }},
                             // Custom component
                             new TestComponent("pink cute eris cute"),
+
+                            // Toggles
+                            new ToggleSetting("Toggle false", false),
+                            new ToggleSetting("Toggle true", true, [](ToggleSetting* set, bool val, UnityEngine::Transform*) {
+                                set->mutateData([&val](MutableToggleSettingsData data){
+                                    data.toggleText = "Toggle " + std::string(val ? "true" : "false");
+                                    return data;
+                                });
+                                set->doUpdate();
+                            }),
 
 
                             new HoverHint("hintee", new Text("hello from other world!")),

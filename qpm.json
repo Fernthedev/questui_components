@@ -27,6 +27,13 @@
       "id": "codegen",
       "versionRange": "^0.12",
       "additionalData": {}
+    },
+    {
+      "id": "config-utils",
+      "versionRange": "*",
+      "additionalData": {
+        "private": true
+      }
     }
   ],
   "additionalData": {}
