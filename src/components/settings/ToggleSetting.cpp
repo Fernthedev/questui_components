@@ -9,30 +9,19 @@ using namespace QuestUI;
 using namespace QuestUI_Components;
 
 Component* QuestUI_Components::ToggleSetting::render(UnityEngine::Transform *parentTransform) {
-    std::function<void(bool)> callback;
-    if (onToggle) {
-        onToggleCallback toggle(onToggle); // copy
-        callback = [=](bool val) {
-            setToggleValue(val);
-            toggle(this, val, parentTransform);
-        };
-    } else {
-        callback = [=](bool val) {
-            setToggleValue(val);
-        };
-    }
+    CallbackWrapper callback = constructWrapperCallback(parentTransform);
 
     if (toggleInitData) {
-        uiToggle = BeatSaberUI::CreateToggle(parentTransform, std::string(data.toggleText), data.toggleValue, toggleInitData->anchoredPosition, callback);
+        uiToggle = BeatSaberUI::CreateToggle(parentTransform, std::string(data.text), getValue(), toggleInitData->anchoredPosition, callback);
     } else {
-        uiToggle = BeatSaberUI::CreateToggle(parentTransform, std::string(data.toggleText), data.toggleValue, callback);
+        uiToggle = BeatSaberUI::CreateToggle(parentTransform, std::string(data.text), getValue(), callback);
     }
 
     transform = uiToggle->get_transform();
 
     // From QuestUI
     UnityEngine::GameObject* nameText = transform->get_parent()->Find(il2cpp_utils::createcsstr("NameText"))->get_gameObject();
-    uiToggleText = nameText->GetComponent<TMPro::TextMeshProUGUI*>();
+    uiText = nameText->GetComponent<TMPro::TextMeshProUGUI*>();
 
 
     markAsRendered();
@@ -43,22 +32,12 @@ Component* QuestUI_Components::ToggleSetting::render(UnityEngine::Transform *par
 
 void QuestUI_Components::ToggleSetting::update() {
     if (!rendered)
-        throw std::runtime_error("Toggle setting component has not rendered!");
+        throw std::runtime_error("String setting component has not rendered!");
 
+    BaseSetting::update();
     uiToggle->set_enabled(data.enabled);
     uiToggle->set_interactable(data.interactable);
 
-    if (uiToggleText) {
-        uiToggleText->set_text(il2cpp_utils::newcsstr(data.toggleText));
-    }
-
-    uiToggle->set_isOn(data.toggleValue);
-}
-
-void ToggleSetting::internalSetToggleValue(bool val) {
-    mutateData([&val](MutableToggleSettingsData data) {
-        data.toggleValue = val;
-        return data;
-    });
+    uiToggle->set_isOn(getValue());
 }
 

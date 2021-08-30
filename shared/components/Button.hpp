@@ -39,7 +39,7 @@ namespace QuestUI_Components {
             UnityEngine::Vector2 sizeDelta;
         };
 
-        explicit Button(std::string_view text, onClickCallback onClick = nullptr, std::optional<InitButtonData> buttonData = std::nullopt) : buttonData(buttonData), onClick(std::move(onClick)) {
+        explicit Button(std::string_view text, onClickCallback onClick = nullptr, std::optional<InitButtonData> buttonData = std::nullopt) : buttonData(std::move(buttonData)), onClick(std::move(onClick)) {
             data.text = text;
         }
 
@@ -50,7 +50,6 @@ namespace QuestUI_Components {
         Component* render(UnityEngine::Transform *parentTransform) override;
 
         // Constructor time
-    private:
         UnityEngine::UI::Button* uiButton = nullptr;
         TMPro::TextMeshProUGUI* uiButtonText = nullptr;
 

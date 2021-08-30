@@ -13,6 +13,7 @@
 #include "components/layouts/VerticalLayoutGroup.hpp"
 #include "components/layouts/HorizontalLayoutGroup.hpp"
 #include "components/settings/ToggleSetting.hpp"
+#include "components/settings/StringSetting.hpp"
 
 #include "TestComponent.hpp"
 
@@ -110,10 +111,13 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                             new ToggleSetting("Toggle false", false),
                             new ToggleSetting("Toggle true", true, [](ToggleSetting* set, bool val, UnityEngine::Transform*) {
                                 set->mutateData([&val](MutableToggleSettingsData data){
-                                    data.toggleText = "Toggle " + std::string(val ? "true" : "false");
+                                    data.text = "Toggle " + std::string(val ? "true" : "false");
                                     return data;
                                 });
                                 set->doUpdate();
+                            }),
+                            new StringSetting("Text setting", "The current val!", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
+                                getLogger().debug("Input! %s", input.c_str());
                             }),
 
 
