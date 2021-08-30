@@ -32,7 +32,7 @@ Component* QuestUI_Components::ToggleSetting::render(UnityEngine::Transform *par
 
 void QuestUI_Components::ToggleSetting::update() {
     if (!rendered)
-        throw std::runtime_error("String setting component has not rendered!");
+        throw std::runtime_error("Toggle setting component has not rendered!");
 
     BaseSetting::update();
     uiToggle->set_enabled(data.enabled);

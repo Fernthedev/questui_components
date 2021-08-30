@@ -14,6 +14,7 @@
 #include "components/layouts/HorizontalLayoutGroup.hpp"
 #include "components/settings/ToggleSetting.hpp"
 #include "components/settings/StringSetting.hpp"
+#include "components/settings/IncrementSetting.hpp"
 
 #include "TestComponent.hpp"
 
@@ -119,7 +120,14 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                             new StringSetting("Text setting", "The current val!", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
                                 getLogger().debug("Input! %s", input.c_str());
                             }),
-
+                            new QuestUI_Components::IncrementSetting("Increment!", 5.0f, 2, 0.05f, [](QuestUI_Components::IncrementSetting* set, float input, UnityEngine::Transform*){
+                                getLogger().debug("Increment value! %f", input);
+                                set->mutateData([&input](MutableIncrementSettingsData data){
+                                    data.text = "Increment value: " + std::to_string(input);
+                                    return data;
+                                });
+                                set->doUpdate();
+                            }),
 
                             new HoverHint("hintee", new Text("hello from other world!")),
                             new HoverHint("another hintee", new Text("this is cooler!!")),
