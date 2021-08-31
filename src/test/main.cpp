@@ -15,6 +15,7 @@
 #include "components/settings/ToggleSetting.hpp"
 #include "components/settings/StringSetting.hpp"
 #include "components/settings/IncrementSetting.hpp"
+#include "components/settings/DropdownSetting.hpp"
 
 #include "TestComponent.hpp"
 
@@ -175,6 +176,15 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                             set->mutateData([&input](MutableIncrementSettingsData data){
                                 data.text = "Increment value: " + std::to_string(input);
                                 return data;
+                            });
+                            set->doUpdate();
+                        }),
+                        new DropdownSetting("Dropdowns are cool!", "some val", {"value1", "value2", "some val", "value3"}, [](DropdownSetting* set, const std::string& selected, UnityEngine::Transform*){
+                            getLogger().debug("Dropdowns are cool %s", selected.c_str());
+                            set->mutateData([&selected](MutableDropdownSettingsData data) {
+                               data.text = "Dropdowns are coeaweol!" + selected;
+                               data.values.emplace_back(std::to_string(count));
+                               return data;
                             });
                             set->doUpdate();
                         }),
