@@ -13,8 +13,8 @@ namespace QuestUI_Components {
     class ComponentPtrWrapper;
 
 #define CONSTRUCT_AFTER_COMPONENT(clazz) \
-virtual clazz* craftLater(std::function<void(clazz *)> const& craftCallback) { \
-    craftCallback(reinterpret_cast<clazz*>(this));                         \
+virtual clazz* with(std::function<void(clazz *)> const& withCallback) { \
+    withCallback(reinterpret_cast<clazz*>(this));                         \
     return reinterpret_cast<clazz*>(this);                            \
 }
 

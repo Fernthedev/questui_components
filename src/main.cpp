@@ -67,7 +67,7 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
         if (!container) {
             loadingView = new ViewComponent{self->get_transform(), {
                     new ScrollableContainer({
-                        (new Text("Loading"))->craftLater([](Text* text) {
+                        (new Text("Loading"))->with([](Text* text) {
                             std::string textStr = text->getData().text;
                             std::thread([textStr, text]{
                                 int periodCount = 0;
@@ -120,7 +120,7 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
 
                     container = new ScrollableContainer {{
                         new HoverHint("hint", new Text("hi!")),
-                        (new Text("this is cool! Pink Cute!"))->craftLater([](Text* text){
+                        (new Text("this is cool! Pink Cute!"))->with([](Text* text){
                             text->mutateData([](MutableTextData data) {
                                 data.color = UnityEngine::Color(255.0f / 255.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f);
                                 return data;
@@ -130,7 +130,7 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
 
                         // we can create components using lambdas too
                         {[]{
-                            Modal* modal = (new Modal({}, nullptr))->craftLater([](Modal* modal){
+                            Modal* modal = (new Modal({}, nullptr))->with([](Modal* modal){
                                 auto* horizontalWrapper = new HorizontalLayoutGroup({
                                     new VerticalLayoutGroup({
                                         new Text("Look at me!"),
