@@ -75,24 +75,18 @@ namespace QuestUI_Components {
         }
 
         virtual void removeMultipleFromHierarchy(std::vector<ComponentWrapper> const& components) {
-            for (auto& component : components) {
+            for (auto &component: components) {
 
                 //man this hurts, so much waste
                 auto itSet = renderChildrenSet.find(component);
                 if (itSet != renderChildrenSet.end()) {
-                    for (auto it = renderChildren.begin(); it != renderChildren.end(); ++it) {
-                        auto &renderedComponent = *it;
-
-                        if (component.getComponent().get() == renderedComponent.getComponent().get()) {
-                            auto transform = component->getTransform();
-                            renderChildren.erase(it);
-                            renderChildrenSet.erase(itSet);
-                            if (transform) {
-                                UnityEngine::Object::Destroy(transform);
-                            }
-                            break;
-                        }
+                    auto transform = component->getTransform();
+                    std::erase(renderChildren, component);
+                    renderChildrenSet.erase(itSet);
+                    if (transform) {
+                        UnityEngine::Object::Destroy(transform);
                     }
+                    break;
                 }
             }
         }
@@ -126,6 +120,7 @@ namespace QuestUI_Components {
         // Keep children alive
         std::vector<ComponentWrapper> renderChildren;
 
+        // To ensure no duplicates.
         std::unordered_set<ComponentWrapper> renderChildrenSet;
     };
 
