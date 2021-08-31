@@ -16,9 +16,3 @@ Component* QuestUI_Components::HorizontalLayoutGroup::render(UnityEngine::Transf
 
     return this;
 }
-
-void QuestUI_Components::HorizontalLayoutGroup::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {
-    if (rendered) {
-        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
-    }
-}

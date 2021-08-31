@@ -33,12 +33,6 @@ Component* QuestUI_Components::Modal::render(UnityEngine::Transform *parentTrans
     return this;
 }
 
-void QuestUI_Components::Modal::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {
-    if (rendered) {
-        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
-    }
-}
-
 void QuestUI_Components::Modal::dismiss() {
     if (!rendered)
         throw std::runtime_error("Not rendered yet");

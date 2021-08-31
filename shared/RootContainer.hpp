@@ -16,7 +16,7 @@ namespace QuestUI_Components {
     class ComponentRenderer {
     protected:
         /**
-         * @brief Used to cheat accessibility
+         * @brief Renders or updates the component
          * @param comp
          */
         static Component* renderComponent(ComponentWrapper& comp, UnityEngine::Transform* transform) {
@@ -48,8 +48,15 @@ namespace QuestUI_Components {
         }
     };
 
+    /**
+     * @brief A abstract class of ComponentRenderer who's main purpose is to handle ownership of child Component and rendering them.
+     */
     class Container : public ComponentRenderer {
     public:
+        /**
+         * @brief Add to UI and ownership
+         * @param components list of components to add
+         */
         virtual void addMultipleToHierarchy(std::vector<ComponentWrapper> components) {
             for (auto& component : components) {
                 if (!renderChildrenSet.contains(component)) {
@@ -60,6 +67,9 @@ namespace QuestUI_Components {
             }
         }
 
+        /**
+         * @brief Destroy all children in both UI and ownership
+         */
         virtual void destroyAll() {
             for (auto& component : renderChildrenSet) {
                 auto transform = component->getTransform();
@@ -74,6 +84,10 @@ namespace QuestUI_Components {
             renderChildren.shrink_to_fit();
         }
 
+        /**
+         * @brief Removes the components from UI and ownership
+         * @param components
+         */
         virtual void removeMultipleFromHierarchy(std::vector<ComponentWrapper> const& components) {
             for (auto &component: components) {
 
@@ -84,17 +98,25 @@ namespace QuestUI_Components {
                     std::erase(renderChildren, component);
                     renderChildrenSet.erase(itSet);
                     if (transform) {
-                        UnityEngine::Object::Destroy(transform);
+                        UnityEngine::Object::Destroy(transform->get_gameObject());
                     }
                     break;
                 }
             }
         }
 
+        /**
+         * @brief Removes a single component from ownership and UI
+         * @param component
+         */
         inline void removeFromHierarchy(ComponentWrapper component) {
             removeMultipleFromHierarchy({std::move(component)});
         }
 
+        /**
+         * @brief Adds a single component to UIand takes ownership
+         * @param component
+         */
         inline void addToHierarchy(ComponentWrapper component) {
             addMultipleToHierarchy({std::move(component)});
         }
@@ -108,13 +130,25 @@ namespace QuestUI_Components {
 
         }
 
+        /**
+         * @brief Method for rendering component in child
+         * @param comp Component to render
+         */
         virtual void renderComponentInContainer(ComponentWrapper& comp) = 0;
 
+        /**
+         * @brief Utility for rendering children
+         * @param transform
+         */
         void doRenderChildren(UnityEngine::Transform *transform) {
             for (auto& comp : renderChildren)
                 renderComponent(comp, transform);
         }
 
+    public:
+        [[nodiscard]] const std::vector<ComponentWrapper> &getRenderChildren() const {
+            return renderChildren;
+        }
 
     private:
         // Keep children alive
@@ -124,6 +158,11 @@ namespace QuestUI_Components {
         std::unordered_set<ComponentWrapper> renderChildrenSet;
     };
 
+    /**
+     * @brief A base class implementation of Container with UpdateComponent and Component
+     * @tparam UpdateComponent
+     * @tparam CompParent
+     */
     template<typename UpdateComponent, typename CompParent = Component>
     class IBaseContainer : public Container, public CompParent, public UpdateComponent {
     public:
@@ -135,8 +174,21 @@ namespace QuestUI_Components {
 
         }
 
+        /**
+         * @brief Updates the children of the container on update.
+         */
         void update() override {
             doRenderChildren(this->transform);
+        }
+
+        /**
+         * @brief Method for rendering component in child
+         * @param comp Component to render
+         */
+        void renderComponentInContainer(ComponentWrapper &comp) override {
+            if (this->rendered) {
+                renderComponent(comp, const_cast<UnityEngine::Transform*>(this->transform));
+            }
         }
     };
 

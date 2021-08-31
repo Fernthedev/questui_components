@@ -17,8 +17,6 @@ namespace QuestUI_Components {
         explicit MultiComponentGroup(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
 
     protected:
-        void renderComponentInContainer(ComponentWrapper &comp) override;
-
         Component* render(UnityEngine::Transform *parentTransform) override;
     };
 }

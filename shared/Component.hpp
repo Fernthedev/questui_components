@@ -29,6 +29,11 @@ virtual clazz* with(std::function<void(clazz *)> const& withCallback) { \
             rendered = true;
         }
 
+        /**
+         * @brief Use this method to ensure your render isn't called twice
+         * However, this may not be necessary as ComponentRenderer by default will not render
+         * a rendered component again.
+         */
         virtual void ensureRenderOnce() {
             if (rendered) {
                 throw std::runtime_error("Component " + std::string(typeid(this).name()) + " has already been rendered");
@@ -46,6 +51,8 @@ virtual clazz* with(std::function<void(clazz *)> const& withCallback) { \
          * @param parentTransform The transform of the parent component that is in game
          * @return The component that was rendered. Return this or another component.
          * The parent component is not guaranteed to take ownership of what is returned however.
+         *
+         * If the component needs updating, you will also have to manually update it by inheriting UpdateableComponentBase or a child of it.
          */
         virtual Component* render(UnityEngine::Transform* parentTransform) = 0;
     public:
@@ -56,10 +63,21 @@ virtual clazz* with(std::function<void(clazz *)> const& withCallback) { \
         [[nodiscard]] bool isRendered() const { return rendered; }
     };
 
+    /**
+     * @brief Extend this class to allow state functionality.
+     * Components by default are stateless and static.
+     */
     class UpdateableComponentBase {
     protected:
+        /**
+         * @brief Called when a update is deemed require by  UpdateableComponentBase.doUpdate
+         */
         virtual void update() = 0;
     public:
+        /**
+         * @brief Use this method to update the component
+         * @remark A public proxy to UpdateableComponentBase.update which can be used to only update when it is required.
+         */
         virtual void doUpdate() {
             update();
         };
@@ -73,6 +91,9 @@ virtual clazz* with(std::function<void(clazz *)> const& withCallback) { \
         // allow one initial update
         bool updated = true;
 
+        /**
+         * @brief Called when a update is deemed require by  UpdateableComponentBase.doUpdate
+         */
         void update() override = 0;
     public:
         T getData() {
@@ -91,6 +112,10 @@ virtual clazz* with(std::function<void(clazz *)> const& withCallback) { \
             updated = true;
         }
 
+        /**
+         * @brief Use this method to update the component
+         * @remark A public proxy to UpdateableComponentBase.update which can be used to only update when it is required.
+         */
         void doUpdate() override {
             if (!updated) return;
 
@@ -100,8 +125,15 @@ virtual clazz* with(std::function<void(clazz *)> const& withCallback) { \
     };
 
 
+    /**
+     * @brief A wrapper for shared_ptr<Component> to allow implicit conversion
+     * Note this will take ownership of a Component if it's not a shared_ptr
+     */
     class ComponentPtrWrapper {
     private:
+        /**
+         * @brief the underlying component held
+         */
         std::shared_ptr<Component> component;
 
     public:

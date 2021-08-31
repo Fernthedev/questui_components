@@ -16,9 +16,3 @@ Component* QuestUI_Components::ScrollableContainer::render(UnityEngine::Transfor
 
     return this;
 }
-
-void QuestUI_Components::ScrollableContainer::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {
-    if (rendered) {
-        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
-    }
-}

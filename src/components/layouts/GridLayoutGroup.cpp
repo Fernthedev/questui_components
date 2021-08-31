@@ -16,9 +16,3 @@ Component* QuestUI_Components::GridLayoutGroup::render(UnityEngine::Transform *p
 
     return this;
 }
-
-void QuestUI_Components::GridLayoutGroup::renderComponentInContainer(QuestUI_Components::ComponentWrapper &comp) {
-    if (rendered) {
-        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
-    }
-}

@@ -24,7 +24,7 @@ namespace QuestUI_Components {
         Component* render(UnityEngine::Transform *parentTransform) override;
 
         // Store as a shared_ptr because parent wil NOT take ownership of this.
-        // However, it will take of us
+        // However, it will take ownership of us
         std::shared_ptr<MultiComponentGroup> group;
     };
 }

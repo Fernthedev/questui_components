@@ -13,8 +13,6 @@ namespace QuestUI_Components {
         explicit ScrollableContainer(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
 
     protected:
-        void renderComponentInContainer(ComponentWrapper &comp) override;
-
         Component* render(UnityEngine::Transform *parentTransform) override;
     };
 }

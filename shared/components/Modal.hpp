@@ -46,8 +46,6 @@ namespace QuestUI_Components {
         CONSTRUCT_AFTER_COMPONENT(Modal)
 
     protected:
-        void renderComponentInContainer(ComponentWrapper &comp) override;
-
         Component* render(UnityEngine::Transform *parentTransform) override;
 
         HMUI::ModalView* modalView = nullptr;
