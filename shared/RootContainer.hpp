@@ -36,6 +36,8 @@ namespace QuestUI_Components {
          * @param comp
          */
         static inline Component* justRenderComponent(Component* comp, UnityEngine::Transform* transform) {
+            if (comp->isRendered()) return comp;
+
             auto compRendered = comp->render(transform);
 
             // TODO: Should we do this?
