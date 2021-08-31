@@ -12,9 +12,9 @@ namespace UnityEngine::UI {
 
 namespace QuestUI_Components {
 
-    class GridLayoutGroup : public Component, public Container {
+    class GridLayoutGroup : public BaseContainer {
     public:
-        explicit GridLayoutGroup(std::initializer_list<ComponentWrapper> children) : Container(children) {}
+        explicit GridLayoutGroup(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
 
     protected:
         void renderComponentInContainer(ComponentWrapper &comp) override;

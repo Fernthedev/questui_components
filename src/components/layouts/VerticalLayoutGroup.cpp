@@ -12,8 +12,7 @@ Component* QuestUI_Components::VerticalLayoutGroup::render(UnityEngine::Transfor
     transform = verticalLayoutGroup->get_transform();
 
     rendered = true;
-    for (auto& comp : renderChildren)
-        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
+    update();
 
     return this;
 }

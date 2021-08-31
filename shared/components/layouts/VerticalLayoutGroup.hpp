@@ -12,9 +12,9 @@ namespace UnityEngine::UI {
 
 namespace QuestUI_Components {
 
-    class VerticalLayoutGroup : public Component, public Container {
+    class VerticalLayoutGroup : public BaseContainer {
     public:
-        explicit VerticalLayoutGroup(std::initializer_list<ComponentWrapper> children) : Container(children) {}
+        explicit VerticalLayoutGroup(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
 
     protected:
         void renderComponentInContainer(ComponentWrapper &comp) override;

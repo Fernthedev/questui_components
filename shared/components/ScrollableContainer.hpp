@@ -8,9 +8,9 @@
 
 namespace QuestUI_Components {
 
-    class ScrollableContainer : public Component, public Container {
+    class ScrollableContainer : public BaseContainer {
     public:
-        explicit ScrollableContainer(std::initializer_list<ComponentWrapper> children) : Container(children) {}
+        explicit ScrollableContainer(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
 
     protected:
         void renderComponentInContainer(ComponentWrapper &comp) override;

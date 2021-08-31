@@ -16,7 +16,7 @@ namespace HMUI {
 
 namespace QuestUI_Components {
 
-    class Modal : public Component, public Container {
+    class Modal : public BaseContainer {
     public:
         using BlockerClickedCallback = std::function<void(Modal*, HMUI::ModalView*)>;
 
@@ -29,12 +29,12 @@ namespace QuestUI_Components {
         explicit Modal(std::initializer_list<ComponentWrapper> children, BlockerClickedCallback onBlockerClicked,
                        ModalInitData initData) :
                        onBlockerClicked(std::move(onBlockerClicked)),
-                       initData(std::make_optional(initData)), Container(children) {}
+                       initData(std::make_optional(initData)), BaseContainer(children) {}
 
         explicit Modal(std::initializer_list<ComponentWrapper> children, BlockerClickedCallback onBlockerClicked,
                        std::optional<ModalInitData> initData = std::nullopt) :
                        onBlockerClicked(std::move(onBlockerClicked)),
-                       initData(initData), Container(children) {}
+                       initData(initData), BaseContainer(children) {}
 
         void dismiss();
         void show();

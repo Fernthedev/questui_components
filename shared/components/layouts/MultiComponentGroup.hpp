@@ -12,9 +12,9 @@ namespace UnityEngine::UI {
 
 namespace QuestUI_Components {
 
-    class MultiComponentGroup : public Component, public Container {
+    class MultiComponentGroup : public BaseContainer {
     public:
-        explicit MultiComponentGroup(std::initializer_list<ComponentWrapper> children) : Container(children) {}
+        explicit MultiComponentGroup(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
 
     protected:
         void renderComponentInContainer(ComponentWrapper &comp) override;

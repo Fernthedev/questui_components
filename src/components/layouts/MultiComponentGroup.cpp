@@ -10,8 +10,7 @@ Component* QuestUI_Components::MultiComponentGroup::render(UnityEngine::Transfor
     transform = parentTransform;
 
     rendered = true;
-    for (auto& comp : renderChildren)
-        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
+    update();
 
     return this;
 }

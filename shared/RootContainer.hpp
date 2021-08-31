@@ -1,12 +1,13 @@
 #pragma once
 
 #include "Component.hpp"
+
+#include "UnityEngine/Object.hpp"
+#include "UnityEngine/GameObject.hpp"
+#include "UnityEngine/Transform.hpp"
+
 #include <utility>
 #include <vector>
-
-namespace UnityEngine {
-    class Transform;
-}
 
 namespace QuestUI_Components {
     /**
@@ -51,9 +52,53 @@ namespace QuestUI_Components {
     public:
         virtual void addMultipleToHierarchy(std::vector<ComponentWrapper> components) {
             for (auto& component : components) {
-                renderComponentInContainer(component);
-                renderChildren.emplace_back(component);
+                if (!renderChildrenSet.contains(component)) {
+                    renderComponentInContainer(component);
+                    renderChildren.emplace_back(component);
+                    renderChildrenSet.emplace(component);
+                }
             }
+        }
+
+        virtual void destroyAll() {
+            for (auto& component : renderChildrenSet) {
+                auto transform = component->getTransform();
+
+                if (transform) {
+                    UnityEngine::Object::Destroy(transform->get_gameObject());
+                }
+            }
+
+            renderChildrenSet.clear();
+            renderChildren.clear();
+            renderChildren.shrink_to_fit();
+        }
+
+        virtual void removeMultipleFromHierarchy(std::vector<ComponentWrapper> const& components) {
+            for (auto& component : components) {
+
+                //man this hurts, so much waste
+                auto itSet = renderChildrenSet.find(component);
+                if (itSet != renderChildrenSet.end()) {
+                    for (auto it = renderChildren.begin(); it != renderChildren.end(); ++it) {
+                        auto &renderedComponent = *it;
+
+                        if (component.getComponent().get() == renderedComponent.getComponent().get()) {
+                            auto transform = component->getTransform();
+                            renderChildren.erase(it);
+                            renderChildrenSet.erase(itSet);
+                            if (transform) {
+                                UnityEngine::Object::Destroy(transform);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        inline void removeFromHierarchy(ComponentWrapper component) {
+            removeMultipleFromHierarchy({std::move(component)});
         }
 
         inline void addToHierarchy(ComponentWrapper component) {
@@ -62,12 +107,44 @@ namespace QuestUI_Components {
 
         Container() = default;
 
-    protected:
-        Container(std::initializer_list<ComponentWrapper> children) : renderChildren(children) {}
+        virtual ~Container() = default;
 
+    protected:
+        Container(std::initializer_list<ComponentWrapper> children) : renderChildren(children), renderChildrenSet(children) {
+
+        }
+
+        virtual void renderComponentInContainer(ComponentWrapper& comp) = 0;
+
+        void doRenderChildren(UnityEngine::Transform *transform) {
+            for (auto& comp : renderChildren)
+                renderComponent(comp, transform);
+        }
+
+
+    private:
         // Keep children alive
         std::vector<ComponentWrapper> renderChildren;
 
-        virtual void renderComponentInContainer(ComponentWrapper& comp) = 0;
+        std::unordered_set<ComponentWrapper> renderChildrenSet;
     };
+
+    template<typename UpdateComponent, typename CompParent = Component>
+    class IBaseContainer : public Container, public CompParent, public UpdateComponent {
+    public:
+        IBaseContainer() : Container() {}
+
+
+    protected:
+        IBaseContainer(std::initializer_list<ComponentWrapper> children) : Container(children) {
+
+        }
+
+        void update() override {
+            doRenderChildren(this->transform);
+        }
+    };
+
+    using BaseContainer = IBaseContainer<UpdateableComponentBase, Component>;
+
 }

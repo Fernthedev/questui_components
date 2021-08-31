@@ -60,7 +60,9 @@ virtual clazz* craftLater(std::function<void(clazz *)> const& craftCallback) { \
     protected:
         virtual void update() = 0;
     public:
-        virtual void doUpdate() = 0;
+        virtual void doUpdate() {
+            update();
+        };
     };
 
     template<class T>
@@ -125,8 +127,20 @@ virtual clazz* craftLater(std::function<void(clazz *)> const& craftCallback) { \
         [[nodiscard]]  Component* operator->() const noexcept {
             return component.get();
         }
+
+        bool operator==(const ComponentPtrWrapper& other) const {
+            return component.get() == other.component.get();
+        }
     };
+
 
 //    using ComponentWrapper = std::shared_ptr<Component>;
         using ComponentWrapper = ComponentPtrWrapper;
 }
+
+template<>
+struct std::hash<QuestUI_Components::ComponentPtrWrapper> {
+    [[nodiscard]] size_t operator()(const QuestUI_Components::ComponentPtrWrapper& comp) const noexcept {
+        return std::hash<QuestUI_Components::Component*>()(comp.getComponent().get());
+    }
+};

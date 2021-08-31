@@ -28,8 +28,7 @@ Component* QuestUI_Components::Modal::render(UnityEngine::Transform *parentTrans
     transform = modalView->get_transform();
 
     rendered = true;
-    for (auto& comp : renderChildren)
-        renderComponent(comp, const_cast<UnityEngine::Transform*>(transform));
+    update();
 
     return this;
 }
