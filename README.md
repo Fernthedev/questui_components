@@ -21,24 +21,29 @@ BSML still does have some advantages though:
 Lots of people saw BSML as the only way forward in making QuestUI a better experience. As cool as it is, I highly disliked the idea of using an XML parser and packaging XML code in Quest mods. 
 This and the experience I had with React & Flutter made me realize a different approach, one where UI can be just lots of components.
 
+-----
+
+### Component
 Everything rendered in QuestUI Components is a component. By default, a `Component` is static and does not ever change.
-    - `render()` will be called as long as `rendered == false`. Run `markAsRendered()` in your render function to mark it as rendered.
-    - `transform` must be assigned on `render()`
-    - `render()` can return `this` or another component. If another component is returned, it will also be rendered.
-    - When a `Component` dies, its UI object and transform will **NOT** be destroyed. You should instead destroy it manually or call the container's `removeFromHierarchy` function.
+- `render()` will be called as long as `rendered == false`. Run `markAsRendered()` in your render function to mark it as rendered.
+- `transform` must be assigned on `render()`
+- `render()` can return `this` or another component. If another component is returned, it will also be rendered.
+- When a `Component` dies, its UI object and transform will **NOT** be destroyed. You should instead destroy it manually or call the container's `removeFromHierarchy` function.
 
+#### UpdateableComponentBase
 A `UpdateableComponentBase` (or more commonly used, `UpdateableComponent<MutableData>`) is a type of component that can be updated. Use this in conjunction with `Component`
-    - `mutateData([](MutableData data) { return data })` Method to mark a change in state, with the new data. 
-    - `doUpdate()` Applies the change, do not call if `render()` has not been called.
+- `mutateData([](MutableData data) { return data })` Method to mark a change in state, with the new data. 
+- `doUpdate()` Applies the change, do not call if `render()` has not been called.
+-----
 
-
+### Container
 A `Container` such as `ViewComponent` or `ScrollableContainer` is a type used to render and own multiple `Component`s.
 
-
+#### ViewComponent
 `ViewComponent` is not actually a `Component`, however it is a `Container`. It is usually the highest root parent, as it renders everything. You would usually have this as a field in your `ViewController` (and ensure it is cleaned on `ViewController` destroy)
-    - You can construct a `ViewComponent` at any time and thread you want
-    - You should only call `render()` in the main thread, you can use `QuestUI::MainThreadScheduler::Schedule` if on another thread.
-
+- You can construct a `ViewComponent` at any time and thread you want
+- You should only call `render()` in the main thread, you can use `QuestUI::MainThreadScheduler::Schedule` if on another thread.
+-----
 
 The best example code, while also confusing and extensive can be found in `DidActivate` [here](src/test/main.cpp)
 
