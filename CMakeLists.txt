@@ -26,6 +26,7 @@ add_compile_definitions("VERSION=\"0.1.0\"") #Modify this if you use it
 add_compile_definitions("ID=\"${CMAKE_PROJECT_NAME}\"") #Modify this if you use it
 add_compile_definitions("__GNUC__")
 add_compile_definitions("__aarch64__")
+add_compile_definitions("AddConfigValue")
 
 file(GLOB SRC src/*.cpp src/*/*.cpp src/*/*/*.cpp)
 add_library(${CMAKE_PROJECT_NAME} SHARED ${SRC}) # Is this necessary? Not sure, have it there anyways
