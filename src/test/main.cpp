@@ -16,6 +16,7 @@
 #include "components/settings/StringSetting.hpp"
 #include "components/settings/IncrementSetting.hpp"
 #include "components/settings/DropdownSetting.hpp"
+#include "components/misc/RainbowText.hpp"
 
 #include "TestComponent.hpp"
 
@@ -158,6 +159,7 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                         }},
                         // Custom component
                         new TestComponent("pink cute eris cute"),
+                        new RainbowText("Rainbow!"),
 
                         // Toggles
                         new ToggleSetting("Toggle false", false),

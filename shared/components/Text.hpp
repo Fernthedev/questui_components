@@ -39,8 +39,9 @@ namespace QuestUI_Components {
         Component* render(UnityEngine::Transform *parentTransform) override;
         void update() override;
 
-    private:
         const std::optional<InitialTextData> initialTextData;
+
+        // render time
         TMPro::TextMeshProUGUI* textUI = nullptr;
     };
 }
