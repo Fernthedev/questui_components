@@ -22,6 +22,7 @@ namespace QuestUI_Components {
 
     using MutableToggleSettingsData = MutableSettingsData<bool>;
 
+    // TODO: Somehow this causes game buttons to be wide. How to fix?
     class ToggleSetting : public BaseSetting<bool, ToggleSetting, MutableToggleSettingsData> {
     public:
         struct InitToggleSettingsData {
