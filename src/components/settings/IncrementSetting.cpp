@@ -11,13 +11,16 @@ using namespace QuestUI_Components;
 Component* QuestUI_Components::IncrementSetting::render(UnityEngine::Transform *parentTransform) {
     CallbackWrapper callback = constructWrapperCallback(parentTransform);
 
+    bool hasMax = data.max.has_value();
+    bool hasMin = data.min.has_value();
+
+    float min = data.min.value_or(0);
+    float max = data.max.value_or(0);
+
+    int decimals = data.decimals;
+    float increment = data.increment;
+
     if (incrementInitData) {
-        bool hasMax = incrementInitData->max.has_value();
-        bool hasMin = incrementInitData->min.has_value();
-
-        float min = incrementInitData->min.value_or(0);
-        float max = incrementInitData->max.value_or(0);
-
         uiIncrement = BeatSaberUI::CreateIncrementSetting(parentTransform, std::string(data.text), decimals, increment, getValue(), hasMin, hasMax, min, max,incrementInitData->anchoredPosition, callback);
     } else {
         uiIncrement = BeatSaberUI::CreateIncrementSetting(parentTransform, std::string(data.text), decimals, increment, getValue(), callback);
@@ -45,7 +48,14 @@ void QuestUI_Components::IncrementSetting::update() {
     // TODO: How?
     // uiIncrement->set_interactable(data.interactable);
 
-    // TODO: make min, max, decimals and increment mutable?
+    uiIncrement->Decimals = data.decimals;
+    uiIncrement->Increment = data.increment;
+
+    uiIncrement->MaxValue = data.max.value_or(0);
+    uiIncrement->MinValue = data.min.value_or(0);
+
+    uiIncrement->HasMax = (bool) data.max;
+    uiIncrement->HasMin = (bool) data.min;
 
     uiIncrement->CurrentValue = getValue();
 }

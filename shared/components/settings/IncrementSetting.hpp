@@ -23,22 +23,28 @@ namespace TMPro {
 
 namespace QuestUI_Components {
 
-    using MutableIncrementSettingsData = MutableSettingsData<float>;
+    struct MutableIncrementSettingsData : public MutableSettingsData<float> {
+        std::optional<float> max = std::nullopt;
+        std::optional<float> min = std::nullopt;
+        int decimals;
+        float increment;
+    };
 
     class IncrementSetting : public BaseSetting<float, IncrementSetting, MutableIncrementSettingsData> {
     public:
         struct InitIncrementSettingsData {
-            std::optional<float> max = std::nullopt;
-            std::optional<float> min = std::nullopt;
             UnityEngine::Vector2 anchoredPosition;
+
         };
 
         explicit IncrementSetting(std::string_view text, float currentValue, int decimals, float increment, OnCallback callback = nullptr,
                                std::optional<InitIncrementSettingsData> incrementData = std::nullopt)
         : BaseSetting(std::string(text), currentValue, std::move(callback)),
-                               incrementInitData(incrementData),
-                               decimals(decimals),
-                               increment(increment) {}
+                               incrementInitData(incrementData)
+                               {
+            data.decimals = decimals;
+            data.increment = increment;
+                               }
 
     protected:
         void update() override;
@@ -48,8 +54,6 @@ namespace QuestUI_Components {
         QuestUI::IncrementSetting* uiIncrement = nullptr;
 
         // Constructor time
-        int decimals;
-        float increment;
         const std::optional<InitIncrementSettingsData> incrementInitData;
     };
 
