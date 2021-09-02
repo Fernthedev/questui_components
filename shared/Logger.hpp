@@ -2,6 +2,7 @@
 
 #include "beatsaber-hook/shared/utils/logging.hpp"
 
-namespace QuestUI_Components {
+// intentional typo, yay
+namespace QuestUI_Components::Loggerr {
     Logger& getLogger();
 }

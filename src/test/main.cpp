@@ -24,6 +24,7 @@
 
 using namespace QuestUI;
 using namespace QuestUI_Components;
+using namespace QuestUI_Components::Loggerr;
 
 static ModInfo modInfo; // Stores the ID and version of our mod, and is sent to the modloader upon startup
 
@@ -35,7 +36,7 @@ Configuration& getConfig() {
 }
 
 // Returns a logger, useful for printing debug messages
-Logger& QuestUI_Components::getLogger() {
+Logger& QuestUI_Components::Loggerr::getLogger() {
     static auto* logger = new Logger(modInfo, LoggerOptions(false, true));
     return *logger;
 }
