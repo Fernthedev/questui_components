@@ -12,6 +12,9 @@ Component* QuestUI_Components::Text::render(UnityEngine::Transform *parentTransf
         textUI = BeatSaberUI::CreateText(parentTransform, std::string(data.text));
     }
 
+    if (!data.fontSize)
+        data.fontSize = textUI->get_fontSize();
+
     transform = textUI->get_transform();
 
     markAsRendered();
@@ -29,5 +32,9 @@ void QuestUI_Components::Text::update() {
 
     if (data.color) {
         textUI->set_color(*data.color);
+    }
+
+    if (data.fontSize) {
+        textUI->set_fontSize(data.fontSize.value());
     }
 }

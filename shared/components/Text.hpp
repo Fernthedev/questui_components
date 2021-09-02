@@ -20,6 +20,7 @@ namespace QuestUI_Components {
         std::string text;
         bool enabled = true;
         std::optional<UnityEngine::Color> color = std::nullopt;
+        std::optional<float> fontSize;
     };
 
     class Text : public Component, public UpdateableComponent<MutableTextData> {
