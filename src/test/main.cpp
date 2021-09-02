@@ -18,7 +18,9 @@
 #include "components/settings/DropdownSetting.hpp"
 #include "components/misc/RainbowText.hpp"
 
+// Custom components
 #include "TestComponent.hpp"
+#include "TacoImage.hpp"
 
 using namespace QuestUI;
 using namespace QuestUI_Components;
@@ -33,7 +35,7 @@ Configuration& getConfig() {
 }
 
 // Returns a logger, useful for printing debug messages
-Logger& getLogger() {
+Logger& QuestUI_Components::getLogger() {
     static auto* logger = new Logger(modInfo, LoggerOptions(false, true));
     return *logger;
 }
@@ -110,11 +112,17 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
 
 #pragma region FullyLoadedUI
 
+        // Image has to be loaded on main thread
+        // When passing this to a container, it will take ownership, so we don't need to call delete
+        auto* tacoImage = new TacoImage(Image::InitialImageData{
+                .sizeDelta = {48, 48}
+        });
+
 // CLion why
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-value"
 
-        std::thread([self]{
+        std::thread([self, tacoImage]{
             // Simulate slow UI
             std::this_thread::sleep_for(std::chrono::seconds(2));
 
@@ -160,6 +168,9 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                         // Custom component
                         new TestComponent("pink cute eris cute"),
                         new RainbowText("Rainbow!"),
+
+                        // Image is loaded on main thread
+                        tacoImage,
 
                         // Toggles
                         new ToggleSetting("Toggle false", false),

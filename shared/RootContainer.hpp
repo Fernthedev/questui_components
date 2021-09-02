@@ -6,6 +6,8 @@
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Transform.hpp"
 
+#include "Logger.hpp"
+
 #include <utility>
 #include <vector>
 
@@ -14,12 +16,20 @@ namespace QuestUI_Components {
      * @brief Marks this class as a friend to QuestUI_Components::Component
      */
     class ComponentRenderer {
+        // according to scad, blame him if this breaks
+        static const int MAIN_THREAD_ID = 1;
+
     protected:
         /**
          * @brief Renders or updates the component
          * @param comp
          */
         static Component* renderComponent(ComponentWrapper& comp, UnityEngine::Transform* transform) {
+
+             // TODO: THROW EXCEPTION?
+//            if (std::this_thread::get_id() != MAIN_THREAD_ID) {
+//                getLogger().warning("Rendering components should only be done from the main thread, you've been warned!");
+//            }
             if (comp->isRendered()) {
                 if (auto updateableComponent = std::dynamic_pointer_cast<UpdateableComponentBase>(comp.getComponent())) {
                     updateableComponent->doUpdate();
