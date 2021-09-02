@@ -6,7 +6,10 @@
     "id": "questui_components",
     "version": "0.1.0",
     "url": "https://github.com/Fernthedev/questui_components",
-    "additionalData": {}
+    "additionalData": {
+      "branchName": "version-v0.1.0",
+      "soLink": "https://github.com/Fernthedev/questui_components/releases/download/v0.1.0/libquestui_components_0_1_0.so"
+    }
   },
   "dependencies": [
     {
