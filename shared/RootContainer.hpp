@@ -142,6 +142,10 @@ namespace QuestUI_Components {
 
         }
 
+        Container(std::vector<ComponentWrapper> children) : renderChildren(children), renderChildrenSet(children.begin(), children.end()) {
+
+        }
+
         /**
          * @brief Method for rendering component in child
          * @param comp Component to render
@@ -182,9 +186,9 @@ namespace QuestUI_Components {
 
 
     protected:
-        IBaseContainer(std::initializer_list<ComponentWrapper> children) : Container(children) {
+        IBaseContainer(std::initializer_list<ComponentWrapper> children) : Container(children) {}
 
-        }
+        IBaseContainer(std::vector<ComponentWrapper> children) : Container(children) {}
 
         /**
          * @brief Updates the children of the container on update.

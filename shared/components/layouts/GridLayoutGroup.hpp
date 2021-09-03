@@ -14,6 +14,7 @@ namespace QuestUI_Components {
     class GridLayoutGroup : public BaseContainer {
     public:
         explicit GridLayoutGroup(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
+        explicit GridLayoutGroup(std::vector<ComponentWrapper> children) : BaseContainer(children) {}
 
     protected:
         Component* render(UnityEngine::Transform *parentTransform) override;

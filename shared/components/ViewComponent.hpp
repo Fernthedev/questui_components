@@ -16,6 +16,10 @@ namespace QuestUI_Components {
         transform(transform),
         Container(components) {}
 
+        ViewComponent(const UnityEngine::Transform *transform, std::vector<ComponentPtrWrapper> const& components) :
+        transform(transform),
+        Container(components) {}
+
         void render();
 
     protected:
