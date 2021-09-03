@@ -11,12 +11,15 @@ using namespace QuestUI;
 using namespace QuestUI_Components;
 
 Component* QuestUI_Components::StringSetting::render(UnityEngine::Transform *parentTransform) {
-    CallbackWrapper callbackWrapper = constructWrapperCallback(parentTransform);
+    CallbackWrapper callbackWrapperOrig = constructWrapperCallback(parentTransform);
+    std::function<void(std::string_view)> callbackWrapper = [callbackWrapperOrig](std::string_view arg){
+        callbackWrapperOrig(std::string(arg));
+    };
 
     if (stringInitData) {
-        uiString = BeatSaberUI::CreateStringSetting(parentTransform, std::string(data.text), getValue(), stringInitData->anchoredPosition, stringInitData->keyboardPositionOffset, callbackWrapper);
+        uiString = BeatSaberUI::CreateStringSetting(parentTransform, data.text, getValue(), stringInitData->anchoredPosition, stringInitData->keyboardPositionOffset, callbackWrapper);
     } else {
-        uiString = BeatSaberUI::CreateStringSetting(parentTransform, std::string(data.text), getValue(), callbackWrapper);
+        uiString = BeatSaberUI::CreateStringSetting(parentTransform, data.text, getValue(), callbackWrapper);
     }
 
     transform = uiString->get_transform();

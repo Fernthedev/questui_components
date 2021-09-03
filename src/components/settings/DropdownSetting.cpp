@@ -13,9 +13,12 @@ using namespace QuestUI;
 using namespace QuestUI_Components;
 
 Component* QuestUI_Components::DropdownSetting::render(UnityEngine::Transform *parentTransform) {
-    CallbackWrapper callbackWrapper = constructWrapperCallback(parentTransform);
+    CallbackWrapper callbackWrapperOrig = constructWrapperCallback(parentTransform);
+    std::function<void(std::string_view)> callbackWrapper = [callbackWrapperOrig](std::string_view arg){
+        callbackWrapperOrig(std::string(arg));
+    };
 
-    uiDropdown = BeatSaberUI::CreateDropdown(parentTransform, std::string(data.text), getValue(), data.values, callbackWrapper);
+    uiDropdown = BeatSaberUI::CreateDropdown(parentTransform, data.text, getValue(), data.values, callbackWrapper);
 
 
     transform = uiDropdown->get_transform();
