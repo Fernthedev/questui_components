@@ -115,7 +115,7 @@ template<> struct ::QuestUI_Components::StrToEnum<EnumName> {                   
     }                                              \
 };                                                \
 template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {                      \
-    inline static const std::vector<std::string> values = std::vector<std::string>({#__VA_ARGS__}); \
+    inline static const std::vector<std::string> values = std::vector<std::string>({strlist}); \
     static std::vector<std::string> get() {                                       \
         return values;                                          \
     }                                              \
@@ -135,7 +135,8 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
         template<typename... TArgs>
         explicit
         ConfigUtilsEnumDropdownSetting(ConfigUtils::ConfigValue<EnumConfigValue> &configValue, TArgs &&... args)
-                : configValue(std::ref(configValue)), DropdownSetting(configValue.GetName(), ConfigUtilsEnumDropdownSetting::getValue(), EnumStrValues<EnumType>::values, args...) {
+                : configValue(std::ref(configValue)), DropdownSetting(configValue.GetName(), "", EnumStrValues<EnumType>::values, args...) {
+            this->setValueOfData(this->data, this->getValue());
             if (!configValue.GetHoverHint().empty()) {
                 hoverHint = std::make_shared<HoverHint>(configValue.GetHoverHint(), this);
             }
@@ -156,9 +157,6 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
             }
         };
 
-        void update() override {
-            DropdownSetting::update();
-        };
 
         std::string getValue() override {
             EnumToStrType<EnumType> map = EnumToStr<EnumType>::map;
