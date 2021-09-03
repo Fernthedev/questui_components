@@ -22,12 +22,12 @@
     },
     {
       "id": "questui",
-      "versionRange": "^0.10",
+      "versionRange": "^0.11",
       "additionalData": {}
     },
     {
       "id": "codegen",
-      "versionRange": "^0.12",
+      "versionRange": "^0.13",
       "additionalData": {}
     },
     {
