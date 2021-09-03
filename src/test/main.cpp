@@ -116,7 +116,7 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
         // Image has to be loaded on main thread
         // When passing this to a container, it will take ownership, so we don't need to call delete
         auto* tacoImage = new TacoImage(Image::InitialImageData{
-                .sizeDelta = {48, 48}
+                .sizeDelta = {128, 128}
         });
 
 // CLion why
@@ -171,7 +171,12 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                         new RainbowText("Rainbow!"),
 
                         // Image is loaded on main thread
-                        tacoImage,
+                        new HorizontalLayoutGroup{{
+                         new VerticalLayoutGroup{{
+                             tacoImage,
+                         }}
+                        }},
+
 
                         // Toggles
                         new ToggleSetting("Toggle false", false),
