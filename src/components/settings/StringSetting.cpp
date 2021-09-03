@@ -1,4 +1,4 @@
-#include "components/settings/StringSetting.hpp"
+#include "shared/components/settings/StringSetting.hpp"
 
 #include <utility>
 

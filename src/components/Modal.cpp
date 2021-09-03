@@ -1,4 +1,4 @@
-#include "components/Modal.hpp"
+#include "shared/components/Modal.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
 #include "main.hpp"

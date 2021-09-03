@@ -1,4 +1,4 @@
-#include "components/layouts/MultiComponentGroup.hpp"
+#include "shared/components/layouts/MultiComponentGroup.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
 #include "main.hpp"

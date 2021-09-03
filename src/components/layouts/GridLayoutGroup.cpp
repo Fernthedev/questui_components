@@ -1,4 +1,4 @@
-#include "components/layouts/GridLayoutGroup.hpp"
+#include "shared/components/layouts/GridLayoutGroup.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
 #include "main.hpp"

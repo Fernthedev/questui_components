@@ -1,4 +1,4 @@
-#include "components/Image.hpp"
+#include "shared/components/Image.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
 

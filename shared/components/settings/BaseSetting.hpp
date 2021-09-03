@@ -2,9 +2,9 @@
 
 #include "UnityEngine/Vector2.hpp"
 
-#include "Component.hpp"
-#include "RootContainer.hpp"
-#include "components/HoverHint.hpp"
+#include "shared/Component.hpp"
+#include "shared/RootContainer.hpp"
+#include "shared/components/HoverHint.hpp"
 
 #include <string>
 #include <utility>

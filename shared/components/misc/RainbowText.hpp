@@ -1,6 +1,6 @@
 #pragma once
 
-#include "components/Text.hpp"
+#include "shared/components/Text.hpp"
 #include "custom-types/shared/coroutine.hpp"
 
 #include <utility>

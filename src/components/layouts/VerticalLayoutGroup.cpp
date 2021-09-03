@@ -1,4 +1,4 @@
-#include "components/layouts/VerticalLayoutGroup.hpp"
+#include "shared/components/layouts/VerticalLayoutGroup.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
 #include "main.hpp"

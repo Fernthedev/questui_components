@@ -1,4 +1,4 @@
-#include "components/settings/ToggleSetting.hpp"
+#include "shared/components/settings/ToggleSetting.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
 

@@ -3,8 +3,7 @@
 #include "UnityEngine/Vector2.hpp"
 #include "UnityEngine/Color.hpp"
 
-#include "Component.hpp"
-#include "RootContainer.hpp"
+#include "shared/Component.hpp"
 
 #include <string>
 #include <vector>

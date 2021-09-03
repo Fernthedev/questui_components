@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Component.hpp"
-#include "RootContainer.hpp"
+#include "shared/Component.hpp"
 
-#include "components/Text.hpp"
-#include "components/layouts/MultiComponentGroup.hpp"
+#include "shared/components/Text.hpp"
+#include "shared/components/layouts/MultiComponentGroup.hpp"
 
 #include <utility>
 #include <vector>

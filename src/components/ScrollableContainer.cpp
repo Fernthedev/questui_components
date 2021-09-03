@@ -1,4 +1,4 @@
-#include "components/ScrollableContainer.hpp"
+#include "shared/components/ScrollableContainer.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
 #include "main.hpp"

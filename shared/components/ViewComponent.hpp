@@ -1,7 +1,7 @@
 #pragma once
 
-#include "RootContainer.hpp"
-#include "Component.hpp"
+#include "shared/RootContainer.hpp"
+#include "shared/Component.hpp"
 #include <utility>
 #include <vector>
 

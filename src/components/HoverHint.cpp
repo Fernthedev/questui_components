@@ -1,4 +1,4 @@
-#include "components/HoverHint.hpp"
+#include "shared/components/HoverHint.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
 

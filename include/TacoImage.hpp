@@ -1,6 +1,6 @@
 #pragma once
 
-#include "components/Image.hpp"
+#include "shared/components/Image.hpp"
 
 namespace QuestUI_Components {
     class TacoImage : public Image {

@@ -1,4 +1,4 @@
-#include "components/Text.hpp"
+#include "shared/components/Text.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
 

@@ -1,4 +1,4 @@
-#include "components/settings/DropdownSetting.hpp"
+#include "shared/components/settings/DropdownSetting.hpp"
 
 #include "main.hpp"
 

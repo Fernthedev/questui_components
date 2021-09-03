@@ -1,4 +1,4 @@
-#include "components/settings/IncrementSetting.hpp"
+#include "shared/components/settings/IncrementSetting.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
 

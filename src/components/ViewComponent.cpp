@@ -1,4 +1,4 @@
-#include "components/ViewComponent.hpp"
+#include "shared/components/ViewComponent.hpp"
 
 void QuestUI_Components::ViewComponent::render() {
     rendered = true;

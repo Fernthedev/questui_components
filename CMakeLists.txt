@@ -12,7 +12,6 @@ file (STRINGS "ndkpath.txt" CMAKE_ANDROID_NDK)
 
 include_directories(include)
 include_directories(extern)
-include_directories(shared)
 include_directories(extern/libil2cpp/il2cpp/libil2cpp)
 # Uncomment these if you use these libraries
  include_directories(extern/codegen/include)

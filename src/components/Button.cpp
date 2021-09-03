@@ -1,4 +1,4 @@
-#include "components/Button.hpp"
+#include "shared/components/Button.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
 
