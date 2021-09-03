@@ -6,7 +6,9 @@
     "id": "questui_components",
     "version": "0.0.1",
     "url": "https://github.com/Fernthedev/questui_components",
-    "additionalData": {}
+    "additionalData": {
+      "overrideSoName": "libquestui_components.so"
+    }
   },
   "dependencies": [
     {
