@@ -50,7 +50,7 @@ namespace QuestUI_Components {
 
 
 
-#if defined(AddConfigValue) || defined(AddConfigValueString)
+#if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
     using ConfigUtilsStringSetting = ConfigUtilsSetting<std::string, StringSetting>;
 #endif
 }

@@ -41,7 +41,6 @@ void QuestUI_Components::DropdownSetting::update() {
     if (!rendered)
         throw std::runtime_error("String setting component has not rendered!");
 
-    getLogger().debug("Update %p", uiText);
     BaseSetting::update();
 
     uiDropdown->set_enabled(data.enabled);

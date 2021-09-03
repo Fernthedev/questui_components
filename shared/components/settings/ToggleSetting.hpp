@@ -47,7 +47,7 @@ namespace QuestUI_Components {
 
 
 
-#if defined(AddConfigValue) || defined(AddConfigValueToggle)
+#if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
     using ConfigUtilsToggleSetting = ConfigUtilsSetting<bool, ToggleSetting>;
 #endif
 }

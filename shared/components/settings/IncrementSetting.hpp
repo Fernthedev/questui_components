@@ -59,7 +59,7 @@ namespace QuestUI_Components {
 
 
 
-#if defined(AddConfigValue) || defined(AddConfigValueIncrement)
+#if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
     using ConfigUtilsIncrementSetting = ConfigUtilsSetting<float, IncrementSetting>;
 #endif
 }
