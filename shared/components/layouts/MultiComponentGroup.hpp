@@ -5,10 +5,6 @@
 #include <utility>
 #include <vector>
 
-namespace UnityEngine::UI {
-    class GridLayoutGroup;
-}
-
 namespace QuestUI_Components {
 
     class MultiComponentGroup : public BaseContainer {
