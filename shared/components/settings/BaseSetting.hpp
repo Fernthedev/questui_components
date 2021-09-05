@@ -134,6 +134,11 @@ namespace QuestUI_Components {
 
         }
 
+        void doUpdate() override {
+            this->setValue(this->getValue());
+            SettingType::doUpdate();
+        }
+
     protected:
         template<typename... TArgs>
         explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) : configValue(std::ref(configValue)), SettingType(configValue.GetName(), currentValue, args...) {
