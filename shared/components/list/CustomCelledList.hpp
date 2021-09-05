@@ -18,7 +18,7 @@ namespace QuestUI_Components {
     class CustomCelledList : public BaseContainer {
     public:
         using CallbackWrapper = std::function<void(int)>;
-        using Callback = std::function<void(CustomCelledList* self, ComponentWrapper selectedComp, int selectedIndex)>;
+        using Callback = std::function<void(CustomCelledList<T>* self, ComponentWrapper selectedComp, int selectedIndex)>;
         struct CustomCelledListInitData {
             UnityEngine::Vector2 anchoredPosition = {0,0};
             UnityEngine::Vector2 sizeDelta;
