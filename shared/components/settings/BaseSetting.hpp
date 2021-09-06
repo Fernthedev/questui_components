@@ -152,15 +152,15 @@ namespace QuestUI_Components {
 
         // reference capture should be safe here
         std::shared_ptr<HoverHint> hoverHint;
-        const ConfigUtils::ConfigValue<ConfigValueType>& configValue;
+        ConfigUtils::ConfigValue<ConfigValueType>& configValue;
 
 
         ValueType getValue() override {
-            return configValue.get().GetValue();
+            return configValue.GetValue();
         }
 
         void internalSetValue(const ValueType& val) override {
-            configValue.get().SetValue(val);
+            configValue.SetValue(val);
         }
 
         Component *render(UnityEngine::Transform *parentTransform) override {

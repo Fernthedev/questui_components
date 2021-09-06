@@ -145,7 +145,7 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
     protected:
         // reference capture should be safe here
         std::shared_ptr<HoverHint> hoverHint;
-        const ConfigUtils::ConfigValue<int>& configValue;
+        ConfigUtils::ConfigValue<int>& configValue;
 
         Component *render(UnityEngine::Transform *parentTransform) override {
             DropdownSetting::render(parentTransform);
@@ -161,9 +161,9 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
         std::string getValue() override {
             EnumToStrType<EnumType> map = EnumToStr<EnumType>::map;
             if constexpr (CrashOnBoundsExit) {
-                return map[(EnumType) this->configValue.get()];
+                return map[(EnumType) this->configValue];
             } else {
-                auto it = map.find((EnumType) this->configValue.get().GetValue());
+                auto it = map.find((EnumType) this->configValue.GetValue());
 
                 if (it == map.end()) {
                     if (map.size() == 0) return "";
@@ -178,16 +178,16 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
             StrToEnumType<EnumType> map = StrToEnum<EnumType>::map;
             if constexpr (CrashOnBoundsExit) {
                 EnumType newValue = map[val];
-                this->configValue.get().SetValue((int) newValue);
+                this->configValue.SetValue((int) newValue);
             } else {
                 auto it = map.find(val);
 
                 if (it == map.end()) {
-                    if (map.size() == 0) this->configValue.get().SetValue((int) 0);
-                    else this->configValue.get().SetValue((int) map.cbegin()->second);
+                    if (map.size() == 0) this->configValue.SetValue((int) 0);
+                    else this->configValue.SetValue((int) map.cbegin()->second);
                 }
 
-                this->configValue.get().SetValue((int) it->second);
+                this->configValue.SetValue((int) it->second);
             }
         }
     };
