@@ -23,9 +23,11 @@ namespace QuestUI_Components {
     protected:
         Component* render(UnityEngine::Transform *parentTransform) override;
 
-        QuestUI::Backgroundable* background;
+        // render time
+        QuestUI::Backgroundable* background = nullptr;
 
     private:
+        // constructor time
         const bool replaceExistingBackground;
         std::string backgroundType;
         ComponentWrapper child;
@@ -37,14 +39,16 @@ namespace QuestUI_Components {
     class BackgroundableContainer : public BaseContainer {
     public:
         explicit BackgroundableContainer(std::string_view backgroundType, std::initializer_list<ComponentWrapper> children) :  backgroundType(backgroundType), BaseContainer(children) {}
-        explicit BackgroundableContainer(std::string_view backgroundType, std::vector<ComponentWrapper> children) :  backgroundType(backgroundType), BaseContainer(children) {}
+        explicit BackgroundableContainer(std::string_view backgroundType, std::vector<ComponentWrapper> const& children) :  backgroundType(backgroundType), BaseContainer(children) {}
 
     protected:
         Component* render(UnityEngine::Transform *parentTransform) override;
 
-        QuestUI::Backgroundable* background;
+        // render time
+        QuestUI::Backgroundable* background = nullptr;
 
     private:
+        // construct type
         std::string backgroundType;
     };
 }

@@ -141,7 +141,7 @@ namespace QuestUI_Components {
 
     protected:
         template<typename... TArgs>
-        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) : configValue(std::ref(configValue)), SettingType(configValue.GetName(), currentValue, args...) {
+        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) : configValue(configValue), SettingType(configValue.GetName(), currentValue, args...) {
             if (!configValue.GetHoverHint().empty()) {
                 hoverHint = std::make_shared<HoverHint>(configValue.GetHoverHint(), this);
             }
@@ -150,7 +150,7 @@ namespace QuestUI_Components {
 
         // reference capture should be safe here
         std::shared_ptr<HoverHint> hoverHint;
-        const std::reference_wrapper<ConfigUtils::ConfigValue<ConfigValueType>> configValue;
+        const ConfigUtils::ConfigValue<ConfigValueType>& configValue;
 
 
         ValueType getValue() override {

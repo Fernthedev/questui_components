@@ -135,7 +135,7 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
         template<typename... TArgs>
         explicit
         ConfigUtilsEnumDropdownSetting(ConfigUtils::ConfigValue<EnumConfigValue> &configValue, TArgs &&... args)
-                : configValue(std::ref(configValue)), DropdownSetting(configValue.GetName(), "", EnumStrValues<EnumType>::values, args...) {
+                : configValue(configValue), DropdownSetting(configValue.GetName(), "", EnumStrValues<EnumType>::values, args...) {
             this->setValueOfData(this->data, this->getValue());
             if (!configValue.GetHoverHint().empty()) {
                 hoverHint = std::make_shared<HoverHint>(configValue.GetHoverHint(), this);
@@ -145,7 +145,7 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
     protected:
         // reference capture should be safe here
         std::shared_ptr<HoverHint> hoverHint;
-        const std::reference_wrapper<ConfigUtils::ConfigValue<int>> configValue;
+        const ConfigUtils::ConfigValue<int>& configValue;
 
         Component *render(UnityEngine::Transform *parentTransform) override {
             DropdownSetting::render(parentTransform);
