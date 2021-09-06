@@ -39,7 +39,7 @@ namespace QuestUI_Components {
 
         explicit IncrementSetting(std::string_view text, float currentValue, int decimals, float increment, OnCallback callback = nullptr,
                                std::optional<InitIncrementSettingsData> incrementData = std::nullopt)
-        : BaseSetting(std::string(text), currentValue, std::move(callback)),
+        : BaseSetting(text, currentValue, std::move(callback)),
                                incrementInitData(incrementData)
                                {
             data.decimals = decimals;

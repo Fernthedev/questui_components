@@ -4,6 +4,7 @@
 #include <memory>
 #include <utility>
 #include <string>
+#include <functional>
 
 namespace UnityEngine {
     class Transform;

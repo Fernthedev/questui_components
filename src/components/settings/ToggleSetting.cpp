@@ -12,9 +12,9 @@ Component* QuestUI_Components::ToggleSetting::render(UnityEngine::Transform *par
     CallbackWrapper callback = constructWrapperCallback(parentTransform);
 
     if (toggleInitData) {
-        uiToggle = BeatSaberUI::CreateToggle(parentTransform, std::string(data.text), getValue(), toggleInitData->anchoredPosition, callback);
+        uiToggle = BeatSaberUI::CreateToggle(parentTransform, data.text, getValue(), toggleInitData->anchoredPosition, callback);
     } else {
-        uiToggle = BeatSaberUI::CreateToggle(parentTransform, std::string(data.text), getValue(), callback);
+        uiToggle = BeatSaberUI::CreateToggle(parentTransform, data.text, getValue(), callback);
     }
 
     transform = uiToggle->get_transform();

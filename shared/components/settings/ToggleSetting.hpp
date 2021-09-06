@@ -31,7 +31,7 @@ namespace QuestUI_Components {
 
         explicit ToggleSetting(std::string_view text, bool currentValue, OnCallback callback = nullptr,
                                std::optional<InitToggleSettingsData> toggleData = std::nullopt)
-        : BaseSetting(std::string(text), currentValue, std::move(callback)),
+        : BaseSetting(text, currentValue, std::move(callback)),
                                toggleInitData(toggleData) {}
 
     protected:

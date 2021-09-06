@@ -37,6 +37,8 @@ namespace QuestUI_Components {
         bool interactable = true;
 
         friend class BaseSettingModifier<ValueType>;
+
+        virtual ~MutableSettingsData() = default;
     private:
         // To edit this, use getValue() and setValue()
         ValueType value;
@@ -64,7 +66,7 @@ namespace QuestUI_Components {
         using CallbackWrapper = std::function<void(ValueType)>;
 //        using Modifier = BaseSettingModifier<ValueType>;
 
-        explicit BaseSetting(std::string_view text, ValueType currentValue, OnCallback callback = nullptr) : callback(std::move(callback)) {
+        explicit BaseSetting(std::string_view text, ValueType currentValue, OnCallback callback = nullptr) : callback(callback) {
             this->data.text = text;
             this->setValueOfData(this->data, currentValue);
         }
@@ -80,7 +82,7 @@ namespace QuestUI_Components {
         // This is always called on set, whether your callback is nullptr or not.
         ValueType setValue(ValueType val) {
             bool different = getValue() != val;
-            this->updated |= different;
+            this->updated = this->updated || different;
             if (different) {
                 internalSetValue(val);
             }

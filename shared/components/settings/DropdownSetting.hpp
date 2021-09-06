@@ -32,7 +32,7 @@ namespace QuestUI_Components {
 
 
         explicit DropdownSetting(std::string_view text, std::string_view currentValue,
-                                 std::vector<std::string> values,
+                                 std::vector<std::string> const& values,
                                  OnCallback callback = nullptr)
                 : BaseSetting(std::string(text), std::string(currentValue), std::move(callback))
         {

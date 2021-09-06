@@ -34,7 +34,7 @@ namespace QuestUI_Components {
 
         explicit StringSetting(std::string_view text, std::string_view currentValue,
                                OnCallback callback = nullptr, std::optional<InitStringSettingsData> stringData = std::nullopt)
-                               : BaseSetting(std::string(text), std::string(currentValue), std::move(callback)),
+                               : BaseSetting(text, std::string(currentValue), std::move(callback)),
         stringInitData(stringData) {}
 
     protected:
