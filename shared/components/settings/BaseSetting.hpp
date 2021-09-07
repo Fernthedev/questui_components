@@ -6,6 +6,8 @@
 #include "shared/RootContainer.hpp"
 #include "shared/components/HoverHint.hpp"
 
+#include "questui/shared/BeatSaberUI.hpp"
+
 #include <string>
 #include <utility>
 #include <vector>
@@ -143,15 +145,11 @@ namespace QuestUI_Components {
 
     protected:
         template<typename... TArgs>
-        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) : configValue(configValue), SettingType(configValue.GetName(), currentValue, args...) {
-            if (!configValue.GetHoverHint().empty()) {
-                hoverHint = std::make_shared<HoverHint>(configValue.GetHoverHint(), this);
-            }
-        }
+        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) :
+        configValue(configValue), SettingType(configValue.GetName(), currentValue, args...) {}
 
 
         // reference capture should be safe here
-        std::shared_ptr<HoverHint> hoverHint;
         ConfigUtils::ConfigValue<ConfigValueType>& configValue;
 
 
@@ -166,11 +164,12 @@ namespace QuestUI_Components {
         Component *render(UnityEngine::Transform *parentTransform) override {
             SettingType::render(parentTransform);
 
-            if (hoverHint) {
-                return hoverHint.get();
-            } else {
-                return this;
+            if (!configValue.GetHoverHint().empty()) {
+                QuestUI::BeatSaberUI::AddHoverHint(this->getTransform()->get_gameObject(), configValue.GetHoverHint());
             }
+
+            return this;
+
         };
 
         void update() override {

@@ -137,24 +137,21 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
         ConfigUtilsEnumDropdownSetting(ConfigUtils::ConfigValue<EnumConfigValue> &configValue, TArgs &&... args)
                 : configValue(configValue), DropdownSetting(configValue.GetName(), "", EnumStrValues<EnumType>::values, args...) {
             this->setValueOfData(this->data, this->getValue());
-            if (!configValue.GetHoverHint().empty()) {
-                hoverHint = std::make_shared<HoverHint>(configValue.GetHoverHint(), this);
-            }
         }
 
     protected:
         // reference capture should be safe here
-        std::shared_ptr<HoverHint> hoverHint;
         ConfigUtils::ConfigValue<int>& configValue;
 
         Component *render(UnityEngine::Transform *parentTransform) override {
             DropdownSetting::render(parentTransform);
 
-            if (hoverHint) {
-                return hoverHint.get();
-            } else {
-                return this;
+            if (!configValue.GetHoverHint().empty()) {
+                QuestUI::BeatSaberUI::AddHoverHint(this->getTransform()->get_gameObject(), configValue.GetHoverHint());
             }
+
+            return this;
+
         };
 
 
