@@ -16,7 +16,7 @@ namespace QuestUI_Components {
     /**
      * @brief Modifies the background of the child
      */
-    class Backgroundable : public Component, public ComponentRenderer {
+    class Backgroundable : public Component, public ComponentRenderer, public UpdateableComponentBase {
     public:
         explicit Backgroundable(std::string_view backgroundType, ComponentWrapper child, bool replaceExistingBackground = true) : replaceExistingBackground(replaceExistingBackground), backgroundType(backgroundType), child(std::move(child)) {}
 
@@ -25,6 +25,8 @@ namespace QuestUI_Components {
 
         // render time
         QuestUI::Backgroundable* background = nullptr;
+
+        void update() override;
 
     private:
         // constructor time

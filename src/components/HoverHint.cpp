@@ -9,3 +9,9 @@ Component* QuestUI_Components::HoverHint::render(UnityEngine::Transform *parentT
     transform = BeatSaberUI::AddHoverHint(renderComponent(child, parentTransform)->getTransform()->get_gameObject(), std::string(text))->get_transform();
     return this;
 }
+
+void HoverHint::update() {
+    if (this->rendered) {
+        renderComponent(child, getTransform());
+    }
+}

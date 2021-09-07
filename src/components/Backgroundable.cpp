@@ -23,6 +23,12 @@ Component* QuestUI_Components::Backgroundable::render(UnityEngine::Transform *pa
     return this;
 }
 
+void QuestUI_Components::Backgroundable::update() {
+    if (this->rendered) {
+        renderComponent(child, getTransform());
+    }
+}
+
 Component *BackgroundableContainer::render(UnityEngine::Transform *parentTransform) {
     auto gameObject = UnityEngine::GameObject::New_ctor();
     gameObject->set_name(il2cpp_utils::newcsstr("BSMLBackground"));
