@@ -69,8 +69,13 @@ include $(BUILD_STATIC_LIBRARY)
 # NDK wants a module to use the static library before building it
 include $(CLEAR_VARS)
 LOCAL_MODULE := questui_components_unused
+LOCAL_SRC_FILES := $(call rwildcard,test/src/,*.cpp)
+LOCAL_SHARED_LIBRARIES += beatsaber-hook_2_3_0
+LOCAL_SHARED_LIBRARIES += modloader
+LOCAL_SHARED_LIBRARIES += questui
+LOCAL_SHARED_LIBRARIES += codegen_0_13_1
+LOCAL_SHARED_LIBRARIES += custom-types
 LOCAL_STATIC_LIBRARIES += questui_components
-LOCAL_SRC_FILES += $(call rwildcard,test/src/,*.cpp)
 LOCAL_LDLIBS += -llog
 LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"questui_components"' -DVERSION='"0.1.0"' -I'./extern' -isystem'extern/codegen/include' -O3
 LOCAL_CPPFLAGS += -std=c++2a -frtti
