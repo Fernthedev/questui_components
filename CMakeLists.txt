@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 file (STRINGS "ndkpath.txt" CMAKE_ANDROID_NDK)
 
 include_directories(include)
+include_directories(test/include)
 include_directories(extern)
 include_directories(extern/libil2cpp/il2cpp/libil2cpp)
 # Uncomment these if you use these libraries
@@ -27,5 +28,5 @@ add_compile_definitions("__GNUC__")
 add_compile_definitions("__aarch64__")
 add_compile_definitions("AddConfigValue")
 
-file(GLOB SRC src/*.cpp src/*/*.cpp src/*/*/*.cpp)
+file(GLOB SRC src/*.cpp src/*/*.cpp src/*/*/*.cpp test/*/*.cpp)
 add_library(${CMAKE_PROJECT_NAME} SHARED ${SRC}) # Is this necessary? Not sure, have it there anyways
