@@ -1,5 +1,7 @@
 #include "shared/components/Backgroundable.hpp"
 
+#include "shared/Logger.hpp"
+
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 
@@ -27,6 +29,7 @@ Component* QuestUI_Components::Backgroundable::render(UnityEngine::Transform *pa
 
 void QuestUI_Components::Backgroundable::update() {
     if (this->rendered) {
+        QuestUI_Components::Loggerr::getLogger().debug("Backgroundable update %s", child->isRendered() ? "true" : "false");
         renderComponent(child, getTransform());
     }
 }

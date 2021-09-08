@@ -31,12 +31,19 @@ namespace QuestUI_Components {
 //                getLogger().warning("Rendering components should only be done from the main thread, you've been warned!");
 //            }
             if (comp->isRendered()) {
-                if (auto updateableComponent = std::dynamic_pointer_cast<UpdateableComponentBase>(comp.getComponent())) {
+                if (auto updateableComponent = dynamic_cast<UpdateableComponentBase*>(comp.getComponent().get())) {
+                    QuestUI_Components::Loggerr::getLogger().debug("Doing the update! %p %s", comp.getComponent().get(), typeid(*comp.getComponent().get()).name());
                     updateableComponent->doUpdate();
+                } else {
+                    QuestUI_Components::Loggerr::getLogger().debug("not Doing the update! %p %s", comp.getComponent().get(), typeid(*comp.getComponent().get()).name());
                 }
+
+                QuestUI_Components::Loggerr::getLogger().Backtrace(10);
 
                 return comp.getComponent().get();
             } else {
+                QuestUI_Components::Loggerr::getLogger().debug("Just rendering! %p %s", comp.getComponent().get(), typeid(*comp.getComponent().get()).name());
+
                 return justRenderComponent(comp.getComponent().get(), transform);
             }
         }

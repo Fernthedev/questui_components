@@ -1,8 +1,6 @@
 #include "shared/components/layouts/VerticalLayoutGroup.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
-#include "main.hpp"
-
 using namespace QuestUI;
 using namespace QuestUI_Components;
 

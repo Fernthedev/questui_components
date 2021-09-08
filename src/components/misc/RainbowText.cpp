@@ -7,8 +7,6 @@
 
 #include "sombrero/shared/ColorUtils.hpp"
 
-#include "main.hpp"
-
 using namespace QuestUI;
 using namespace QuestUI_Components;
 

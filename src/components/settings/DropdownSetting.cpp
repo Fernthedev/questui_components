@@ -1,7 +1,5 @@
 #include "shared/components/settings/DropdownSetting.hpp"
 
-#include "main.hpp"
-
 #include <utility>
 
 #include "questui/shared/BeatSaberUI.hpp"
