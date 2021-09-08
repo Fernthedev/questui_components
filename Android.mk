@@ -50,18 +50,6 @@ LOCAL_EXPORT_C_INCLUDES := extern/custom-types
 LOCAL_SRC_FILES := extern/libcustom-types.so
 include $(PREBUILT_SHARED_LIBRARY)
 
-# NDK wants a module to use the static library before building it
-include $(CLEAR_VARS)
-LOCAL_MODULE := questui_components_unused
-LOCAL_STATIC_LIBRARIES += questui_components
-LOCAL_SRC_FILES += $(call rwildcard,test/src/,*.cpp)
-LOCAL_LDLIBS += -llog
-LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"questui_components"' -DVERSION='"0.1.0"' -I'./extern' -isystem'extern/codegen/include' -O3
-LOCAL_CPPFLAGS += -std=c++2a -frtti
-LOCAL_C_INCLUDES += ./include ./src ./test/include ./test/src
-LOCAL_CPP_FEATURES += rtti
-include $(BUILD_SHARED_LIBRARY)
-
 include $(CLEAR_VARS)
 LOCAL_MODULE := questui_components
 LOCAL_SRC_FILES += $(call rwildcard,src/,*.cpp)
@@ -78,3 +66,14 @@ LOCAL_C_INCLUDES += ./include ./src
 LOCAL_CPP_FEATURES += rtti
 include $(BUILD_STATIC_LIBRARY)
 
+# NDK wants a module to use the static library before building it
+include $(CLEAR_VARS)
+LOCAL_MODULE := questui_components_unused
+LOCAL_STATIC_LIBRARIES += questui_components
+LOCAL_SRC_FILES += $(call rwildcard,test/src/,*.cpp)
+LOCAL_LDLIBS += -llog
+LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"questui_components"' -DVERSION='"0.1.0"' -I'./extern' -isystem'extern/codegen/include' -O3
+LOCAL_CPPFLAGS += -std=c++2a -frtti
+LOCAL_C_INCLUDES += ./test/include ./test/src
+LOCAL_CPP_FEATURES += rtti
+include $(BUILD_SHARED_LIBRARY)

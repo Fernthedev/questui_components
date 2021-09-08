@@ -32,18 +32,11 @@ namespace QuestUI_Components {
 //            }
             if (comp->isRendered()) {
                 if (auto updateableComponent = dynamic_cast<UpdateableComponentBase*>(comp.getComponent().get())) {
-                    QuestUI_Components::Loggerr::getLogger().debug("Doing the update! %p %s", comp.getComponent().get(), typeid(*comp.getComponent().get()).name());
                     updateableComponent->doUpdate();
-                } else {
-                    QuestUI_Components::Loggerr::getLogger().debug("not Doing the update! %p %s", comp.getComponent().get(), typeid(*comp.getComponent().get()).name());
                 }
-
-                QuestUI_Components::Loggerr::getLogger().Backtrace(10);
 
                 return comp.getComponent().get();
             } else {
-                QuestUI_Components::Loggerr::getLogger().debug("Just rendering! %p %s", comp.getComponent().get(), typeid(*comp.getComponent().get()).name());
-
                 return justRenderComponent(comp.getComponent().get(), transform);
             }
         }

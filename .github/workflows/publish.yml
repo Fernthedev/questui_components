@@ -78,7 +78,9 @@ jobs:
 
       - name: QPM Edit Version
         run: |
+          cp ./Android.mk ./Android.mk.temp
           ./QPM/QPM package edit version "${{ steps.get_tag_version.outputs.VERSION }}"
+          cp ./Android.mk.temp ./Android.mk
 
       - name: Build
         run: |
