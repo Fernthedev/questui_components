@@ -53,8 +53,6 @@ include $(PREBUILT_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := questui_components
 LOCAL_SRC_FILES += $(call rwildcard,src/,*.cpp)
-LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.cpp)
-LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.c)
 LOCAL_SHARED_LIBRARIES += modloader
 LOCAL_SHARED_LIBRARIES += beatsaber-hook_2_3_0
 LOCAL_SHARED_LIBRARIES += questui
@@ -71,6 +69,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := questui_components_unused
 LOCAL_STATIC_LIBRARIES += questui_components
 LOCAL_SRC_FILES += $(call rwildcard,test/src/,*.cpp)
+LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.cpp)
+LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.c)
 LOCAL_LDLIBS += -llog
 LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"questui_components"' -DVERSION='"0.1.0"' -I'./extern' -isystem'extern/codegen/include' -O3
 LOCAL_CPPFLAGS += -std=c++2a -frtti
