@@ -91,12 +91,12 @@ jobs:
           pattern="libquestui_components*.a"
           files=( $pattern )
           echo ::set-output name=NAME::"${files[0]}"
-      - name: Upload non-debug artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ steps.libname.outputs.NAME }}
-          path: ./libs/arm64-v8a/${{ steps.libname.outputs.NAME }}
-          if-no-files-found: error
+#      - name: Upload non-debug artifact
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: ${{ steps.libname.outputs.NAME }}
+#          path: ./libs/arm64-v8a/${{ steps.libname.outputs.NAME }}
+#          if-no-files-found: error
           # TODO: Who needs debug builds anyways?
 #      - name: Upload debug artifact
 #        uses: actions/upload-artifact@v2
