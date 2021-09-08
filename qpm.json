@@ -8,7 +8,9 @@
     "url": "https://github.com/Fernthedev/questui_components",
     "additionalData": {
       "overrideSoName": "libquestui_components.a",
-      "staticLinking": true
+      "staticLinking": true,
+      "branchName": "version-v0.1.14",
+      "soLink": "https://github.com/Fernthedev/questui_components/releases/download/v0.1.14/libquestui_components.a"
     }
   },
   "dependencies": [
