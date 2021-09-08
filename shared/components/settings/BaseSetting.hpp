@@ -139,7 +139,7 @@ namespace QuestUI_Components {
         }
 
         void doUpdate() override {
-            this->setValue(this->getValue());
+            this->updated = true;
             SettingType::doUpdate();
         }
 

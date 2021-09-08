@@ -88,7 +88,7 @@ jobs:
         id: libname
         run: |
           cd ./libs/arm64-v8a/
-          pattern="libquestui_components*.so"
+          pattern="libquestui_components*.a"
           files=( $pattern )
           echo ::set-output name=NAME::"${files[0]}"
       - name: Upload non-debug artifact

@@ -20,6 +20,8 @@ Component* QuestUI_Components::Backgroundable::render(UnityEngine::Transform *pa
     }
     background->ApplyBackground(il2cpp_utils::newcsstr(backgroundType));
 
+    rendered = true;
+
     return this;
 }
 

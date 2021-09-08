@@ -12,6 +12,7 @@
 #include "shared/components/Modal.hpp"
 #include "shared/components/layouts/VerticalLayoutGroup.hpp"
 #include "shared/components/layouts/HorizontalLayoutGroup.hpp"
+#include "shared/components/layouts/ModifierContainer.hpp"
 #include "shared/components/settings/ToggleSetting.hpp"
 #include "shared/components/settings/StringSetting.hpp"
 #include "shared/components/settings/IncrementSetting.hpp"
