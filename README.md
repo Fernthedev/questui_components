@@ -49,8 +49,8 @@ The best example code, while also confusing and extensive can be found in `DidAc
 
 ## Custom components
 An example of a custom component can be found here:
-- [Header](include/TestComponent.hpp)
-- [src](src/test/TestComponent.cpp)
+- [Header](test/include/TestComponent.hpp)
+- [src](test/src/TestComponent.cpp)
 
 For more extensive examples, look at existing components.
 
