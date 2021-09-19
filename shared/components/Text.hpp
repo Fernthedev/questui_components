@@ -1,47 +1,74 @@
 #pragma once
 
-#include "UnityEngine/Vector2.hpp"
-#include "UnityEngine/Color.hpp"
-
-#include "shared/Component.hpp"
+#include "../context.hpp"
 
 #include <string>
-#include <vector>
+#include "UnityEngine/Vector2.hpp"
+#include "UnityEngine/Color.hpp"
+#include "TMPro/TextMeshProUGUI.hpp"
+#include "HMUI/CurvedTextMeshPro.hpp"
+#include "UnityEngine/RectTransform.hpp"
+#include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
 
-namespace TMPro {
-    class TextMeshPro;
-    class TextMeshProUGUI;
-}
-
-namespace QuestUI_Components {
-
-    struct MutableTextData {
+namespace QUC {
+    struct Text {
         std::string text;
-        bool enabled = true;
-        std::optional<UnityEngine::Color> color = std::nullopt;
-        std::optional<float> fontSize;
-    };
+        bool enabled;
+        UnityEngine::Color color;
+        float fontSize;
+        bool italic = true;
+        UnityEngine::Vector2 anchoredPosition = {0.0f, 0.0f};
+        UnityEngine::Vector2 sizeDelta = {60.0f, 10.0f};
 
-    class Text : public Component, public UpdateableComponent<MutableTextData> {
-    public:
-        struct InitialTextData {
-            bool italic = true;
-            UnityEngine::Vector2 anchoredPosition = {0.0f, 0.0f};
-            UnityEngine::Vector2 sizeDelta = {60.0f, 10.0f};
-        };
-        explicit Text(std::string_view text, std::optional<InitialTextData> textData = std::nullopt) : initialTextData(textData) {
-            data.text = text;
+        Text(std::string t = "", bool enabled_ = true, UnityEngine::Color c = {1.0f, 1.0f, 1.0f, 1.0f}, float fontSize_ = 4, bool italic_ = true, UnityEngine::Vector2 anch = {0.0f, 0.0f}, UnityEngine::Vector2 sd = {60.0f, 10.0f})
+            : text(t), enabled(enabled_), color(c), fontSize(fontSize_), italic(italic_), anchoredPosition(anch), sizeDelta(sd) {}
+
+        void render(RenderContext& ctx) {
+            using namespace il2cpp_utils;
+            // THIS SHOULD BE SHARED FROM QUESTUI!
+            static auto textObj = newcsstr<CreationType::Manual>("QuestUIText");
+            auto parent = ctx.parentTransform;
+            // TODO: If our parent transform already holds a text instance, we should change the existing one
+            // Recreating our own is not very bueno... ASSUMING we can avoid it, which we should be able to.
+            auto found = parent->FindChild(textObj);
+            if (found != nullptr) {
+                auto comp = found->GetComponent<HMUI::CurvedTextMeshPro*>();
+                if (comp == nullptr) {
+                    // Destroy dangling child
+                    UnityEngine::Object::Destroy(found);
+                } else {
+                    // Rewrite our existing text instance instead of making a new one
+                    assign(comp);
+                }
+            }
+            auto textComp = QuestUI::BeatSaberUI::CreateText(parent, text, italic, anchoredPosition, sizeDelta);
+            assign<true>(textComp);
         }
-
-        CONSTRUCT_AFTER_COMPONENT(Text)
-
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-        void update() override;
-
-        const std::optional<InitialTextData> initialTextData;
-
-        // render time
-        TMPro::TextMeshProUGUI* textUI = nullptr;
+        private:
+        template<bool created = false>
+        void assign(TMPro::TextMeshProUGUI* textMesh) {
+            textMesh->set_enabled(enabled);
+            if (!enabled) {
+                // Don't bother setting anything if we aren't enabled.
+                return;
+            }
+            auto rectTransform = textMesh->get_rectTransform();
+            if constexpr (!created) {
+                // Only set these properties if we did NOT JUST create the text.
+                Il2CppString* text_cs = nullptr;
+                if (italic) text_cs = il2cpp_utils::newcsstr("<i>" + std::string(text) + "</i>");
+                else text_cs = il2cpp_utils::newcsstr(text);
+                rectTransform->set_anchorMin(UnityEngine::Vector2(0.5f, 0.5f));
+                rectTransform->set_anchorMax(UnityEngine::Vector2(0.5f, 0.5f));
+                textMesh->set_richText(true);
+                textMesh->set_text(text_cs);
+            }
+            textMesh->set_fontSize(fontSize);
+            textMesh->set_color(color);
+            rectTransform->set_anchoredPosition(anchoredPosition);
+            rectTransform->set_sizeDelta(sizeDelta);
+        }
     };
+    static_assert(renderable<Text>);
 }
