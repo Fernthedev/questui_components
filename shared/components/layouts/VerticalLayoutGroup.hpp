@@ -1,25 +1,27 @@
 #pragma once
 
-
 #include "shared/RootContainer.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
 
-#include <utility>
-#include <vector>
-
-namespace UnityEngine::UI {
-    class VerticalLayoutGroup;
-}
-
-namespace QuestUI_Components {
-
-    class VerticalLayoutGroup : public BaseContainer {
-    public:
-        explicit VerticalLayoutGroup(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
-        explicit VerticalLayoutGroup(std::vector<ComponentWrapper> children) : BaseContainer(children) {}
-
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        UnityEngine::UI::VerticalLayoutGroup* verticalLayoutGroup = nullptr;
-    };
+namespace QUC {
+    namespace detail {
+        template<class... TArgs>
+        requires ((renderable<TArgs> && ...))
+        struct VerticalLayoutGroup : Container<TArgs...> {
+            static_assert(renderable<VerticalLayoutGroup<TArgs...>>);
+            VerticalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
+            auto render(RenderContext& ctx) {
+                // TODO: Cache this properly
+                auto obj = QuestUI::BeatSaberUI::CreateVerticalLayoutGroup(&ctx.parentTransform)->get_transform();
+                RenderContext ctx2(obj);
+                Container<TArgs...>::render(ctx2);
+                return obj;
+            }
+        };
+    }
+    template<class... TArgs>
+    requires ((renderable<TArgs> && ...))
+    auto VerticalLayoutGroup(TArgs&&... args) {
+        return detail::VerticalLayoutGroup<TArgs...>(std::forward<TArgs>(args)...);
+    }
 }

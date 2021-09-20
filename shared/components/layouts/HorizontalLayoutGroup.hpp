@@ -1,24 +1,29 @@
 #pragma once
 
+#include "shared/context.hpp"
 #include "shared/RootContainer.hpp"
+#include "UnityEngine/UI/HorizontalLayoutGroup.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
 
-#include <utility>
-#include <vector>
-
-namespace UnityEngine::UI {
-    class HorizontalLayoutGroup;
-}
-
-namespace QuestUI_Components {
-
-    class HorizontalLayoutGroup : public BaseContainer {
-    public:
-        explicit HorizontalLayoutGroup(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
-        explicit HorizontalLayoutGroup(std::vector<ComponentWrapper> children) : BaseContainer(children) {}
-
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        UnityEngine::UI::HorizontalLayoutGroup* horizontalLayoutGroup = nullptr;
-    };
+namespace QUC {
+    namespace detail {
+        template<class... TArgs>
+        requires ((renderable<TArgs> && ...))
+        struct HorizontalLayoutGroup : Container<TArgs...> {
+            static_assert(renderable<HorizontalLayoutGroup<TArgs...>>);
+            HorizontalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
+            auto render(RenderContext& ctx) {
+                // TODO: Cache this properly
+                auto obj = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(&ctx.parentTransform)->get_transform();
+                RenderContext ctx2(obj);
+                Container<TArgs...>::render(ctx2);
+                return obj;
+            }
+        };
+    }
+    template<class... TArgs>
+    requires ((renderable<TArgs> && ...))
+    auto HorizontalLayoutGroup(TArgs&&... args) {
+        return detail::HorizontalLayoutGroup<TArgs...>(std::forward<TArgs>(args)...);
+    }
 }

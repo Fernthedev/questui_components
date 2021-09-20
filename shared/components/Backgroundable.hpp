@@ -1,56 +1,87 @@
 #pragma once
 
-#include "shared/Component.hpp"
-#include "shared/RootContainer.hpp"
-
+#include "shared/context.hpp"
 #include <string>
-#include <utility>
-#include <vector>
+#include <string_view>
+#include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
+#include "UnityEngine/GameObject.hpp"
+#include "UnityEngine/Transform.hpp"
+#include "UnityEngine/UI/ContentSizeFitter.hpp"
+#include "UnityEngine/RectTransform.hpp"
 
-namespace QuestUI {
-    class Backgroundable;
-}
+namespace QUC {
+    namespace detail {
+        template<class T>
+        requires (renderable_return<T, UnityEngine::Transform*>)
+        struct Backgroundable {
+            static_assert(renderable<Backgroundable>);
 
-namespace QuestUI_Components {
+            Backgroundable(std::string_view bkgType, bool replace, T&& child_)
+                : backgroundType(bkgType), replaceExisting(replace), child(child_) {}
+            auto render(RenderContext& ctx) {
+                auto res = child.render(ctx);
+                auto go = res->get_gameObject();
+                QuestUI::Backgroundable* background;
+                if (replaceExisting) {
+                    background = go->template AddComponent<QuestUI::Backgroundable*>();
+                } else {
+                    background = go->template GetComponent<QuestUI::Backgroundable*>();
+                    if (!background) {
+                        background = go->template AddComponent<QuestUI::Backgroundable*>();
+                    }
+                }
+                if (background) {
+                    background->ApplyBackground(il2cpp_utils::newcsstr(backgroundType));
+                }
+                return background->get_transform();
+            }
+            private:
+            const std::string backgroundType;
+            const bool replaceExisting;
+            T child;
+        };
+    }
+    template<class T>
+    auto Backgroundable(std::string_view bkgType, bool replace, T&& child) {
+        return detail::Backgroundable<T>(bkgType, replace, child);
+    }
 
-    /**
-     * @brief Modifies the background of the child
-     */
-    class Backgroundable : public Component, public ComponentRenderer, public UpdateableComponentBase {
-    public:
-        explicit Backgroundable(std::string_view backgroundType, ComponentWrapper child, bool replaceExistingBackground = true) : replaceExistingBackground(replaceExistingBackground), backgroundType(backgroundType), child(std::move(child)) {}
+    namespace detail {
+        template<class... TArgs>
+        requires ((renderable<TArgs> && ...))
+        struct BackgroundableContainer {
+            static_assert(renderable<BackgroundableContainer>);
+            BackgroundableContainer(std::string_view type, TArgs... args) : backgroundType(type), children(args...) {}
 
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
+            auto render(RenderContext& ctx) {
+                auto gameObject = UnityEngine::GameObject::New_ctor();
+                static auto strName = il2cpp_utils::newcsstr("BSMLBackground");
+                gameObject->set_name(strName);
+                auto transform = gameObject->get_transform();
+                transform->SetParent(&ctx.parentTransform, false);
+                gameObject->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
+                auto background = gameObject->AddComponent<QuestUI::Backgroundable*>();
 
-        // render time
-        QuestUI::Backgroundable* background = nullptr;
+                auto rectTransform = gameObject->GetComponent<UnityEngine::RectTransform*>();
+                rectTransform->set_anchorMin({0,0});
+                rectTransform->set_anchorMax({1,1});
+                rectTransform->set_sizeDelta({0,0});
 
-        void update() override;
+                background->ApplyBackground(il2cpp_utils::newcsstr(backgroundType));
+                // Then we render our children to ourselves.
+                RenderContext ctx2(transform);
+                renderTuple(children, ctx2);
+                return transform;
+            }
+            private:
+            const std::string backgroundType;
+            std::tuple<TArgs...> children;
+        };
+    }
 
-    private:
-        // constructor time
-        const bool replaceExistingBackground;
-        std::string backgroundType;
-        ComponentWrapper child;
-    };
-
-    /**
-     * @brief Creates a new object and modifies the background
-     */
-    class BackgroundableContainer : public BaseContainer {
-    public:
-        explicit BackgroundableContainer(std::string_view backgroundType, std::initializer_list<ComponentWrapper> children) :  backgroundType(backgroundType), BaseContainer(children) {}
-        explicit BackgroundableContainer(std::string_view backgroundType, std::vector<ComponentWrapper> const& children) :  backgroundType(backgroundType), BaseContainer(children) {}
-
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        // render time
-        QuestUI::Backgroundable* background = nullptr;
-
-    private:
-        // construct type
-        std::string backgroundType;
-    };
+    template<class... TArgs>
+    requires ((renderable<TArgs> && ...))
+    auto BackgroundableContainer(std::string_view type, TArgs&&... args) {
+        return detail::BackgroundableContainer<TArgs...>(type, std::forward<TArgs>(args)...);
+    }
 }

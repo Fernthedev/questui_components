@@ -11,10 +11,9 @@ namespace QUC {
     namespace detail {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
-        struct ScrollableContainer {
-            static_assert(QUC::renderable<Container<TArgs...>>);
-            std::tuple<TArgs...> children;
-            ScrollableContainer(TArgs... args) : children(args...) {}
+        struct ScrollableContainer : Container<TArgs...> {
+            static_assert(renderable<ScrollableContainer<TArgs...>>);
+            ScrollableContainer(TArgs... args) : Container<TArgs...>(args...) {}
 
             auto render(RenderContext& ctx) {
                 auto& parent = ctx.parentTransform;
@@ -29,16 +28,22 @@ namespace QUC {
                 auto container = QuestUI::BeatSaberUI::CreateScrollableSettingsContainer(&parent);
                 if (!nameStr) {
                     using namespace il2cpp_utils;
+                    // TODO: This might not be the correct quantity of parenting
                     nameStr = newcsstr<CreationType::Manual>(csstrtostr(container->get_transform()->GetParent()->get_gameObject()->get_name()));
                 }
 
                 RenderContext childrenCtx(container->get_transform());
-                QUC::detail::renderTuple(children, childrenCtx);
+                Container<TArgs...>::render(childrenCtx);
                 return container->get_transform();
             }
 
             private:
             static inline Il2CppString* nameStr = nullptr;
         };
+    }
+    template<class... TArgs>
+    requires ((renderable<TArgs> && ...))
+    auto ScrollableContainer(TArgs&&... args) {
+        return detail::ScrollableContainer<TArgs...>(std::forward<TArgs>(args)...);
     }
 }

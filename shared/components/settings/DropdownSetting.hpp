@@ -2,23 +2,42 @@
 
 #include "UnityEngine/Vector2.hpp"
 
-#include "BaseSetting.hpp"
-
+#include "shared/context.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
 #include <string>
-#include <utility>
-#include <vector>
+#include <array>
 
-namespace UnityEngine::UI {
-    class Image;
-}
-
-namespace HMUI {
-    class SimpleTextDropdown;
-}
-
-namespace TMPro {
-    class TextMeshPro;
-    class TextMeshProUGUI;
+namespace QUC {
+    namespace detail {
+        template<size_t sz>
+        struct DropdownSetting {
+            static_assert(renderable<DropdownSetting>);
+            using OnCallback = std::function<void(DropdownSetting*, std::string, UnityEngine::Transform*)>;
+            std::string text;
+            OnCallback callback;
+            bool enabled;
+            bool interactable;
+            std::string value;
+            std::array<std::string, sz> values;
+            template<class F>
+            DropdownSetting(std::string_view txt, std::string_view current, F&& callable, bool enabled_ = true, bool interact = true, std::array<std::string, sz> v = std::array<std::string, 0>())
+                : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(current), values(v) {}
+            
+            auto render(RenderContext& ctx) {
+                // TODO: Cache this properly
+                auto parent = &ctx.parentTransform;
+                auto setting = QuestUI::BeatSaberUI::CreateStringSetting(parent, text, value, anchoredPosition, keyboardPositionOffset, [this, parent](std::string_view val) {
+                    callback(this, std::string(val), parent);
+                });
+                auto txt = setting->placeholderText->GetComponent<TMPro::TextMeshProUGUI*>();
+                CRASH_UNLESS(txt);
+                txt->set_text(il2cpp_utils::newcsstr(text));
+                setting->set_enabled(enabled);
+                setting->set_interactable(interactable);
+                setting->SetText(il2cpp_utils::newcsstr(value));
+            }
+        };
+    }
 }
 
 namespace QuestUI_Components {

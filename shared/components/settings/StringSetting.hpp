@@ -1,56 +1,43 @@
 #pragma once
 
 #include "UnityEngine/Vector2.hpp"
+#include "UnityEngine/Vector3.hpp"
 
-#include "BaseSetting.hpp"
+#include "shared/context.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
+#include "HMUI/InputFieldView.hpp"
 
 #include <string>
-#include <utility>
-#include <vector>
 
-namespace UnityEngine::UI {
-    class Image;
-}
+namespace QUC {
+    struct StringSetting {
+        using OnCallback = std::function<void(StringSetting*, std::string, UnityEngine::Transform*)>;
+        std::string text;
+        OnCallback callback;
+        bool enabled;
+        bool interactable;
+        std::string value;
+        UnityEngine::Vector2 anchoredPosition;
+        UnityEngine::Vector3 keyboardPositionOffset;
 
-namespace HMUI {
-    class InputFieldView;
-}
+        template<class F>
+        StringSetting(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, std::string currentValue = "", UnityEngine::Vector2 anch = {}, UnityEngine::Vector3 offt = {})
+            : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), anchoredPosition(anch), keyboardPositionOffset(offt) {}
 
-namespace TMPro {
-    class TextMeshPro;
-    class TextMeshProUGUI;
-}
-
-namespace QuestUI_Components {
-
-    using MutableStringSettingsData = MutableSettingsData<std::string>;
-
-    class StringSetting : public BaseSetting<std::string, StringSetting, MutableStringSettingsData> {
-    public:
-        struct InitStringSettingsData {
-            UnityEngine::Vector2 anchoredPosition;
-            UnityEngine::Vector3 keyboardPositionOffset;
-        };
-
-        explicit StringSetting(std::string_view text, std::string_view currentValue,
-                               OnCallback callback = nullptr, std::optional<InitStringSettingsData> stringData = std::nullopt)
-                               : BaseSetting(text, std::string(currentValue), std::move(callback)),
-        stringInitData(stringData) {}
-
-    protected:
-        void update() override;
-        Component* render(UnityEngine::Transform *parentTransform) override;
-    private:
-        // render time
-        HMUI::InputFieldView* uiString = nullptr;
-
-        // constructor time
-        const std::optional<InitStringSettingsData> stringInitData;
+        auto render(RenderContext& ctx) {
+            // TODO: Cache this properly
+            auto parent = &ctx.parentTransform;
+            auto setting = QuestUI::BeatSaberUI::CreateStringSetting(parent, text, value, anchoredPosition, keyboardPositionOffset, [this, parent](std::string_view val) {
+                callback(this, std::string(val), parent);
+            });
+            auto txt = setting->placeholderText->GetComponent<TMPro::TextMeshProUGUI*>();
+            CRASH_UNLESS(txt);
+            txt->set_text(il2cpp_utils::newcsstr(text));
+            setting->set_enabled(enabled);
+            setting->set_interactable(interactable);
+            setting->SetText(il2cpp_utils::newcsstr(value));
+            return setting->get_transform();
+        }
     };
-
-
-
-#if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
-    using ConfigUtilsStringSetting = ConfigUtilsSetting<std::string, StringSetting>;
-#endif
+    static_assert(renderable<StringSetting>);
 }

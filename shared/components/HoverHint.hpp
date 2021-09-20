@@ -16,7 +16,6 @@ namespace QUC {
         struct HoverHint {
             static_assert(renderable<HoverHint>);
             std::string text;
-            T child;
 
             HoverHint(std::string_view txt, T&& arg) : text(txt), child(arg) {}
             UnityEngine::Transform* render(RenderContext& ctx) {
@@ -25,6 +24,8 @@ namespace QUC {
                 // Now, we know the result is convertible to Transform*, so we can pass that into make hover hint
                 return QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), text)->get_transform();
             }
+            private:
+            const T child;
         };
     }
     template<class T>

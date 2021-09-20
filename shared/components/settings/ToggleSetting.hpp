@@ -2,52 +2,47 @@
 
 #include "UnityEngine/Vector2.hpp"
 
-#include "BaseSetting.hpp"
+#include "shared/context.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
+#include "beatsaber-hook/shared/utils/utils.h"
 
 #include <string>
-#include <utility>
-#include <vector>
+#include <string_view>
+#include <functional>
 
-namespace UnityEngine::UI {
-    class Toggle;
-    class Image;
-}
+#include "TMPro/TextMeshProUGUI.hpp"
+#include "UnityEngine/UI/Toggle.hpp"
 
-namespace TMPro {
-    class TextMeshPro;
-    class TextMeshProUGUI;
-}
+namespace QUC {
+    struct ToggleSetting {
+        using OnCallback = std::function<void(ToggleSetting*, bool, UnityEngine::Transform*)>;
+        std::string text;
+        OnCallback callback;
+        bool enabled;
+        bool interactable;
+        bool value;
+        UnityEngine::Vector2 anchoredPosition;
 
-namespace QuestUI_Components {
+        template<class F>
+        ToggleSetting(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, bool currentValue = false, UnityEngine::Vector2 anch = {})
+            : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), anchoredPosition(anch) {}
 
-    using MutableToggleSettingsData = MutableSettingsData<bool>;
-
-    // TODO: Somehow this causes game buttons to be wide. How to fix?
-    class ToggleSetting : public BaseSetting<bool, ToggleSetting, MutableToggleSettingsData> {
-    public:
-        struct InitToggleSettingsData {
-            UnityEngine::Vector2 anchoredPosition;
-        };
-
-        explicit ToggleSetting(std::string_view text, bool currentValue, OnCallback callback = nullptr,
-                               std::optional<InitToggleSettingsData> toggleData = std::nullopt)
-        : BaseSetting(text, currentValue, std::move(callback)),
-                               toggleInitData(toggleData) {}
-
-    protected:
-        void update() override;
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        // render time
-        UnityEngine::UI::Toggle* uiToggle = nullptr;
-
-        // Constructor time
-        const std::optional<InitToggleSettingsData> toggleInitData;
+        auto render(RenderContext& ctx) {
+            // TODO: Cache this properly
+            auto parent = &ctx.parentTransform;
+            auto toggle = QuestUI::BeatSaberUI::CreateToggle(parent, text, value, anchoredPosition, [this, parent](bool val) {
+                callback(this, val, parent);
+            });
+            auto nameText = CRASH_UNLESS(toggle->get_transform()->get_parent()->Find(il2cpp_utils::createcsstr("NameText")))->get_gameObject();
+            CRASH_UNLESS(nameText);
+            auto txt = nameText->GetComponent<TMPro::TextMeshProUGUI*>();
+            CRASH_UNLESS(txt);
+            txt->set_text(il2cpp_utils::newcsstr(text));
+            toggle->set_enabled(enabled);
+            toggle->set_interactable(interactable);
+            toggle->set_isOn(value);
+            return toggle->get_transform();
+        }
     };
-
-
-
-#if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
-    using ConfigUtilsToggleSetting = ConfigUtilsSetting<bool, ToggleSetting>;
-#endif
+    static_assert(renderable<ToggleSetting>);
 }
