@@ -1,58 +1,51 @@
 #pragma once
 
+#include "shared/context.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
 #include "UnityEngine/Vector2.hpp"
-
-#include "shared/Component.hpp"
+#include "UnityEngine/UI/Button.hpp"
+#include "TMPro/TextMeshProUGUI.hpp"
 
 #include <string>
-#include <utility>
-#include <vector>
+#include <functional>
 
 namespace UnityEngine::UI {
-    class Button;
     class Image;
 }
 
-namespace TMPro {
-    class TextMeshPro;
-    class TextMeshProUGUI;
-}
-
-namespace QuestUI_Components {
-
-    struct MutableButtonData {
-        // Mutable variables
+namespace QUC {
+    struct Button {
         std::string text;
-        bool enabled = true;
-        bool interactable = true;
-        std::optional<UnityEngine::UI::Image*> image;
-    };
+        bool enabled;
+        bool interactable;
+        UnityEngine::UI::Image* image;
+        UnityEngine::Vector2 anchoredPosition;
+        UnityEngine::Vector2 sizeDelta;
+        std::string buttonTemplate;
 
-    class Button : public Component, public UpdateableComponent<MutableButtonData> {
-    public:
-        using onClickCallback = std::function<void(Button* button, UnityEngine::Transform*)>;
-
-        struct InitButtonData {
-            std::string buttonTemplate;
-            UnityEngine::Vector2 anchoredPosition;
-            UnityEngine::Vector2 sizeDelta;
-        };
-
-        explicit Button(std::string_view text, onClickCallback onClick = nullptr, std::optional<InitButtonData> buttonData = std::nullopt) : buttonData(std::move(buttonData)), onClick(std::move(onClick)) {
-            data.text = text;
+        template<class F>
+        Button(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, UnityEngine::Vector2 anch = {}, UnityEngine::Vector2 sz = {}, std::string buttonTemplate_ = "")
+            : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(buttonTemplate_), click(callable) {}
+        auto render(RenderContext& ctx) {
+            // TODO: Cache this for avoiding tree reparses
+            auto parent = &ctx.parentTransform;
+            std::function<void()> callback = [this, parent]{
+                click(this, parent);
+            };
+            auto res = QuestUI::BeatSaberUI::CreateUIButton(parent, text, buttonTemplate, anchoredPosition, sizeDelta, callback);
+            res->set_enabled(enabled);
+            if (!enabled) {
+                // Don't bother setting anything if we aren't enabled.
+                return;
+            }
+            res->set_interactable(interactable);
+            // auto txt = res->GetComponentInChildren<TMPro::TextMeshProUGUI*>();
+            if (image) {
+                res->set_image(image);
+            }
         }
-
-        // Allow constructing with lambda
-        CONSTRUCT_AFTER_COMPONENT(Button)
-    protected:
-        void update() override;
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        // Constructor time
-        UnityEngine::UI::Button* uiButton = nullptr;
-        TMPro::TextMeshProUGUI* uiButtonText = nullptr;
-
-        const std::optional<InitButtonData> buttonData;
-        const onClickCallback onClick;
+        private:
+        std::function<void(Button* button, UnityEngine::Transform*)> click;
     };
+    static_assert(renderable<Button>);
 }

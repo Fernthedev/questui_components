@@ -1,54 +1,33 @@
 #pragma once
 
-#include "shared/RootContainer.hpp"
-
-#include <optional>
-#include <utility>
-#include <vector>
+#include "shared/context.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
 
 #include "UnityEngine/Vector2.hpp"
+#include <functional>
 
 namespace HMUI {
     class ModalView;
 }
 
-
-namespace QuestUI_Components {
-
-    class Modal : public BaseContainer {
-    public:
-        using BlockerClickedCallback = std::function<void(Modal*, HMUI::ModalView*)>;
-
-        struct ModalInitData {
-            UnityEngine::Vector2 sizeDelta = {30.0f, 40.0f};
-            UnityEngine::Vector2 anchoredPosition = {0.0f, 0.0f};
-            bool dismissOnBlockerClicked = true;
-        };
-
-        explicit Modal(std::initializer_list<ComponentWrapper> children, BlockerClickedCallback onBlockerClicked,
-                       ModalInitData initData) :
-                       onBlockerClicked(std::move(onBlockerClicked)),
-                       initData(std::make_optional(initData)), BaseContainer(children) {}
-
-        explicit Modal(std::initializer_list<ComponentWrapper> children, BlockerClickedCallback onBlockerClicked,
-                       std::optional<ModalInitData> initData = std::nullopt) :
-                       onBlockerClicked(std::move(onBlockerClicked)),
-                       initData(initData), BaseContainer(children) {}
-
-        void dismiss();
-        void show();
-
-        [[nodiscard]] HMUI::ModalView *getModalView() const {
-            return modalView;
+namespace QUC {
+    struct Modal {
+        UnityEngine::Vector2 sizeDelta;
+        UnityEngine::Vector2 anchoredPosition;
+        bool dismissOnBlockerClicked;
+        
+        template<class F>
+        Modal(F&& callable, UnityEngine::Vector2 sz = {30.0f, 40.0f}, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool dismiss = true)
+            : sizeDelta(sz), anchoredPosition(anch), dismissOnBlockerClicked(dismiss), callback(callable) {}
+        auto render(RenderContext& ctx) {
+            std::function<void(HMUI::ModalView*)> cbk([this](HMUI::ModalView* arg) {
+                callback(this, arg);
+            });
+            // TODO: Add proper tree recaching on parent context.
+            return QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, sizeDelta, anchoredPosition, cbk, dismissOnBlockerClicked)->get_transform();
         }
-
-        CONSTRUCT_AFTER_COMPONENT(Modal)
-
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        HMUI::ModalView* modalView = nullptr;
-        std::optional<ModalInitData> initData;
-        BlockerClickedCallback onBlockerClicked;
+        private:
+        std::function<void(Modal*, HMUI::ModalView*)> callback;
     };
+    static_assert(renderable<Modal>);
 }

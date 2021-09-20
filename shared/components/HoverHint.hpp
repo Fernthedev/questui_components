@@ -1,25 +1,34 @@
 #pragma once
 
-#include "shared/Component.hpp"
-#include "shared/RootContainer.hpp"
-
+#include "shared/context.hpp"
 #include <string>
-#include <utility>
-#include <vector>
+#include <string_view>
+#include "questui/shared/BeatSaberUI.hpp"
 
-namespace QuestUI_Components {
+namespace UnityEngine {
+    class Transform;
+}
 
-    class HoverHint : public Component, public ComponentRenderer, public UpdateableComponentBase {
-    public:
-        explicit HoverHint(std::string_view hint, ComponentWrapper child) : text(hint), child(std::move(child)) {}
+namespace QUC {
+    namespace detail {
+        template<class T>
+        requires (renderable_return<T, UnityEngine::Transform*>)
+        struct HoverHint {
+            static_assert(renderable<HoverHint>);
+            std::string text;
+            T child;
 
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        void update() override;
-
-    private:
-        const std::string text;
-        ComponentWrapper child;
-    };
+            HoverHint(std::string_view txt, T&& arg) : text(txt), child(arg) {}
+            UnityEngine::Transform* render(RenderContext& ctx) {
+                // First render our child to our parent.
+                auto res = child.render(ctx);
+                // Now, we know the result is convertible to Transform*, so we can pass that into make hover hint
+                return QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), text)->get_transform();
+            }
+        };
+    }
+    template<class T>
+    auto HoverHint(std::string_view txt, T&& arg) {
+        return detail::HoverHint<T>(txt, arg);
+    }
 }

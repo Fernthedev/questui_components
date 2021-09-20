@@ -1,13 +1,9 @@
 #pragma once
 
+#include "shared/context.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
+
 #include "UnityEngine/Vector2.hpp"
-#include "UnityEngine/Color.hpp"
-
-#include "shared/Component.hpp"
-
-#include <string>
-#include <vector>
-
 
 namespace UnityEngine {
     class Sprite;
@@ -16,38 +12,22 @@ namespace UnityEngine {
     }
 }
 
-
-namespace QuestUI_Components {
-    struct MutableImageData {
-        bool enabled = true;
-
-        // cannot be null
+namespace QUC {
+    struct Image {
+        UnityEngine::Vector2 sizeDelta;
+        UnityEngine::Vector2 anchoredPosition;
+        bool enabled;
         UnityEngine::Sprite* sprite;
-    };
 
-
-    class Image : public Component, public UpdateableComponent<MutableImageData> {
-    public:
-        struct InitialImageData {
-            UnityEngine::Vector2 sizeDelta;
-            UnityEngine::Vector2 anchoredPosition = {0.0f, 0.0f};
-        };
-        explicit Image(UnityEngine::Sprite* sprite, InitialImageData imageData) : initialImageData(imageData) {
-            data.sprite = sprite;
-
-            if (!data.sprite)
-                throw std::runtime_error("Sprite is null! Cannot happen");
+        Image(UnityEngine::Sprite* spr, UnityEngine::Vector2 sd, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool enabled_ = true)
+            : sizeDelta(sd), anchoredPosition(anch), enabled(enabled_), sprite(spr) {}
+        
+        auto render(RenderContext& ctx) {
+            // TODO: Add proper tree recaching on parent context.
+            auto res = QuestUI::BeatSaberUI::CreateImage(&ctx.parentTransform, sprite, anchoredPosition, sizeDelta);
+            res->set_enabled(enabled);
+            return res->get_transform();
         }
-
-        CONSTRUCT_AFTER_COMPONENT(Image)
-
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-        void update() override;
-
-        const InitialImageData initialImageData;
-
-        // render time
-        UnityEngine::UI::Image* uiImage = nullptr;
     };
+    static_assert(renderable<Image>);
 }

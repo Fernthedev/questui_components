@@ -17,35 +17,40 @@ namespace QUC {
         bool enabled;
         UnityEngine::Color color;
         float fontSize;
-        bool italic = true;
-        UnityEngine::Vector2 anchoredPosition = {0.0f, 0.0f};
-        UnityEngine::Vector2 sizeDelta = {60.0f, 10.0f};
+        bool italic;
+        UnityEngine::Vector2 anchoredPosition;
+        UnityEngine::Vector2 sizeDelta;
 
         Text(std::string t = "", bool enabled_ = true, UnityEngine::Color c = {1.0f, 1.0f, 1.0f, 1.0f}, float fontSize_ = 4, bool italic_ = true, UnityEngine::Vector2 anch = {0.0f, 0.0f}, UnityEngine::Vector2 sd = {60.0f, 10.0f})
             : text(t), enabled(enabled_), color(c), fontSize(fontSize_), italic(italic_), anchoredPosition(anch), sizeDelta(sd) {}
 
         void render(RenderContext& ctx) {
-            using namespace il2cpp_utils;
-            // THIS SHOULD BE SHARED FROM QUESTUI!
-            static auto textObj = newcsstr<CreationType::Manual>("QuestUIText");
-            auto parent = ctx.parentTransform;
+            auto& parent = ctx.parentTransform;
             // TODO: If our parent transform already holds a text instance, we should change the existing one
             // Recreating our own is not very bueno... ASSUMING we can avoid it, which we should be able to.
-            auto found = parent->FindChild(textObj);
-            if (found != nullptr) {
-                auto comp = found->GetComponent<HMUI::CurvedTextMeshPro*>();
-                if (comp == nullptr) {
-                    // Destroy dangling child
-                    UnityEngine::Object::Destroy(found);
-                } else {
-                    // Rewrite our existing text instance instead of making a new one
-                    assign(comp);
+            if (nameStr) {
+                auto found = parent.FindChild(nameStr);
+                if (found) {
+                    auto comp = found->GetComponent<HMUI::CurvedTextMeshPro*>();
+                    if (!comp) {
+                        // Destroy dangling child
+                        UnityEngine::Object::Destroy(found);
+                    } else {
+                        // Rewrite our existing text instance instead of making a new one
+                        assign(comp);
+                        return;
+                    }
                 }
             }
-            auto textComp = QuestUI::BeatSaberUI::CreateText(parent, text, italic, anchoredPosition, sizeDelta);
+            auto textComp = QuestUI::BeatSaberUI::CreateText(&parent, text, italic, anchoredPosition, sizeDelta);
             assign<true>(textComp);
+            if (!nameStr) {
+                using namespace il2cpp_utils;
+                nameStr = newcsstr<CreationType::Manual>(csstrtostr(textComp->get_gameObject()->get_name()));
+            }
         }
         private:
+        static inline Il2CppString* nameStr = nullptr;
         template<bool created = false>
         void assign(TMPro::TextMeshProUGUI* textMesh) {
             textMesh->set_enabled(enabled);
