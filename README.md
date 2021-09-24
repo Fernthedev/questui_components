@@ -45,7 +45,7 @@ A `Container` such as `ViewComponent` or `ScrollableContainer` is a type used to
 - You should only call `render()` in the main thread, you can use `QuestUI::MainThreadScheduler::Schedule` if on another thread.
 -----
 
-The best example code, while also confusing and extensive can be found in `DidActivate` [here](src/test/main.cpp)
+The best example code, while also confusing and extensive can be found in `DidActivate` [here](test/src/main.cpp)
 
 ## Custom components
 An example of a custom component can be found here:
