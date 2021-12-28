@@ -5,6 +5,7 @@
 #include <string>
 #include "UnityEngine/Vector2.hpp"
 #include "UnityEngine/Color.hpp"
+#include "sombrero/shared/ColorUtils.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "HMUI/CurvedTextMeshPro.hpp"
 #include "UnityEngine/RectTransform.hpp"
@@ -13,18 +14,20 @@
 
 namespace QUC {
     struct Text {
+        Text(Text const &text) = default;
+
         std::string text;
         bool enabled;
-        UnityEngine::Color color;
+        std::optional<Sombrero::FastColor> color;
         float fontSize;
         bool italic;
         UnityEngine::Vector2 anchoredPosition;
         UnityEngine::Vector2 sizeDelta;
 
-        Text(std::string t = "", bool enabled_ = true, UnityEngine::Color c = {1.0f, 1.0f, 1.0f, 1.0f}, float fontSize_ = 4, bool italic_ = true, UnityEngine::Vector2 anch = {0.0f, 0.0f}, UnityEngine::Vector2 sd = {60.0f, 10.0f})
+        Text(std::string_view t = "", bool enabled_ = true, std::optional<Sombrero::FastColor> c = std::nullopt, float fontSize_ = 4, bool italic_ = true, UnityEngine::Vector2 anch = {0.0f, 0.0f}, UnityEngine::Vector2 sd = {60.0f, 10.0f})
             : text(t), enabled(enabled_), color(c), fontSize(fontSize_), italic(italic_), anchoredPosition(anch), sizeDelta(sd) {}
 
-        void render(RenderContext& ctx) {
+        UnityEngine::Transform* render(RenderContext& ctx) {
             auto& parent = ctx.parentTransform;
             // TODO: If our parent transform already holds a text instance, we should change the existing one
             // Recreating our own is not very bueno... ASSUMING we can avoid it, which we should be able to.
@@ -38,7 +41,7 @@ namespace QUC {
                     } else {
                         // Rewrite our existing text instance instead of making a new one
                         assign(comp);
-                        return;
+                        return found->get_transform();
                     }
                 }
             }
@@ -48,6 +51,7 @@ namespace QUC {
                 using namespace il2cpp_utils;
                 nameStr = newcsstr<CreationType::Manual>(csstrtostr(textComp->get_gameObject()->get_name()));
             }
+            return textComp->get_transform();
         }
         private:
         static inline Il2CppString* nameStr = nullptr;
@@ -70,10 +74,13 @@ namespace QUC {
                 textMesh->set_text(text_cs);
             }
             textMesh->set_fontSize(fontSize);
-            textMesh->set_color(color);
+            if (color) {
+                textMesh->set_color(*color);
+            }
             rectTransform->set_anchoredPosition(anchoredPosition);
             rectTransform->set_sizeDelta(sizeDelta);
         }
     };
     static_assert(renderable<Text>);
+    static_assert(renderable_return<Text, UnityEngine::Transform*>);
 }

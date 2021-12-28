@@ -1,9 +1,7 @@
 #pragma once
 
-#include "shared/Component.hpp"
-
 #include "shared/components/Text.hpp"
-#include "shared/components/layouts/MultiComponentGroup.hpp"
+#include "shared/RootContainer.hpp"
 
 #include <utility>
 #include <vector>
@@ -14,16 +12,13 @@ namespace UnityEngine {
     class Transform;
 }
 
-namespace QuestUI_Components {
-    class TestComponent : public Component {
-    public:
-        explicit TestComponent(std::string_view prefix);
+namespace QUC {
+    auto TestComponent(std::string_view prefix) {
+        return Container(
+                Text(std::string(prefix) + "Group 1"),
+                Text(std::string(prefix) + "Group 2")
+        );
+    }
 
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        // Store as a shared_ptr because parent wil NOT take ownership of this.
-        // However, it will take ownership of us
-        std::shared_ptr<MultiComponentGroup> group;
-    };
+    // TODO: More complex custom component
 }

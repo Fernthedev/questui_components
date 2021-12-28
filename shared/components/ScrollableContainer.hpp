@@ -12,7 +12,6 @@ namespace QUC {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
         struct ScrollableContainer : Container<TArgs...> {
-            static_assert(renderable<ScrollableContainer<TArgs...>>);
             ScrollableContainer(TArgs... args) : Container<TArgs...>(args...) {}
 
             auto render(RenderContext& ctx) {

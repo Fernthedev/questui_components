@@ -8,7 +8,6 @@ namespace QUC {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
         struct VerticalLayoutGroup : Container<TArgs...> {
-            static_assert(renderable<VerticalLayoutGroup<TArgs...>>);
             VerticalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
             auto render(RenderContext& ctx) {
                 // TODO: Cache this properly

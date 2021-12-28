@@ -8,6 +8,7 @@
 
 #include <string>
 #include <functional>
+#include <utility>
 
 namespace UnityEngine::UI {
     class Image;
@@ -25,7 +26,7 @@ namespace QUC {
 
         template<class F>
         Button(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, UnityEngine::Vector2 anch = {}, UnityEngine::Vector2 sz = {}, std::string buttonTemplate_ = "")
-            : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(buttonTemplate_), click(callable) {}
+            : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(std::move(buttonTemplate_)), click(callable) {}
         auto render(RenderContext& ctx) {
             // TODO: Cache this for avoiding tree reparses
             auto parent = &ctx.parentTransform;
@@ -45,7 +46,7 @@ namespace QUC {
             }
         }
         private:
-        std::function<void(Button* button, UnityEngine::Transform*)> click;
+        std::function<void(Button* button, UnityEngine::Transform* transform)> click;
     };
     static_assert(renderable<Button>);
 }

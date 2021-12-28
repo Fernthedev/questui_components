@@ -23,6 +23,8 @@
 #include "TestComponent.hpp"
 #include "TacoImage.hpp"
 
+#include "UnityEngine/UI/Image.hpp"
+
 using namespace QuestUI;
 using namespace QuestUI_Components;
 using namespace QuestUI_Components::Loggerr;
@@ -45,13 +47,168 @@ extern "C" void setup(ModInfo& info) {
     getLogger().info("Completed setup!");
 }
 
+auto LoadingView(std::string_view loadingText) {
+    using namespace QUC;
+
+    return ScrollableContainer(
+            Text(loadingText)
+    );
+}
+
+auto tuple(QUC::ModalWrapper& modal) {
+    using namespace QUC;
+    return std::tuple(HorizontalLayoutGroup(
+                       Text("Look at me!"),
+                       Button("Close!", [&modal](Button *button, UnityEngine::Transform *) {
+                           modal.dismiss();
+                       })
+               )
+    );
+}
+
+auto DefaultView() {
+    using namespace QUC;
+
+    Text pinkCuteText("this is cool! Pink Cute!", true, UnityEngine::Color(255.0f / 255.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f));
+
+
+//    Modal modal = Modal(tuple);
+
+    Modal modal = Modal([](ModalWrapper& modal) {
+        return std::tuple(HorizontalLayoutGroup(
+                                  Text("Look at me!"),
+                                  Button("Close!", [&modal](Button *button, UnityEngine::Transform *) {
+                                      modal.dismiss();
+                                  })
+                          )
+        );
+    });
+
+    // Image has to be loaded on main thread
+    // When passing this to a container, it will take ownership, so we don't need to call delete
+    auto tacoImage = TacoImage({128, 128});
+
+    return ScrollableContainer(
+            HoverHint("hint", Text("hi!")),
+            pinkCuteText,
+
+            // TODO: we can create components using lambdas too
+
+            Button("More info!", [&modal](Button* button, UnityEngine::Transform* transform){
+                modal.show();
+            }),
+            // Custom component
+            TestComponent("pink cute eris cute"),
+            RainbowText("Rainbow!"),
+
+            // Image is loaded on main thread
+            HorizontalLayoutGroup(
+                    VerticalLayoutGroup(
+                            tacoImage
+                            )
+                    ),
+
+            // Toggles
+            new ToggleSetting("Toggle false", false),
+            new ToggleSetting("Toggle true", true, [](ToggleSetting* set, bool val, UnityEngine::Transform*) {
+                set->mutateData([&val](MutableToggleSettingsData data){
+                    data.text = "Toggle " + std::string(val ? "true" : "false");
+                    return data;
+                });
+                set->doUpdate();
+            }),
+            new StringSetting("Text setting", "The current val!", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
+                getLogger().debug("Input! %s", input.c_str());
+            }),
+            new QuestUI_Components::IncrementSetting("Increment!", 5.0f, 2, 0.05f, [](QuestUI_Components::IncrementSetting* set, float input, UnityEngine::Transform*){
+                getLogger().debug("Increment value! %f", input);
+                set->mutateData([&input](MutableIncrementSettingsData data){
+                    data.text = "Increment value: " + std::to_string(input);
+                    return data;
+                });
+                set->doUpdate();
+            }),
+            new DropdownSetting("Dropdowns are cool!", "some val", {"value1", "value2", "some val", "value3"}, [](DropdownSetting* set, const std::string& selected, UnityEngine::Transform*){
+                getLogger().debug("Dropdowns are cool %s", selected.c_str());
+                set->mutateData([&selected](MutableDropdownSettingsData data) {
+                    data.text = "Dropdowns are coeaweol!" + selected;
+                    data.values.emplace_back(std::to_string(count));
+                    return data;
+                });
+                set->doUpdate();
+            }),
+
+            new HoverHint("hintee", new Text("hello from other world!")),
+            new HoverHint("another hintee", new Text("this is cooler!!")),
+            new Button("Click me!", [](Button* button, UnityEngine::Transform* parentTransform) {
+                if (!newText) {
+                    newText = new Text("New text!");
+                    container->addToHierarchy(newText);
+                } else {
+                    count++;
+                    newText->mutateData([](MutableTextData data){
+                        data.text = "someOtherText" + std::to_string(count);
+                        return data;
+                    });
+                    newText->doUpdate();
+                }
+
+                // Update button text
+                button->mutateData([](MutableButtonData data){
+                    data.text = "Clicked: " + std::to_string(count);
+                    return data;
+                });
+                button->doUpdate();
+            })
+    );
+}
+
 void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling){
+    using namespace QUC;
+
     getLogger().info("DidActivate: %p, %d, %d, %d", self, firstActivation, addedToHierarchy, screenSystemEnabling);
 
     if (firstActivation) {
         // keep these pointers alive so the lambdas can capture them. These would usually be instance fields in a ViewCoordinator
-        static ScrollableContainer* container;
-        static Text* newText;
+
+        static bool loaded = false;
+
+        if (!loaded) {
+            const std::string templateLoadingText = "Loading";
+
+            RenderContext c = {self->get_transform()};
+
+            LoadingView(templateLoadingText).render(c);
+
+            std::thread([templateLoadingText, c]{
+                int periodCount = 0;
+                bool once = true;
+
+                while (!loaded || once) {
+                    getLogger().debug("Loading check! %i", periodCount);
+                    once = false;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+                    if (loaded) break;
+
+                    periodCount++;
+                    if (periodCount > 4) periodCount = 1;
+
+                    std::string textStr(templateLoadingText + std::string(periodCount, '.'));
+
+                    QuestUI::MainThreadScheduler::Schedule([textStr, c]() mutable {
+                        if (!loaded) {
+                            // Updates the entire hierarchy
+                            LoadingView(textStr).render(c);
+                        }
+                    });
+                }
+            }).detach();
+        }
+        static detail::ScrollableContainer container(
+
+        );
+        static Text newText;
         static int count = 0;
 
         // We can use new because ComponentWrapper takes ownership of the pointer

@@ -14,7 +14,6 @@ namespace QUC {
         template<class T>
         requires (renderable_return<T, UnityEngine::Transform*>)
         struct HoverHint {
-            static_assert(renderable<HoverHint>);
             std::string text;
 
             HoverHint(std::string_view txt, T&& arg) : text(txt), child(arg) {}
@@ -30,6 +29,6 @@ namespace QUC {
     }
     template<class T>
     auto HoverHint(std::string_view txt, T&& arg) {
-        return detail::HoverHint<T>(txt, arg);
+        return detail::HoverHint<T>(txt, std::forward<T>(arg));
     }
 }

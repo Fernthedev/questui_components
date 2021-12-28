@@ -9,9 +9,9 @@ namespace QUC {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
         struct Container {
-            static_assert(QUC::renderable<Container<TArgs...>>);
             std::tuple<TArgs...> children;
             Container(TArgs... args) : children(args...) {}
+            Container(std::tuple<TArgs...> args) : children(args) {}
 
             void render(RenderContext& ctx) {
                 QUC::detail::renderTuple(children, ctx);

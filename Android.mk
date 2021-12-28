@@ -24,11 +24,11 @@ LOCAL_MODULE := modloader
 LOCAL_EXPORT_C_INCLUDES := extern/modloader
 LOCAL_SRC_FILES := extern/libmodloader.so
 include $(PREBUILT_SHARED_LIBRARY)
-# Creating prebuilt for dependency: beatsaber-hook - version: 2.3.1
+# Creating prebuilt for dependency: beatsaber-hook - version: 3.0.0
 include $(CLEAR_VARS)
-LOCAL_MODULE := beatsaber-hook_2_3_1
+LOCAL_MODULE := beatsaber-hook_3_0_0
 LOCAL_EXPORT_C_INCLUDES := extern/beatsaber-hook
-LOCAL_SRC_FILES := extern/libbeatsaber-hook_2_3_1.so
+LOCAL_SRC_FILES := extern/libbeatsaber-hook_3_0_0.so
 LOCAL_CPP_FEATURES += exceptions
 include $(PREBUILT_SHARED_LIBRARY)
 # Creating prebuilt for dependency: questui - version: 0.11.1
@@ -54,7 +54,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := questui_components
 LOCAL_SRC_FILES := $(call rwildcard,src/,*.cpp)
 LOCAL_SHARED_LIBRARIES += modloader
-LOCAL_SHARED_LIBRARIES += beatsaber-hook_2_3_1
+LOCAL_SHARED_LIBRARIES += beatsaber-hook_3_0_0
 LOCAL_SHARED_LIBRARIES += questui
 LOCAL_SHARED_LIBRARIES += codegen
 LOCAL_SHARED_LIBRARIES += custom-types
@@ -70,7 +70,7 @@ LOCAL_MODULE := questui_components_unused
 LOCAL_SRC_FILES += $(call rwildcard,test/src/,*.cpp)
 LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.cpp)
 LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.c)
-LOCAL_SHARED_LIBRARIES += beatsaber-hook_2_3_1
+LOCAL_SHARED_LIBRARIES += beatsaber-hook_3_0_0
 LOCAL_SHARED_LIBRARIES += modloader
 LOCAL_SHARED_LIBRARIES += questui
 LOCAL_SHARED_LIBRARIES += codegen

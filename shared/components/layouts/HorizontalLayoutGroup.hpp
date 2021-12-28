@@ -10,7 +10,6 @@ namespace QUC {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
         struct HorizontalLayoutGroup : Container<TArgs...> {
-            static_assert(renderable<HorizontalLayoutGroup<TArgs...>>);
             HorizontalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
             auto render(RenderContext& ctx) {
                 // TODO: Cache this properly
