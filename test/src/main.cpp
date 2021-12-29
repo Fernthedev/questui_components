@@ -109,10 +109,12 @@ auto DefaultView() {
                     ),
 
             // Toggles
-            new ToggleSetting("Toggle false", false),
-            new ToggleSetting("Toggle true", true, [](ToggleSetting* set, bool val, UnityEngine::Transform*) {
+            ToggleSetting("Toggle false", false),
+            ToggleSetting("Toggle true", true, [](ToggleSetting* set, bool val, UnityEngine::Transform*) {
+                set->text->text =  "Toggle " + std::string(val ? "true" : "false");
+                set.
                 set->mutateData([&val](MutableToggleSettingsData data){
-                    data.text = "Toggle " + std::string(val ? "true" : "false");
+                    data.text =
                     return data;
                 });
                 set->doUpdate();

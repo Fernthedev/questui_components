@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../context.hpp"
+#include "shared/unity/WeakPtrGO.hpp"
 
 #include <string>
 #include "UnityEngine/Vector2.hpp"
@@ -29,40 +30,58 @@ namespace QUC {
 
         UnityEngine::Transform* render(RenderContext& ctx) {
             auto& parent = ctx.parentTransform;
-            // TODO: If our parent transform already holds a text instance, we should change the existing one
             // Recreating our own is not very bueno... ASSUMING we can avoid it, which we should be able to.
-            if (nameStr) {
-                auto found = parent.FindChild(nameStr);
-                if (found) {
-                    auto comp = found->GetComponent<HMUI::CurvedTextMeshPro*>();
-                    if (!comp) {
-                        // Destroy dangling child
-                        UnityEngine::Object::Destroy(found);
-                    } else {
-                        // Rewrite our existing text instance instead of making a new one
-                        assign(comp);
-                        return found->get_transform();
-                    }
-                }
+            if (textComp) {
+                // Rewrite our existing text instance instead of making a new one
+                assign();
+                return textComp->get_transform();
             }
-            auto textComp = QuestUI::BeatSaberUI::CreateText(&parent, text, italic, anchoredPosition, sizeDelta);
-            assign<true>(textComp);
-            if (!nameStr) {
-                using namespace il2cpp_utils;
-                nameStr = newcsstr<CreationType::Manual>(csstrtostr(textComp->get_gameObject()->get_name()));
-            }
+            textComp = QuestUI::BeatSaberUI::CreateText(&parent, text, italic, anchoredPosition, sizeDelta);
+            assign<true>();
             return textComp->get_transform();
         }
+
+        void update() {
+            // TODO: Stop unnecessary updates
+            assign<false>();
+        }
+
+    protected:
+        // Copy with existing TMP
+        Text(TMPro::TextMeshProUGUI* textComp, Text const& text)
+                : Text(text) {
+            CRASH_UNLESS(textComp);
+            this->textComp = textComp;
+        }
+
+        // Grab values from tmp
+        explicit Text(TMPro::TextMeshProUGUI* textComp) {
+            CRASH_UNLESS(textComp);
+            this->textComp = textComp;
+
+            auto rectTransform = textComp->get_rectTransform();
+
+            sizeDelta = rectTransform->get_sizeDelta();
+            text = to_utf8(csstrtostr(textComp->get_text()));
+            anchoredPosition = rectTransform->get_anchoredPosition();
+            italic = text.starts_with("<i>") && text.ends_with("</i>");
+            fontSize = textComp->get_fontSize();
+            enabled = textComp->get_enabled();
+            color = textComp->get_color();
+        }
+
+        WeakPtrGO<TMPro::TextMeshProUGUI> textComp;
+
         private:
-        static inline Il2CppString* nameStr = nullptr;
         template<bool created = false>
-        void assign(TMPro::TextMeshProUGUI* textMesh) {
-            textMesh->set_enabled(enabled);
+        void assign() {
+            CRASH_UNLESS(textComp);
+            textComp->set_enabled(enabled);
             if (!enabled) {
                 // Don't bother setting anything if we aren't enabled.
                 return;
             }
-            auto rectTransform = textMesh->get_rectTransform();
+            auto rectTransform = textComp->get_rectTransform();
             if constexpr (!created) {
                 // Only set these properties if we did NOT JUST create the text.
                 Il2CppString* text_cs = nullptr;
@@ -70,15 +89,16 @@ namespace QUC {
                 else text_cs = il2cpp_utils::newcsstr(text);
                 rectTransform->set_anchorMin(UnityEngine::Vector2(0.5f, 0.5f));
                 rectTransform->set_anchorMax(UnityEngine::Vector2(0.5f, 0.5f));
-                textMesh->set_richText(true);
-                textMesh->set_text(text_cs);
+                textComp->set_richText(true);
+                textComp->set_text(text_cs);
+
+                rectTransform->set_anchoredPosition(anchoredPosition);
+                rectTransform->set_sizeDelta(sizeDelta);
             }
-            textMesh->set_fontSize(fontSize);
+            textComp->set_fontSize(fontSize);
             if (color) {
-                textMesh->set_color(*color);
+                textComp->set_color(*color);
             }
-            rectTransform->set_anchoredPosition(anchoredPosition);
-            rectTransform->set_sizeDelta(sizeDelta);
         }
     };
     static_assert(renderable<Text>);
