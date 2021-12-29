@@ -112,12 +112,8 @@ auto DefaultView() {
             ToggleSetting("Toggle false", false),
             ToggleSetting("Toggle true", true, [](ToggleSetting* set, bool val, UnityEngine::Transform*) {
                 set->text->text =  "Toggle " + std::string(val ? "true" : "false");
-                set.
-                set->mutateData([&val](MutableToggleSettingsData data){
-                    data.text =
-                    return data;
-                });
-                set->doUpdate();
+                set->toggleButton.value = val;
+                set->update();
             }),
             new StringSetting("Text setting", "The current val!", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
                 getLogger().debug("Input! %s", input.c_str());

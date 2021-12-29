@@ -41,11 +41,6 @@ namespace QUC {
             return textComp->get_transform();
         }
 
-        void update() {
-            // TODO: Stop unnecessary updates
-            assign<false>();
-        }
-
     protected:
         // Copy with existing TMP
         Text(TMPro::TextMeshProUGUI* textComp, Text const& text)
@@ -72,7 +67,6 @@ namespace QUC {
 
         WeakPtrGO<TMPro::TextMeshProUGUI> textComp;
 
-        private:
         template<bool created = false>
         void assign() {
             CRASH_UNLESS(textComp);
