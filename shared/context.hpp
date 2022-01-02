@@ -40,7 +40,7 @@ namespace QUC {
     /// @brief A concept for updatable components.
     /// @tparam T The type to check.
     concept updatable = requires (T t) {
-        {t.has_change()} -> std::same_as<bool>;
+        {t.update()};
     };
 
     namespace detail {
