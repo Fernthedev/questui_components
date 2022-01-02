@@ -20,7 +20,7 @@ Component* QuestUI_Components::ToggleSetting::render(UnityEngine::Transform *par
     transform = uiToggle->get_transform();
 
     // From QuestUI
-    UnityEngine::GameObject* nameText = transform->get_parent()->Find(il2cpp_utils::createcsstr("NameText"))->get_gameObject();
+    UnityEngine::GameObject* nameText = transform->get_parent()->Find(il2cpp_utils::newcsstr("NameText"))->get_gameObject();
     uiText = nameText->GetComponent<TMPro::TextMeshProUGUI*>();
 
 

@@ -24,26 +24,26 @@ LOCAL_MODULE := modloader
 LOCAL_EXPORT_C_INCLUDES := extern/modloader
 LOCAL_SRC_FILES := extern/libmodloader.so
 include $(PREBUILT_SHARED_LIBRARY)
-# Creating prebuilt for dependency: beatsaber-hook - version: 2.3.1
+# Creating prebuilt for dependency: beatsaber-hook - version: 3.4.4
 include $(CLEAR_VARS)
-LOCAL_MODULE := beatsaber-hook_2_3_1
+LOCAL_MODULE := beatsaber-hook_3_4_4
 LOCAL_EXPORT_C_INCLUDES := extern/beatsaber-hook
-LOCAL_SRC_FILES := extern/libbeatsaber-hook_2_3_1.so
+LOCAL_SRC_FILES := extern/libbeatsaber-hook_3_4_4.so
 LOCAL_CPP_FEATURES += exceptions
 include $(PREBUILT_SHARED_LIBRARY)
-# Creating prebuilt for dependency: questui - version: 0.11.1
+# Creating prebuilt for dependency: questui - version: 0.12.1
 include $(CLEAR_VARS)
 LOCAL_MODULE := questui
 LOCAL_EXPORT_C_INCLUDES := extern/questui
 LOCAL_SRC_FILES := extern/libquestui.so
 include $(PREBUILT_SHARED_LIBRARY)
-# Creating prebuilt for dependency: custom-types - version: 0.12.7
+# Creating prebuilt for dependency: custom-types - version: 0.14.1
 include $(CLEAR_VARS)
 LOCAL_MODULE := custom-types
 LOCAL_EXPORT_C_INCLUDES := extern/custom-types
 LOCAL_SRC_FILES := extern/libcustom-types.so
 include $(PREBUILT_SHARED_LIBRARY)
-# Creating prebuilt for dependency: codegen - version: 0.14.0
+# Creating prebuilt for dependency: codegen - version: 0.18.2
 include $(CLEAR_VARS)
 LOCAL_MODULE := codegen
 LOCAL_EXPORT_C_INCLUDES := extern/codegen
@@ -54,11 +54,11 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := questui_components
 LOCAL_SRC_FILES := $(call rwildcard,src/,*.cpp)
 LOCAL_SHARED_LIBRARIES += modloader
-LOCAL_SHARED_LIBRARIES += beatsaber-hook_2_3_1
+LOCAL_SHARED_LIBRARIES += beatsaber-hook_3_4_4
 LOCAL_SHARED_LIBRARIES += questui
 LOCAL_SHARED_LIBRARIES += codegen
 LOCAL_SHARED_LIBRARIES += custom-types
-LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"questui_components"' -DVERSION='"0.1.0"' -I'./extern' -isystem'extern/codegen/include' -O3
+LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DUSE_CODEGEN_FIELDS -DID='"questui_components"' -DVERSION='"0.1.0"' -I'./extern' -isystem'extern/codegen/include' -O3
 LOCAL_CPPFLAGS += -std=c++2a -frtti
 LOCAL_C_INCLUDES += ./include ./src
 LOCAL_CPP_FEATURES += rtti
@@ -70,14 +70,14 @@ LOCAL_MODULE := questui_components_unused
 LOCAL_SRC_FILES += $(call rwildcard,test/src/,*.cpp)
 LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.cpp)
 LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.c)
-LOCAL_SHARED_LIBRARIES += beatsaber-hook_2_3_1
+LOCAL_SHARED_LIBRARIES += beatsaber-hook_3_4_4
 LOCAL_SHARED_LIBRARIES += modloader
 LOCAL_SHARED_LIBRARIES += questui
 LOCAL_SHARED_LIBRARIES += codegen
 LOCAL_SHARED_LIBRARIES += custom-types
 LOCAL_STATIC_LIBRARIES += questui_components
 LOCAL_LDLIBS += -llog
-LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"questui_components"' -DVERSION='"0.1.0"' -I'./extern' -isystem'extern/codegen/include' -O3
+LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DUSE_CODEGEN_FIELDS -DID='"questui_components"' -DVERSION='"0.1.0"' -I'./extern' -isystem'extern/codegen/include' -O3
 LOCAL_CPPFLAGS += -std=c++2a -frtti
 LOCAL_C_INCLUDES += ./test/include ./test/src
 LOCAL_CPP_FEATURES += rtti
