@@ -52,6 +52,7 @@ add_compile_definitions("ID=\"${CMAKE_PROJECT_NAME}\"") #Modify this if you use 
 add_compile_definitions("__GNUC__")
 add_compile_definitions("__aarch64__")
 add_compile_definitions("AddConfigValue")
+add_compile_definitions("USE_CODEGEN_FIELDS")
 
 file(GLOB SRC src/*.cpp src/*/*.cpp src/*/*/*.cpp test/*/*.cpp)
 add_library(${CMAKE_PROJECT_NAME} SHARED ${SRC}) # Is this necessary? Not sure, have it there anyways
