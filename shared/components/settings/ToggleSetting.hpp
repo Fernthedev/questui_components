@@ -82,7 +82,7 @@ namespace QUC {
                                                                 callback(this, val, parent);
                                                             });
                 auto nameTextTransform = CRASH_UNLESS(
-                        toggle->get_transform()->get_parent()->Find(il2cpp_utils::createcsstr("NameText")));
+                        toggle->get_transform()->get_parent()->Find(il2cpp_utils::newcsstr("NameText")));
                 auto nameText = nameTextTransform->get_gameObject();
                 CRASH_UNLESS(nameText);
                 auto textParent = nameTextTransform->get_parent();

@@ -26,17 +26,24 @@ namespace QUC {
             auto render(RenderContext& ctx) {
                 // TODO: Cache this properly
                 auto parent = &ctx.parentTransform;
-                auto setting = QuestUI::BeatSaberUI::CreateStringSetting(parent, text, value, anchoredPosition, keyboardPositionOffset, [this, parent](std::string_view val) {
+                auto setting = QuestUI::BeatSaberUI::CreateDropdown(parent, text, value, [this, parent](std::string_view val) {
                     callback(this, std::string(val), parent);
                 });
-                auto txt = setting->placeholderText->GetComponent<TMPro::TextMeshProUGUI*>();
+                auto txt = setting->placeholderText->template GetComponent<TMPro::TextMeshProUGUI*>();
                 CRASH_UNLESS(txt);
                 txt->set_text(il2cpp_utils::newcsstr(text));
                 setting->set_enabled(enabled);
                 setting->set_interactable(interactable);
                 setting->SetText(il2cpp_utils::newcsstr(value));
+
+                return setting->get_transform();
             }
         };
+    }
+
+    template<size_t sz, class F>
+    inline auto DropdownSetting(std::string_view txt, std::string_view current, F&& callable, std::array<std::string, sz> v = std::array<std::string, 0>(), bool enabled_ = true, bool interact = true) {
+        return detail::DropdownSetting<sz>(txt, current, callable, enabled_, interact, v);
     }
 }
 

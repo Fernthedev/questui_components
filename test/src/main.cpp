@@ -115,18 +115,15 @@ auto DefaultView() {
                 set->toggleButton.value = val;
                 set->update();
             }),
-            new StringSetting("Text setting", "The current val!", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
+            StringSetting("Text setting", "The current val!", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
                 getLogger().debug("Input! %s", input.c_str());
             }),
-            new QuestUI_Components::IncrementSetting("Increment!", 5.0f, 2, 0.05f, [](QuestUI_Components::IncrementSetting* set, float input, UnityEngine::Transform*){
+            QUC::IncrementSetting("Increment!", [](QUC::IncrementSetting* set, float input, UnityEngine::Transform*){
                 getLogger().debug("Increment value! %f", input);
-                set->mutateData([&input](MutableIncrementSettingsData data){
-                    data.text = "Increment value: " + std::to_string(input);
-                    return data;
-                });
-                set->doUpdate();
-            }),
-            new DropdownSetting("Dropdowns are cool!", "some val", {"value1", "value2", "some val", "value3"}, [](DropdownSetting* set, const std::string& selected, UnityEngine::Transform*){
+                set->text = "Increment value: " + std::to_string(input);
+                set->assign();
+            }, 5.0f, 2, 0.05f),
+            QUC::detail::DropdownSetting<4>("Dropdowns are cool!", "some val", [](QUC::detail::DropdownSetting<4>* set, const std::string& selected, UnityEngine::Transform*){
                 getLogger().debug("Dropdowns are cool %s", selected.c_str());
                 set->mutateData([&selected](MutableDropdownSettingsData data) {
                     data.text = "Dropdowns are coeaweol!" + selected;
@@ -134,7 +131,7 @@ auto DefaultView() {
                     return data;
                 });
                 set->doUpdate();
-            }),
+            }, {"value1", "value2", "some val", "value3"}),
 
             new HoverHint("hintee", new Text("hello from other world!")),
             new HoverHint("another hintee", new Text("this is cooler!!")),

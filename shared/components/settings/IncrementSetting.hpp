@@ -27,36 +27,57 @@ namespace QUC {
         auto render(RenderContext& ctx) {
             // TODO: Cache this properly
             auto parent = &ctx.parentTransform;
-            auto setting = QuestUI::BeatSaberUI::CreateIncrementSetting(
-                parent,
-                text,
-                decimals,
-                increment,
-                value,
-                static_cast<bool>(min),
-                static_cast<bool>(max),
-                min.value_or(0.0f),
-                max.value_or(0.0f),
-                anchoredPosition,
-                std::function<void(float)>([this, parent](float val) {
-                    callback(this, val, parent);
-                }));
-            auto txt = setting->GetComponentInChildren<TMPro::TextMeshProUGUI*>();;
-            CRASH_UNLESS(txt);
-            txt->set_text(il2cpp_utils::newcsstr(text));
-            setting->set_enabled(enabled);
-            setting->Decimals = decimals;
-            setting->Increment = increment;
+            if (!setting) {
+                setting = QuestUI::BeatSaberUI::CreateIncrementSetting(
+                        parent,
+                        text,
+                        decimals,
+                        increment,
+                        value,
+                        static_cast<bool>(min),
+                        static_cast<bool>(max),
+                        min.value_or(0.0f),
+                        max.value_or(0.0f),
+                        anchoredPosition,
+                        std::function<void(float)>([this, parent](float val) {
+                            callback(this, val, parent);
+                        }));
 
-            setting->MaxValue = max.value_or(0);
-            setting->MinValue = min.value_or(0);
+                assign<true>();
+            } else {
+                assign<false>();
+            }
 
-            setting->HasMax = static_cast<bool>(max);
-            setting->HasMin = static_cast<bool>(min);
 
-            setting->CurrentValue = value;
+
             return setting->get_transform();
         }
+
+        template<bool created = false>
+        void assign() {
+            CRASH_UNLESS(setting);
+
+            if constexpr(!created) {
+                auto txt = setting->GetComponentInChildren<TMPro::TextMeshProUGUI *>();;
+
+                CRASH_UNLESS(txt);
+                txt->set_text(il2cpp_utils::newcsstr(text));
+                setting->set_enabled(enabled);
+                setting->Decimals = decimals;
+                setting->Increment = increment;
+
+                setting->MaxValue = max.value_or(0);
+                setting->MinValue = min.value_or(0);
+
+                setting->HasMax = static_cast<bool>(max);
+                setting->HasMin = static_cast<bool>(min);
+
+                setting->CurrentValue = value;
+            }
+        }
+
+    private:
+        WeakPtrGO<QuestUI::IncrementSetting> setting;
     };
     static_assert(renderable<IncrementSetting>);
 }
