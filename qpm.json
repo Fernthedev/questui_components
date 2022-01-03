@@ -4,7 +4,7 @@
   "info": {
     "name": "QuestUI Components",
     "id": "questui_components",
-    "version": "0.0.1",
+    "version": "0.1.17",
     "url": "https://github.com/Fernthedev/questui_components",
     "additionalData": {
       "overrideSoName": "libquestui_components.a",
