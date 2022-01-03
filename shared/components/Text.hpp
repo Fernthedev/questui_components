@@ -1,29 +1,36 @@
 #pragma once
 
 #include "../context.hpp"
+#include "shared/state.hpp"
 #include "shared/unity/WeakPtrGO.hpp"
 
 #include <string>
+
 #include "UnityEngine/Vector2.hpp"
 #include "UnityEngine/Color.hpp"
-#include "sombrero/shared/ColorUtils.hpp"
+#include "UnityEngine/RectTransform.hpp"
+
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "HMUI/CurvedTextMeshPro.hpp"
-#include "UnityEngine/RectTransform.hpp"
-#include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
+
+
 #include "questui/shared/BeatSaberUI.hpp"
+
+#include "sombrero/shared/ColorUtils.hpp"
+
+#include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 
 namespace QUC {
     struct Text {
         Text(Text const &text) = default;
 
-        std::string text;
-        bool enabled;
-        std::optional<Sombrero::FastColor> color;
-        float fontSize;
-        bool italic;
-        UnityEngine::Vector2 anchoredPosition;
-        UnityEngine::Vector2 sizeDelta;
+        HeldData<std::string> text;
+        HeldData<bool> enabled;
+        HeldData<std::optional<Sombrero::FastColor>> color;
+        HeldData<float> fontSize;
+        HeldData<bool> italic;
+        const UnityEngine::Vector2 anchoredPosition;
+        const UnityEngine::Vector2 sizeDelta;
 
         Text(std::string_view t = "", bool enabled_ = true, std::optional<Sombrero::FastColor> c = std::nullopt, float fontSize_ = 4, bool italic_ = true, UnityEngine::Vector2 anch = {0.0f, 0.0f}, UnityEngine::Vector2 sd = {60.0f, 10.0f})
             : text(t), enabled(enabled_), color(c), fontSize(fontSize_), italic(italic_), anchoredPosition(anch), sizeDelta(sd) {}
@@ -34,11 +41,32 @@ namespace QUC {
             if (textComp) {
                 // Rewrite our existing text instance instead of making a new one
                 assign();
-                return textComp->get_transform();
+            } else {
+                textComp = QuestUI::BeatSaberUI::CreateText(&parent, text.getData(), italic, anchoredPosition,
+                                                            sizeDelta);
+
+                textComp->set_fontSize(fontSize.getData());
+                if (color) {
+                    textComp->set_color(**color);
+                }
+
+                auto rectTransform = textComp->get_rectTransform();
+
+                rectTransform->set_anchoredPosition(anchoredPosition);
+                rectTransform->set_sizeDelta(sizeDelta);
+                rectTransform->set_anchorMin(UnityEngine::Vector2(0.5f, 0.5f));
+                rectTransform->set_anchorMax(UnityEngine::Vector2(0.5f, 0.5f));
+
+                textComp->set_richText(true);
+
+                assign<true>();
             }
-            textComp = QuestUI::BeatSaberUI::CreateText(&parent, text, italic, anchoredPosition, sizeDelta);
-            assign<true>();
             return textComp->get_transform();
+        }
+
+        inline void update() {
+            CRASH_UNLESS(textComp);
+            assign<false>();
         }
 
     protected:
@@ -50,16 +78,14 @@ namespace QUC {
         }
 
         // Grab values from tmp
-        explicit Text(TMPro::TextMeshProUGUI* textComp) {
+        explicit Text(TMPro::TextMeshProUGUI* textComp) :
+                anchoredPosition(textComp->get_rectTransform()->get_anchoredPosition()),
+                sizeDelta(textComp->get_rectTransform()->get_sizeDelta()) {
             CRASH_UNLESS(textComp);
             this->textComp = textComp;
 
-            auto rectTransform = textComp->get_rectTransform();
-
-            sizeDelta = rectTransform->get_sizeDelta();
             text = to_utf8(csstrtostr(textComp->get_text()));
-            anchoredPosition = rectTransform->get_anchoredPosition();
-            italic = text.starts_with("<i>") && text.ends_with("</i>");
+            italic = text.getData().starts_with("<i>") && text.getData().ends_with("</i>");
             fontSize = textComp->get_fontSize();
             enabled = textComp->get_enabled();
             color = textComp->get_color();
@@ -70,28 +96,43 @@ namespace QUC {
         template<bool created = false>
         void assign() {
             CRASH_UNLESS(textComp);
-            textComp->set_enabled(enabled);
-            if (!enabled) {
+            if (enabled) {
+                textComp->set_enabled(*enabled);
+                enabled.clear();
+            }
+            if (!*enabled) {
                 // Don't bother setting anything if we aren't enabled.
                 return;
             }
-            auto rectTransform = textComp->get_rectTransform();
+
             if constexpr (!created) {
                 // Only set these properties if we did NOT JUST create the text.
                 Il2CppString* text_cs = nullptr;
-                if (italic) text_cs = il2cpp_utils::newcsstr("<i>" + std::string(text) + "</i>");
-                else text_cs = il2cpp_utils::newcsstr(text);
-                rectTransform->set_anchorMin(UnityEngine::Vector2(0.5f, 0.5f));
-                rectTransform->set_anchorMax(UnityEngine::Vector2(0.5f, 0.5f));
-                textComp->set_richText(true);
-                textComp->set_text(text_cs);
 
-                rectTransform->set_anchoredPosition(anchoredPosition);
-                rectTransform->set_sizeDelta(sizeDelta);
-            }
-            textComp->set_fontSize(fontSize);
-            if (color) {
-                textComp->set_color(*color);
+                if (italic) {
+                    if (*italic) {
+                        text_cs = il2cpp_utils::newcsstr("<i>" + std::string(text) + "</i>");
+                    }
+                    italic.clear();
+                }
+                else if (text) {
+                    text_cs = il2cpp_utils::newcsstr(text.getData());
+                    text.clear();
+                }
+
+
+                if (text_cs) { textComp->set_text(text_cs); }
+
+                if (fontSize) {
+                    textComp->set_fontSize(*fontSize);
+                    fontSize.clear();
+                }
+                if (color) {
+                    if (*color)
+                        textComp->set_color(**color);
+
+                    color.clear();
+                }
             }
         }
     };
