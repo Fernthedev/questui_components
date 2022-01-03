@@ -81,6 +81,15 @@ namespace QUC {
             }
             return *this;
         }
+        template<class U>
+        requires (std::is_convertible_v<U, T>)
+        constexpr HeldData<T>& operator=(const U& other) {
+            if (data != other) {
+                modified = true;
+                data = other;
+            }
+            return *this;
+        }
 
         constexpr T const& operator ->() const noexcept {
             return data;
@@ -209,7 +218,7 @@ namespace QUC {
         }
 
         constexpr std::optional<T> const& operator *() const noexcept  {
-            return *data;
+            return data;
         }
 
     private:
@@ -223,7 +232,7 @@ namespace QUC {
     struct HeldData<bool> {
         HeldData() = default;
 
-        HeldData(bool data) : data(data) {};
+        constexpr HeldData(bool data) : data(data) {};
 
         constexpr explicit(false) operator bool () const noexcept {return modified;}
 
@@ -318,6 +327,16 @@ namespace QUC {
             if (data != other.data) {
                 modified = true;
                 data = other.data;
+            }
+            return *this;
+        }
+
+        template<class U>
+        requires (std::is_convertible_v<U, std::string>)
+        constexpr HeldData<std::string>& operator=(const U& other) {
+            if (data != other) {
+                modified = true;
+                data = other;
             }
             return *this;
         }

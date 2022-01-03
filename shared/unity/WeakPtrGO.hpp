@@ -8,9 +8,12 @@
 #warning "No codegen found, WeakPtrGO relies on it."
 #endif
 
+#include "shared/context.hpp"
+
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
 
+#include "beatsaber-hook/shared/utils/il2cpp-type-check.hpp"
 #include "beatsaber-hook/shared/utils/typedefs-wrappers.hpp"
 
 // Why have I made such a cursed creation
@@ -20,7 +23,7 @@
 #define DECLARE_SIMPLE_MONO_DTOR() \
 void __Finalize() {                \
     auto l = this;                               \
-    il2cpp_utils::RunMethodThrow(l, il2cpp_utils::il2cpp_type_check::MetadataGetter<&UnityEngine::Object::Finalize>::get());                               \
+    il2cpp_utils::RunMethodThrow(reinterpret_cast<Il2CppObject*>(l), il2cpp_utils::il2cpp_type_check::MetadataGetter<&UnityEngine::Object::Finalize>::get());                               \
     this->~___TargetType();        \
 } \
 ___CREATE_INSTANCE_METHOD(__Finalize, "__Finalize", (::il2cpp_utils::FindMethod("System", "Object", "Finalize")->flags & ~METHOD_ATTRIBUTE_ABSTRACT) | METHOD_ATTRIBUTE_PUBLIC | METHOD_ATTRIBUTE_HIDE_BY_SIG, ::il2cpp_utils::FindMethod("System", "Object", "Finalize"))
@@ -140,7 +143,14 @@ namespace QUC {
             return *this;
         }
 
-        T* const operator ->() const {
+        template<class U>
+        requires (std::is_convertible_v<U, T>)
+        inline WeakPtrGO<T>& operator=(T* other) {
+            emplace(other);
+            return *this;
+        }
+
+        constexpr T* operator ->() const {
             return ptr;
         }
 

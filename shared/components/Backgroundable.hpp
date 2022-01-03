@@ -1,9 +1,12 @@
 #pragma once
 
 #include "shared/context.hpp"
+#include "shared/unity/WeakPtrGO.hpp"
 #include <string>
 #include <string_view>
+
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
+
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/UI/ContentSizeFitter.hpp"
@@ -21,24 +24,20 @@ namespace QUC {
             auto render(RenderContext& ctx) {
                 auto res = child.render(ctx);
                 auto go = res->get_gameObject();
-                QuestUI::Backgroundable* background;
-                if (replaceExisting) {
-                    background = go->template AddComponent<QuestUI::Backgroundable*>();
-                } else {
-                    background = go->template GetComponent<QuestUI::Backgroundable*>();
-                    if (!background) {
-                        background = go->template AddComponent<QuestUI::Backgroundable*>();
-                    }
+
+                if (replaceExisting || !backgroundable) {
+                    backgroundable = go->template AddComponent<QuestUI::Backgroundable*>();
                 }
-                if (background) {
-                    background->ApplyBackground(il2cpp_utils::newcsstr(backgroundType));
-                }
-                return background->get_transform();
+
+                backgroundable->ApplyBackground(il2cpp_utils::newcsstr(backgroundType));
+
+                return backgroundable->get_transform();
             }
             private:
             const std::string backgroundType;
             const bool replaceExisting;
             T child;
+            WeakPtrGO<QuestUI::Backgroundable> backgroundable;
         };
     }
     template<class T>
@@ -54,20 +53,30 @@ namespace QUC {
             BackgroundableContainer(std::string_view type, TArgs... args) : backgroundType(type), children(args...) {}
 
             auto render(RenderContext& ctx) {
-                auto gameObject = UnityEngine::GameObject::New_ctor();
-                static auto strName = il2cpp_utils::newcsstr("BSMLBackground");
-                gameObject->set_name(strName);
-                auto transform = gameObject->get_transform();
-                transform->SetParent(&ctx.parentTransform, false);
-                gameObject->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
-                auto background = gameObject->AddComponent<QuestUI::Backgroundable*>();
+                UnityEngine::Transform* transform;
 
-                auto rectTransform = gameObject->GetComponent<UnityEngine::RectTransform*>();
-                rectTransform->set_anchorMin({0,0});
-                rectTransform->set_anchorMax({1,1});
-                rectTransform->set_sizeDelta({0,0});
+                if (!container) {
+                    container = UnityEngine::GameObject::New_ctor();
+                    static auto strName = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("BSMLBackground");
+                    container->set_name(strName);
 
-                background->ApplyBackground(il2cpp_utils::newcsstr(backgroundType));
+                    transform = container->get_transform();
+
+                    transform->SetParent(&ctx.parentTransform, false);
+                    container->AddComponent<UnityEngine::UI::ContentSizeFitter *>();
+                    auto background = container->AddComponent<QuestUI::Backgroundable *>();
+
+                    auto rectTransform = container->GetComponent<UnityEngine::RectTransform *>();
+                    rectTransform->set_anchorMin({0, 0});
+                    rectTransform->set_anchorMax({1, 1});
+                    rectTransform->set_sizeDelta({0, 0});
+
+                    background->ApplyBackground(il2cpp_utils::newcsstr(backgroundType));
+                }
+
+                if (!transform)
+                    transform = container->get_transform();
+
                 // Then we render our children to ourselves.
                 RenderContext ctx2(transform);
                 renderTuple(children, ctx2);
@@ -76,6 +85,7 @@ namespace QUC {
             private:
             const std::string backgroundType;
             std::tuple<TArgs...> children;
+            WeakPtrGO<UnityEngine::GameObject> container;
         };
     }
 

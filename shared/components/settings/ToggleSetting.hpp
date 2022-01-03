@@ -3,6 +3,7 @@
 #include "UnityEngine/Vector2.hpp"
 
 #include "shared/context.hpp"
+#include "shared/unity/WeakPtrGO.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 #include "beatsaber-hook/shared/utils/utils.h"
 
@@ -16,8 +17,8 @@
 namespace QUC {
     struct ToggleSetting {
         struct ToggleButton {
-            bool value;
-            bool interactable;
+            HeldData<bool> value;
+            HeldData<bool> interactable;
 
             constexpr ToggleButton(bool value, bool interactable) : value(value), interactable(interactable) {}
 
@@ -26,9 +27,18 @@ namespace QUC {
             void assign(UnityEngine::UI::Toggle* toggle) {
                 if constexpr (!created) {
                     // Only set these properties if we did NOT JUST create the text.
-                    toggle->set_isOn(value);
+                    if (value) {
+                        toggle->set_isOn(*value);
+                        value.clear();
+                    }
                 }
-                toggle->set_interactable(interactable);
+                if constexpr (created) {
+                    toggle->set_interactable(*interactable);
+                    interactable.clear();
+                } else if (interactable) {
+                    toggle->set_interactable(*interactable);
+                    interactable.clear();
+                }
             }
 
             friend class ToggleSetting;
@@ -36,13 +46,16 @@ namespace QUC {
 
         struct ToggleText : public Text {
         public:
-            ToggleText(Text const& text) : Text(text) {}
+            ToggleText() = default;
 
-            // Copy with existing TMP
-            ToggleText(TMPro::TextMeshProUGUI* textComp, Text const& text) : Text(textComp, text) {}
+            ToggleText(ToggleText const& text) = default;
+
+            ToggleText(Text const& text) : Text(text) {}
 
             // Grab values from tmp
             explicit ToggleText(TMPro::TextMeshProUGUI* textComp) : Text(textComp) {}
+
+            ~ToggleText() = default;
 
         protected:
             template<bool created = false>
@@ -54,14 +67,13 @@ namespace QUC {
         };
 
         using OnCallback = std::function<void(ToggleSetting*, bool, UnityEngine::Transform*)>;
-        OnCallback callback;
-        bool enabled;
-
+        OnCallback callback; // TODO: Const-ify
+        HeldData<bool> enabled;
 
         // initialized at render
         std::optional<ToggleText> text;
         ToggleButton toggleButton;
-        UnityEngine::Vector2 anchoredPosition;
+        UnityEngine::Vector2 anchoredPosition; // TODO: Const-ify
 
 
         template<class F>
@@ -79,17 +91,22 @@ namespace QUC {
 
                 toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, toggleButton.value, anchoredPosition,
                                                             [this, parent](bool val) {
+                                                                toggleButton.value = val;
+                                                                toggleButton.value.clear();
                                                                 callback(this, val, parent);
                                                             });
-                auto nameTextTransform = CRASH_UNLESS(
-                        toggle->get_transform()->get_parent()->Find(il2cpp_utils::newcsstr("NameText")));
+                auto nameTextTransform = CRASH_UNLESS(toggle->get_transform()->get_parent()->Find(il2cpp_utils::newcsstr("NameText")));
                 auto nameText = nameTextTransform->get_gameObject();
                 CRASH_UNLESS(nameText);
                 auto textParent = nameTextTransform->get_parent();
                 auto toggleText = nameText->GetComponent<TMPro::TextMeshProUGUI *>();
 
+                auto rectTransform = toggle->GetComponent<UnityEngine::RectTransform*>();
+                rectTransform->set_anchoredPosition(anchoredPosition);
+
+                // if text was created
                 if (text) {
-                    text = ToggleText(toggleText, *text);
+                    text->textComp = toggleText;
                 } else {
                     text = ToggleText(toggleText);
                 }
@@ -113,17 +130,19 @@ namespace QUC {
     protected:
         template<bool created = false>
         void assign() {
-            toggle->set_enabled(enabled);
-            if (!enabled) {
+            CRASH_UNLESS(toggle);
+            if (enabled) {
+                toggle->set_enabled(*enabled);
+                enabled.clear();
+            }
+
+            if (!*enabled) {
                 // Don't bother setting anything if we aren't enabled.
                 return;
             }
-            auto rectTransform = toggle->GetComponent<UnityEngine::RectTransform*>();
+
             if constexpr (!created) {
                 // Only set these properties if we did NOT JUST create the text.
-                toggle->set_isOn(toggleButton.value);
-                rectTransform->set_anchoredPosition(anchoredPosition);
-
                 text->assign<created>(toggle);
                 toggleButton.assign<created>(toggle);
             }

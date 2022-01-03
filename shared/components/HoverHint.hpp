@@ -21,11 +21,26 @@ namespace QUC {
                 // First render our child to our parent.
                 auto res = child.render(ctx);
                 // Now, we know the result is convertible to Transform*, so we can pass that into make hover hint
-                return QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), text)->get_transform();
+                if (!hoverHint)
+                    hoverHint = QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), text)->get_transform();
+
+                return res;
             }
+
+            [[nodiscard]] HoverHint<T> clone() const {
+                HoverHint hint(*this);
+                hint.hoverHint = nullptr;
+                return this;
+            }
+
             private:
             const T child;
+
+            WeakPtrGO<HMUI::HoverHint> hoverHint;
         };
+
+        static_assert(renderable<HoverHint<Text>>);
+        static_assert(cloneable<HoverHint<Text>>);
     }
     template<class T>
     auto HoverHint(std::string_view txt, T&& arg) {

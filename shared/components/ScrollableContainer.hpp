@@ -16,28 +16,18 @@ namespace QUC {
 
             auto render(RenderContext& ctx) {
                 auto& parent = ctx.parentTransform;
-                if (nameStr) {
-                    auto found = parent.FindChild(nameStr);
-                    if (found) {
-                        // It's actually EASIER for us to destroy and remake the entire tree instead of changing some elements.
-                        // TODO: Eventually this may change
-                        UnityEngine::Object::Destroy(found);
-                    }
-                }
-                auto container = QuestUI::BeatSaberUI::CreateScrollableSettingsContainer(&parent);
-                if (!nameStr) {
-                    using namespace il2cpp_utils;
-                    // TODO: This might not be the correct quantity of parenting
-                    nameStr = newcsstr<CreationType::Manual>(csstrtostr(container->get_transform()->GetParent()->get_gameObject()->get_name()));
+                if (!scrollContainer) {
+                    // It's actually EASIER for us to destroy and remake the entire tree instead of changing some elements.
+                    scrollContainer = QuestUI::BeatSaberUI::CreateScrollableSettingsContainer(&parent);
                 }
 
-                RenderContext childrenCtx(container->get_transform());
+                RenderContext childrenCtx(scrollContainer->get_transform());
                 Container<TArgs...>::render(childrenCtx);
-                return container->get_transform();
+                return childrenCtx.parentTransform;
             }
 
             private:
-            static inline Il2CppString* nameStr = nullptr;
+            WeakPtrGO<UnityEngine::GameObject> scrollContainer;
         };
     }
     template<class... TArgs>

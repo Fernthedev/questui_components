@@ -20,10 +20,10 @@ namespace QUC {
     public:
         using ModalCallback = std::function<void(ModalWrapper*, HMUI::ModalView*)>;
 
-        UnityEngine::Vector2 sizeDelta;
-        UnityEngine::Vector2 anchoredPosition;
-        bool dismissOnBlockerClicked;
-        ModalCallback callback;
+        const UnityEngine::Vector2 sizeDelta;
+        const UnityEngine::Vector2 anchoredPosition;
+        const bool dismissOnBlockerClicked;
+        const ModalCallback callback;
 
         ModalWrapper(const UnityEngine::Vector2 &sizeDelta, const UnityEngine::Vector2 &anchoredPosition,
                      bool dismissOnBlockerClicked, ModalCallback callback = {}) : sizeDelta(sizeDelta),
@@ -68,12 +68,12 @@ namespace QUC {
             : detail::Container<TArgs...>(children), ModalWrapper(sz, anch, dismiss, callable) {}
 
         auto render(RenderContext& ctx) {
-            std::function<void(HMUI::ModalView*)> cbk([this](HMUI::ModalView* arg) {
-                callback(this, arg);
-            });
-
             // if inner modal is already created, skip recreating and forward render calls
             if (!innerModal) {
+                std::function<void(HMUI::ModalView*)> cbk([this](HMUI::ModalView* arg) {
+                    callback(this, arg);
+                });
+
                 // TODO: Add proper tree recaching on parent context.
                 innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, sizeDelta, anchoredPosition, cbk,
                                                                dismissOnBlockerClicked);
@@ -88,9 +88,10 @@ namespace QUC {
         }
 
 
-        Modal clone() {
+        [[nodiscard]] Modal clone() const {
             Modal m(this);
             m.innerModal = nullptr;
+            m.children = detail::Container<TArgs...>::clone();
             return m;
         }
     };
@@ -116,4 +117,5 @@ namespace QUC {
 //    }
 
     static_assert(renderable<Modal<Text>>);
+    static_assert(cloneable<Modal<Text>>);
 }

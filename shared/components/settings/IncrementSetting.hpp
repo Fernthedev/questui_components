@@ -9,15 +9,15 @@
 namespace QUC {
     struct IncrementSetting {
         using OnCallback = std::function<void(IncrementSetting*, float, UnityEngine::Transform*)>;
-        std::string text;
+        HeldData<std::string> text;
         OnCallback callback;
-        bool enabled;
-        bool interactable;
-        float value;
-        int decimals;
-        float increment;
-        std::optional<float> min;
-        std::optional<float> max;
+        HeldData<bool> enabled;
+        HeldData<bool> interactable;
+        HeldData<float> value;
+        HeldData<int> decimals;
+        HeldData<float> increment;
+        HeldData<std::optional<float>> min;
+        HeldData<std::optional<float>> max;
         UnityEngine::Vector2 anchoredPosition;
 
         template<class F>
@@ -30,16 +30,18 @@ namespace QUC {
             if (!setting) {
                 setting = QuestUI::BeatSaberUI::CreateIncrementSetting(
                         parent,
-                        text,
-                        decimals,
-                        increment,
-                        value,
-                        static_cast<bool>(min),
-                        static_cast<bool>(max),
-                        min.value_or(0.0f),
-                        max.value_or(0.0f),
+                        *text,
+                        *decimals,
+                        *increment,
+                        *value,
+                        static_cast<bool>(*min),
+                        static_cast<bool>(*max),
+                        min.getData().value_or(0.0f),
+                        max.getData().value_or(0.0f),
                         anchoredPosition,
                         std::function<void(float)>([this, parent](float val) {
+                            value = val;
+                            value.clear();
                             callback(this, val, parent);
                         }));
 
@@ -57,27 +59,62 @@ namespace QUC {
         void assign() {
             CRASH_UNLESS(setting);
 
+            if (enabled) {
+                setting->set_enabled(*enabled);
+                enabled.clear();
+            }
+
+            if (!*enabled) {
+                // Don't bother setting anything if we aren't enabled.
+                return;
+            }
+
+            // TODO: Interactable
+
             if constexpr(!created) {
-                auto txt = setting->GetComponentInChildren<TMPro::TextMeshProUGUI *>();;
 
-                CRASH_UNLESS(txt);
-                txt->set_text(il2cpp_utils::newcsstr(text));
-                setting->set_enabled(enabled);
-                setting->Decimals = decimals;
-                setting->Increment = increment;
+                if (text) {
+                    if (!textSetting)
+                        textSetting = setting->GetComponentInChildren<TMPro::TextMeshProUGUI *>();
 
-                setting->MaxValue = max.value_or(0);
-                setting->MinValue = min.value_or(0);
+                    CRASH_UNLESS(textSetting);
+                    textSetting->set_text(il2cpp_utils::newcsstr(*text));
+                    text.clear();
+                }
+                if (decimals) {
+                    setting->Decimals = *decimals;
+                    decimals.clear();
+                }
+                if (increment) {
+                    setting->Increment = *increment;
+                    increment.clear();
+                }
+                if (max) {
+                    setting->MaxValue = max.getData().value_or(0);
+                    max.clear();
+                }
+                if (min) {
+                    setting->MinValue = min.getData().value_or(0);
+                    min.clear();
+                }
 
-                setting->HasMax = static_cast<bool>(max);
-                setting->HasMin = static_cast<bool>(min);
+                if (max) {
+                    setting->HasMax = static_cast<bool>(max.getData());
+                }
 
-                setting->CurrentValue = value;
+                if (min) {
+                    setting->HasMin = static_cast<bool>(min.getData());
+                }
+
+                if (value) {
+                    setting->CurrentValue = *value;
+                }
             }
         }
 
     private:
         WeakPtrGO<QuestUI::IncrementSetting> setting;
+        WeakPtrGO<TMPro::TextMeshProUGUI> textSetting;
     };
     static_assert(renderable<IncrementSetting>);
 }

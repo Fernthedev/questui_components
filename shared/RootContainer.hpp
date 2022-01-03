@@ -16,6 +16,10 @@ namespace QUC {
             void render(RenderContext& ctx) {
                 QUC::detail::renderTuple(children, ctx);
             }
+
+            [[nodiscard]] std::tuple<TArgs...> clone() const {
+                return QUC::detail::cloneTuple(children);
+            }
         };
     }
     template<class... TArgs>

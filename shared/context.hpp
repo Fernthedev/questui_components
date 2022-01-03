@@ -43,6 +43,13 @@ namespace QUC {
         {t.update()};
     };
 
+    template<class T>
+    /// @brief A concept for cloneable components.
+    /// @tparam T The type to check.
+    concept cloneable = requires (T const t) {
+        {t.clone()} -> std::same_as<T>;
+    };
+
     namespace detail {
         template<size_t idx = 0, class... TArgs>
         requires ((renderable<TArgs> && ...))
@@ -50,6 +57,16 @@ namespace QUC {
             if constexpr (idx < sizeof...(TArgs)) {
                 std::get<idx>(args).render(ctx);
                 renderTuple<idx + 1>(args, ctx);
+            }
+        }
+
+        template<size_t idx = 0, class... TArgs>
+        requires ((cloneable<TArgs> && ...))
+        std::tuple<TArgs...> cloneTuple(std::tuple<TArgs...> const& args) {
+            if constexpr (idx < sizeof...(TArgs)) {
+                auto clone = std::get<idx>(args).clone();
+                auto newTuple = cloneTuple<idx + 1>(args);
+                return std::make_tuple<TArgs...>(clone, newTuple);
             }
         }
     }
