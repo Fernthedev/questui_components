@@ -22,8 +22,9 @@ namespace QUC {
                 auto res = child.render(ctx);
                 // Now, we know the result is convertible to Transform*, so we can pass that into make hover hint
                 if (!hoverHint)
-                    hoverHint = QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), text)->get_transform();
+                    hoverHint = QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), text);
 
+                // TODO: Return child or transform of hover hint?
                 return res;
             }
 
@@ -34,7 +35,7 @@ namespace QUC {
             }
 
             private:
-            const T child;
+            T child;
 
             WeakPtrGO<HMUI::HoverHint> hoverHint;
         };

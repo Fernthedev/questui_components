@@ -95,32 +95,27 @@ void HandleLoadingView(QUC::RenderContext& ctx, bool& loaded) {
 #pragma region defaultView
 auto tuple(QUC::ModalWrapper& modal) {
     using namespace QUC;
-    return std::tuple(HorizontalLayoutGroup(
-                       Text("Look at me!"),
-                       Button("Close!", [&modal](Button *button, UnityEngine::Transform *) {
-                           modal.dismiss();
-                       })
-               )
+    return std::tuple(
+            HorizontalLayoutGroup(
+                    Text("Look at me!"),
+                    Button("Close!", [&modal](Button *button, UnityEngine::Transform *) {
+                        modal.dismiss();
+                    })
+            )
     );
 }
 
 auto DefaultView() {
     using namespace QUC;
 
-    Text pinkCuteText("this is cool! Pink Cute!", true, UnityEngine::Color(255.0f / 255.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f));
+    Text pinkCuteText("this is cool! Pink Cute!", true, UnityEngine::Color(1.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f));
 
-
-//    Modal modal = Modal(tuple);
-
-    Modal modal = Modal([](ModalWrapper& modal) {
-        return std::tuple(HorizontalLayoutGroup(
-                                  Text("Look at me!"),
-                                  Button("Close!", [&modal](Button *button, UnityEngine::Transform *) {
-                                      modal.dismiss();
-                                  })
-                          )
-        );
-    });
+    // TODO: Allow lambda construction here
+    // We need to figure out how to do type deduction using lambda
+    // C++ can't deduct the type of Modal from the lambda since Modal<> can't accept children of std::tuple<blah, blah, blah>()
+    // and C++ won't deduct the type based on constructor arguments from the lambda return type
+    // C++ life is sad
+    Modal modal(tuple);
 
     // Image has to be loaded on main thread
     // When passing this to a container, it will take ownership, so we don't need to call delete
@@ -147,12 +142,12 @@ auto DefaultView() {
                     ),
 
             // Toggles
-            ToggleSetting("Toggle false", false),
-            ToggleSetting("Toggle true", true, [](ToggleSetting* set, bool val, UnityEngine::Transform*) {
+            ToggleSetting("Toggle false", nullptr, false),
+            ToggleSetting("Toggle true", [](ToggleSetting* set, bool val, UnityEngine::Transform*) {
                 set->text->text =  "Toggle " + std::string(val ? "true" : "false");
                 set->toggleButton.value = val;
                 set->update();
-            }),
+            }, true),
             StringSetting("Text setting", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
                 getLogger().debug("Input! %s", input.c_str());
             }, "The current val!"),

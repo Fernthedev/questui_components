@@ -23,7 +23,7 @@ namespace QUC {
         UnityEngine::Vector2 anchoredPosition;
 
         template<class F>
-        IncrementSetting(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, float currentValue = 0.0f, int decimals_ = 1, float increment = 1.0f, std::optional<float> min_ = std::nullopt, std::optional<float> max_ = std::nullopt, UnityEngine::Vector2 anch = {})
+        IncrementSetting(std::string_view txt, F&& callable, float currentValue = 0.0f, int decimals_ = 1, float increment = 1.0f, std::optional<float> min_ = std::nullopt, std::optional<float> max_ = std::nullopt,  bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {})
             : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), decimals(decimals_), min(min_), max(max_), anchoredPosition(anch) {}
 
         auto render(RenderContext& ctx) {

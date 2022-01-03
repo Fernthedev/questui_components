@@ -36,7 +36,7 @@ namespace QUC {
             // TODO: Cache this properly
             auto parent = &ctx.parentTransform;
             if (!dropdown) {
-                dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, text, value,
+                dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, *text, *value, *values,
                                                                 [this, parent](std::string_view val) {
                                                                     value = val;
                                                                     value.clear();
@@ -125,7 +125,7 @@ namespace QUC {
         }
     };
 
-    using VariableDropdownSetting = DropdownSetting<0, std::vector<std::string>>
+    using VariableDropdownSetting = DropdownSetting<0, std::vector<std::string>>;
 
 // TODO: Test if it works
 #pragma region ConfigEnum

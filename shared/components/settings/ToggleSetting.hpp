@@ -11,6 +11,8 @@
 #include <string_view>
 #include <functional>
 
+#include "BaseSetting.hpp"
+
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "UnityEngine/UI/Toggle.hpp"
 
@@ -76,12 +78,13 @@ namespace QUC {
         UnityEngine::Vector2 anchoredPosition; // TODO: Const-ify
 
 
-        template<class F>
-        ToggleSetting(Text const& txt, F&& callable, bool enabled_ = true, bool interact = true, bool currentValue = false, UnityEngine::Vector2 anch = {})
+
+        template<class F = OnCallback>
+        ToggleSetting(Text const& txt, F&& callable, bool currentValue = false, bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {})
             : text(txt), callback(callable), enabled(enabled_), toggleButton(currentValue, interact), anchoredPosition(anch) {}
 
-        template<class F>
-        ToggleSetting(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, bool currentValue = false, UnityEngine::Vector2 anch = {})
+        template<class F = OnCallback>
+        ToggleSetting(std::string_view txt, F&& callable, bool currentValue = false, bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {})
                 : str(txt), callback(callable), enabled(enabled_), toggleButton(currentValue, interact), anchoredPosition(anch) {}
 
         auto render(RenderContext& ctx) {

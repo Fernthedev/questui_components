@@ -23,7 +23,7 @@ add_compile_definitions(DEBUGB=1) # disable debug logs
 
 # recursively get all src files
 RECURSE_FILES(cpp_file_list ${SOURCE_DIR}/*.cpp)
-RECURSE_FILES(cpp_file_test_list test/${SOURCE_DIR}/*.cpp)
+RECURSE_FILES(cpp_file_test_list ./test/src/*.cpp)
 RECURSE_FILES(c_file_list ${SOURCE_DIR}/*.c)
 
 # add all src files to compile
@@ -41,8 +41,12 @@ target_include_directories(${COMPILE_ID} PRIVATE extern/includes/questui_compone
 
 # add src dir as include dir
 target_include_directories(${COMPILE_ID} PRIVATE ${SOURCE_DIR})
+target_include_directories(${COMPILE_ID} PRIVATE test/src)
+
 # add include dir as include dir
 target_include_directories(${COMPILE_ID} PRIVATE ${INCLUDE_DIR})
+target_include_directories(${COMPILE_ID} PRIVATE ./test/include)
+
 # add shared dir as include dir
 target_include_directories(${COMPILE_ID} PUBLIC ${SHARED_DIR})
 # codegen includes 

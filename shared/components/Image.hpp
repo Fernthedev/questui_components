@@ -1,6 +1,8 @@
 #pragma once
 
 #include "shared/context.hpp"
+#include "shared/state.hpp"
+#include "shared/unity/WeakPtrGO.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
 #include "UnityEngine/Vector2.hpp"

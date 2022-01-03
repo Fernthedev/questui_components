@@ -13,7 +13,7 @@ namespace UnityEngine {
 }
 
 namespace QUC {
-    auto TestComponent(std::string_view prefix) {
+    static auto TestComponent(std::string_view prefix) {
         return Container(
                 Text(std::string(prefix) + "Group 1"),
                 Text(std::string(prefix) + "Group 2")

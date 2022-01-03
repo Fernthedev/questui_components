@@ -57,14 +57,16 @@ namespace QUC {
     requires ((renderable<TArgs> && ...))
     struct Modal : detail::Container<TArgs...>, public ModalWrapper {
 
-        template<typename ModalCreateFunc2 = ModalCreateFunc<TArgs...>>
-        Modal(ModalCreateFunc2 childrenCallback,
+        template<class ModalCreateFunc2 = ModalCreateFunc<TArgs...>>
+        Modal(ModalCreateFunc2 childrenCallback, ModalCallback callable = nullptr,
               UnityEngine::Vector2 sz = {30.0f, 40.0f}, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool dismiss = true)
-                : detail::Container<TArgs...>(childrenCallback(*this)), ModalWrapper(sz, anch, dismiss) {}
+                : detail::Container<TArgs...>(childrenCallback(*this)),
+                        ModalWrapper(sz, anch, dismiss, callable)
+                        {}
 
         // TODO: How to make children a second parameter with the sizes default?
         template<class F>
-        Modal(ModalCallback callable, std::tuple<TArgs...> children, UnityEngine::Vector2 sz = {30.0f, 40.0f}, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool dismiss = true)
+        Modal(F callable, std::tuple<TArgs...> children, UnityEngine::Vector2 sz = {30.0f, 40.0f}, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool dismiss = true)
             : detail::Container<TArgs...>(children), ModalWrapper(sz, anch, dismiss, callable) {}
 
         auto render(RenderContext& ctx) {
