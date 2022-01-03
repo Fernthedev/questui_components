@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BaseSetting.hpp"
+
 #include "UnityEngine/Vector2.hpp"
 
 #include "shared/context.hpp"
@@ -55,6 +57,11 @@ namespace QUC {
             return setting->get_transform();
         }
 
+        void update() {
+            assign<false>();
+        }
+
+    protected:
         template<bool created = false>
         void assign() {
             CRASH_UNLESS(setting);
@@ -112,9 +119,12 @@ namespace QUC {
             }
         }
 
-    private:
         WeakPtrGO<QuestUI::IncrementSetting> setting;
         WeakPtrGO<TMPro::TextMeshProUGUI> textSetting;
     };
+
+#if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
+    using ConfigUtilsIncrementSetting = ConfigUtilsSetting<float, IncrementSetting>;
+#endif
     static_assert(renderable<IncrementSetting>);
 }

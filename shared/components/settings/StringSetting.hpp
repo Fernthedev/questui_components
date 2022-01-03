@@ -3,6 +3,7 @@
 #include "UnityEngine/Vector2.hpp"
 #include "UnityEngine/Vector3.hpp"
 
+#include "BaseSetting.hpp"
 #include "shared/context.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 #include "HMUI/InputFieldView.hpp"
@@ -21,7 +22,7 @@ namespace QUC {
         UnityEngine::Vector3 keyboardPositionOffset;
 
         template<class F>
-        constexpr StringSetting(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, std::string_view currentValue = "", UnityEngine::Vector2 anch = {}, UnityEngine::Vector3 offt = {})
+        constexpr StringSetting(std::string_view txt, F&& callable, std::string_view currentValue = "", bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {}, UnityEngine::Vector3 offt = {})
             : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), anchoredPosition(anch), keyboardPositionOffset(offt) {}
 
         auto render(RenderContext& ctx) {
@@ -86,4 +87,10 @@ namespace QUC {
         WeakPtrGO<HMUI::InputFieldView> inputFieldView;
     };
     static_assert(renderable<StringSetting>);
+
+#if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
+    using ConfigUtilsStringSetting = ConfigUtilsSetting<std::string, StringSetting>;
+#endif
+
+
 }

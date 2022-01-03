@@ -2,76 +2,130 @@
 
 #include "UnityEngine/Vector2.hpp"
 
+#include "HMUI/SimpleTextDropdown.hpp"
+
 #include "shared/context.hpp"
+#include "shared/state.hpp"
+#include "shared/unity/WeakPtrGO.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
+#include "config-utils/shared/config-utils.hpp"
 #include <string>
 #include <array>
 
 namespace QUC {
-    namespace detail {
-        template<size_t sz>
-        struct DropdownSetting {
-            static_assert(renderable<DropdownSetting>);
-            using OnCallback = std::function<void(DropdownSetting*, std::string, UnityEngine::Transform*)>;
-            std::string text;
-            OnCallback callback;
-            bool enabled;
-            bool interactable;
-            std::string value;
-            std::array<std::string, sz> values;
-            template<class F>
-            DropdownSetting(std::string_view txt, std::string_view current, F&& callable, bool enabled_ = true, bool interact = true, std::array<std::string, sz> v = std::array<std::string, 0>())
-                : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(current), values(v) {}
-            
-            auto render(RenderContext& ctx) {
-                // TODO: Cache this properly
-                auto parent = &ctx.parentTransform;
-                auto setting = QuestUI::BeatSaberUI::CreateDropdown(parent, text, value, [this, parent](std::string_view val) {
-                    callback(this, std::string(val), parent);
-                });
-                auto txt = setting->placeholderText->template GetComponent<TMPro::TextMeshProUGUI*>();
-                CRASH_UNLESS(txt);
-                txt->set_text(il2cpp_utils::newcsstr(text));
-                setting->set_enabled(enabled);
-                setting->set_interactable(interactable);
-                setting->SetText(il2cpp_utils::newcsstr(value));
 
-                return setting->get_transform();
+    template<size_t sz, typename Container = std::array<std::string, sz>>
+    struct DropdownSetting {
+//        static_assert(renderable<DropdownSetting>);
+        using OnCallback = std::function<void(DropdownSetting *, std::string const&, UnityEngine::Transform *)>;
+        HeldData<std::string> text;
+        OnCallback callback;
+        HeldData<bool> enabled;
+        HeldData<bool> interactable;
+        HeldData<std::string> value;
+        HeldData<Container> values;
+
+        template<class F>
+        constexpr DropdownSetting(std::string_view txt, std::string_view current, F &&callable,
+                        Container v = Container(), bool enabled_ = true,
+                        bool interact = true)
+                : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(current),
+                  values(v) {}
+
+        UnityEngine::Transform* render(RenderContext &ctx) {
+            // TODO: Cache this properly
+            auto parent = &ctx.parentTransform;
+            if (!dropdown) {
+                dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, text, value,
+                                                                [this, parent](std::string_view val) {
+                                                                    value = val;
+                                                                    value.clear();
+                                                                    callback(this, value.getData(), parent);
+                                                                });
+                assign<true>();
+            } else {
+                update();
             }
-        };
-    }
-
-    template<size_t sz, class F>
-    inline auto DropdownSetting(std::string_view txt, std::string_view current, F&& callable, std::array<std::string, sz> v = std::array<std::string, 0>(), bool enabled_ = true, bool interact = true) {
-        return detail::DropdownSetting<sz>(txt, current, callable, enabled_, interact, v);
-    }
-}
-
-namespace QuestUI_Components {
-
-    struct MutableDropdownSettingsData : public MutableSettingsData<std::string> {
-        std::vector<std::string> values;
-    };
-
-    class DropdownSetting : public BaseSetting<std::string, DropdownSetting, MutableDropdownSettingsData> {
-    public:
 
 
-        explicit DropdownSetting(std::string_view text, std::string_view currentValue,
-                                 std::vector<std::string> const& values,
-                                 OnCallback callback = nullptr)
-                : BaseSetting(std::string(text), std::string(currentValue), std::move(callback))
-        {
-            data.values = values;
+            return dropdown->get_transform();
+        }
+
+        inline void update() {
+            assign<false>();
         }
 
     protected:
-        void update() override;
-        Component* render(UnityEngine::Transform *parentTransform) override;
+        WeakPtrGO<HMUI::SimpleTextDropdown> dropdown;
+        WeakPtrGO<TMPro::TextMeshProUGUI> uiText;
 
-        // render time
-        HMUI::SimpleTextDropdown* uiDropdown = nullptr;
+        template<bool created>
+        void assign() {
+            CRASH_UNLESS(dropdown);
+
+            if (enabled) {
+                dropdown->set_enabled(*enabled);
+                enabled.clear();
+            }
+
+            if (!*enabled) {
+                // Don't bother setting anything if we aren't enabled.
+                return;
+            }
+
+            if constexpr (created) {
+                dropdown->button->set_interactable(*interactable);
+                interactable.clear();
+            } else if (interactable) {
+                dropdown->button->set_interactable(*interactable);
+                interactable.clear();
+            }
+
+            if constexpr (!created) {
+                if (text) {
+                    if (!uiText) {
+                        // From QuestUI
+                        static auto labelName = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("Label");
+                        auto labelTransform = dropdown->get_transform()->get_parent()->Find(labelName);
+                        if (labelTransform) {
+                            UnityEngine::GameObject *labelObject = labelTransform->get_gameObject();
+                            if (labelObject) {
+                                uiText = labelObject->GetComponent<TMPro::TextMeshProUGUI *>();
+                            }
+                        }
+                    }
+
+                    uiText->set_text(il2cpp_utils::newcsstr(*text));
+                    text.clear();
+                }
+
+                if (value || values) {
+                    List<Il2CppString*>* list = nullptr;
+
+                    if (values)
+                        list = List<Il2CppString*>::New_ctor();
+
+                    int selectedIndex = 0;
+                    for (int i = 0; i < values.getData().size(); i++) {
+                        std::string const &dropdownValue = values.getData()[i];
+                        if (value.getData() == dropdownValue) {
+                            selectedIndex = i;
+                        }
+                        if (list)
+                            list->Add(il2cpp_utils::newcsstr(*value));
+                    }
+
+                    if (dropdown->selectedIndex != selectedIndex)
+                        dropdown->SelectCellWithIdx(selectedIndex);
+
+                    value.clear();
+                    values.clear();
+                }
+            }
+        }
     };
+
+    using VariableDropdownSetting = DropdownSetting<0, std::vector<std::string>>
 
 // TODO: Test if it works
 #pragma region ConfigEnum
@@ -92,13 +146,13 @@ namespace QuestUI_Components {
     struct EnumStrValues;
 
 
-
     template<typename EnumType>
-    EnumToStrType<EnumType> createFromKeysAndValues(std::initializer_list<int> keysList, std::initializer_list<std::string> valuesList) {
+    EnumToStrType<EnumType>
+    createFromKeysAndValues(std::initializer_list<int> keysList, std::initializer_list<std::string> valuesList) {
         std::vector<int> keys(keysList);
         std::vector<std::string> values(valuesList);
         EnumToStrType<EnumType> map(keys.size());
-        for (int i =0; i < keys.size(); i++) {
+        for (int i = 0; i < keys.size(); i++) {
             map.emplace((EnumType) keys[i], values[i]);
         }
 
@@ -107,11 +161,12 @@ namespace QuestUI_Components {
 
 
     template<typename EnumType>
-    StrToEnumType<EnumType> createFromKeysAndValues(std::initializer_list<std::string> keysList, std::initializer_list<int> valuesList) {
+    StrToEnumType<EnumType>
+    createFromKeysAndValues(std::initializer_list<std::string> keysList, std::initializer_list<int> valuesList) {
         std::vector<std::string> keys(keysList);
         std::vector<int> values(valuesList);
         StrToEnumType<EnumType> map(keys.size());
-        for (int i =0; i < keys.size(); i++) {
+        for (int i = 0; i < keys.size(); i++) {
             map.emplace(keys[i], (EnumType) values[i]);
         }
 
@@ -148,10 +203,11 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
 };                                                \
 } // end namespace EnumNamespace__##EnumName
 
+
     // c++ inheritance is a pain
-    template<typename EnumType, typename EnumConfigValue = int, bool CrashOnBoundsExit = false>
-    requires (std::is_enum<EnumType>::value)
-    class ConfigUtilsEnumDropdownSetting : public DropdownSetting {
+    template<typename EnumType, size_t sz, typename EnumConfigValue = int, bool CrashOnBoundsExit = false>
+    requires(std::is_enum_v<EnumType>)
+    class ConfigUtilsEnumDropdownSetting : public DropdownSetting<sz> {
 
     public:
         static_assert(&EnumToStr<EnumType>::get, "Please create a type specialization for EnumToStr");
@@ -161,19 +217,22 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
         template<typename... TArgs>
         explicit
         ConfigUtilsEnumDropdownSetting(ConfigUtils::ConfigValue<EnumConfigValue> &configValue, TArgs &&... args)
-                : configValue(configValue), DropdownSetting(configValue.GetName(), "", EnumStrValues<EnumType>::values, args...) {
+                : configValue(configValue),
+                  DropdownSetting<sz>(configValue.GetName(), "", EnumStrValues<EnumType>::values, args...) {
             this->setValueOfData(this->data, this->getValue());
         }
 
     protected:
         // reference capture should be safe here
-        ConfigUtils::ConfigValue<int>& configValue;
+        ConfigUtils::ConfigValue<int> &configValue;
+        WeakPtrGO<HMUI::HoverHint> hoverHint;
 
-        Component *render(UnityEngine::Transform *parentTransform) override {
-            DropdownSetting::render(parentTransform);
+        UnityEngine::Transform *render(UnityEngine::Transform *parentTransform) override {
+            DropdownSetting<sz>::render(parentTransform);
 
-            if (!configValue.GetHoverHint().empty()) {
-                QuestUI::BeatSaberUI::AddHoverHint(this->getTransform()->get_gameObject(), configValue.GetHoverHint());
+            if (!configValue.GetHoverHint().empty() && !hoverHint) {
+                hoverHint = QuestUI::BeatSaberUI::AddHoverHint(this->getTransform()->get_gameObject(),
+                                                               configValue.GetHoverHint());
             }
 
             return this;
@@ -214,6 +273,7 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
             }
         }
     };
+
 #endif
 #pragma endregion
 }

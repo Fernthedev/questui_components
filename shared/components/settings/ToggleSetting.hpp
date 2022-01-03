@@ -154,4 +154,8 @@ namespace QUC {
     };
     static_assert(renderable<ToggleSetting>);
     static_assert(renderable_return<ToggleSetting, UnityEngine::Transform*>);
+
+#if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
+    using ConfigUtilsToggleSetting = ConfigUtilsSetting<bool, ToggleSetting>;
+#endif
 }

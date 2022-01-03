@@ -22,8 +22,8 @@
 
 #define DECLARE_SIMPLE_MONO_DTOR() \
 void __Finalize() {                \
-    auto l = this;                               \
-    il2cpp_utils::RunMethodThrow(reinterpret_cast<Il2CppObject*>(l), il2cpp_utils::il2cpp_type_check::MetadataGetter<&UnityEngine::Object::Finalize>::get());                               \
+    Il2CppObject* l = this;                               \
+    il2cpp_utils::RunMethodThrow(l, il2cpp_utils::il2cpp_type_check::MetadataGetter<&UnityEngine::Object::Finalize>::get());                               \
     this->~___TargetType();        \
 } \
 ___CREATE_INSTANCE_METHOD(__Finalize, "__Finalize", (::il2cpp_utils::FindMethod("System", "Object", "Finalize")->flags & ~METHOD_ATTRIBUTE_ABSTRACT) | METHOD_ATTRIBUTE_PUBLIC | METHOD_ATTRIBUTE_HIDE_BY_SIG, ::il2cpp_utils::FindMethod("System", "Object", "Finalize"))

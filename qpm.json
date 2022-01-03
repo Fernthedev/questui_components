@@ -7,14 +7,13 @@
     "version": "0.0.1",
     "url": "https://github.com/Fernthedev/questui_components",
     "additionalData": {
-      "overrideSoName": "libquestui_components.a",
-      "staticLinking": true
+      "overrideSoName": "libquestui_components.so"
     }
   },
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^2.0.0",
+      "versionRange": ">=2.0.0",
       "additionalData": {
         "extraFiles": [
           "src/inline-hook"
@@ -23,12 +22,12 @@
     },
     {
       "id": "questui",
-      "versionRange": "^0.11",
+      "versionRange": "^0.12",
       "additionalData": {}
     },
     {
       "id": "codegen",
-      "versionRange": "^0.14",
+      "versionRange": "^0.18",
       "additionalData": {}
     },
     {
@@ -41,6 +40,11 @@
     {
       "id": "sombrero",
       "versionRange": "*",
+      "additionalData": {}
+    },
+    {
+      "id": "custom-types",
+      "versionRange": "^0.14.1",
       "additionalData": {}
     }
   ],

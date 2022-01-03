@@ -25,6 +25,15 @@ namespace QUC {
 
     float speed = 1.0f;
 
+    UnityEngine::Transform* render(RenderContext& ctx) {
+        auto ret = Text::render(ctx);
+
+        auto text = ret->GetComponent<TMPro::TextMeshProUGUI*>(); // TODO: Avoid this
+        text->StartCoroutine(reinterpret_cast<System::Collections::IEnumerator *>(custom_types::Helpers::CoroutineHelper::New(rainbowCoroutine(ctx))));
+
+        return ret;
+    }
+
     protected:
        std::optional<Sombrero::FastColor> color;
 
@@ -50,18 +59,5 @@ namespace QUC {
             }
 #pragma clang diagnostic pop
         }
-
-        UnityEngine::Transform* render(RenderContext& ctx) {
-            auto ret = Text::render(ctx);
-
-            auto text = ret->GetComponent<TMPro::TextMeshProUGUI*>(); // TODO: Avoid this
-            text->StartCoroutine(reinterpret_cast<System::Collections::IEnumerator *>(custom_types::Helpers::CoroutineHelper::New(rainbowCoroutine(ctx))));
-
-            return ret;
-        }
-
-    private:
-        int progress = 0;
-
     };
 }

@@ -5,6 +5,7 @@
 #include <string_view>
 #include <string>
 #include <type_traits>
+#include <optional>
 
 namespace QUC {
 
