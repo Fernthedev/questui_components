@@ -2,7 +2,6 @@ name: NDK build
 
 env:
   module_id: questui_components
-  qmodName: questui_components
   cache-name: questui_components_cache
 
 on:
@@ -78,13 +77,7 @@ jobs:
       run: |
         cd ${GITHUB_WORKSPACE}
         pwsh -Command ./build.ps1
-# TODO: Generate QMOD
-#        ./QPM/qpm-rust qmod build
 
-
-    - name: Create Qmod
-      run: |
-        pwsh -Command ./createqmod.ps1 ${{env.qmodName}}
 
     - name: Get Library Name
       id: libname
@@ -93,12 +86,6 @@ jobs:
         pattern="lib${module_id}*.so"
         files=( $pattern )
         echo ::set-output name=NAME::"${files[0]}"
-    - name: Upload non-debug artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ steps.libname.outputs.NAME }}
-        path: ./build/${{ steps.libname.outputs.NAME }}
-        if-no-files-found: error
 
         # TODO: NEEDED?
 #    - name: Upload debug artifact
