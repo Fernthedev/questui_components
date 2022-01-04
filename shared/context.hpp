@@ -3,9 +3,8 @@
 #include <concepts>
 #include <tuple>
 
-namespace UnityEngine {
-    class Transform;
-}
+#include "UnityEngine/GameObject.hpp"
+#include "UnityEngine/Transform.hpp"
 
 namespace QUC {
     struct RenderContext {
@@ -19,6 +18,10 @@ namespace QUC {
         constexpr RenderContext(UnityEngine::Transform* ptr) : parentTransform(*ptr) {}
         constexpr RenderContext(UnityEngine::Transform& ref) : parentTransform(ref) {}
     };
+
+    static void DestroyTree(RenderContext& ctx) {
+        UnityEngine::Object::Destroy(ctx.parentTransform.get_gameObject());
+    }
 
     // Allows both copies and references
     template<class T>
@@ -53,7 +56,7 @@ namespace QUC {
     namespace detail {
         template<size_t idx = 0, class... TArgs>
         requires ((renderable<TArgs> && ...))
-        void renderTuple(std::tuple<TArgs...>& args, RenderContext& ctx) {
+        static constexpr void renderTuple(std::tuple<TArgs...>& args, RenderContext& ctx) {
             if constexpr (idx < sizeof...(TArgs)) {
                 std::get<idx>(args).render(ctx);
                 renderTuple<idx + 1>(args, ctx);

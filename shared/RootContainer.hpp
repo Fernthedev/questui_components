@@ -8,6 +8,7 @@ namespace QUC {
         // Represents a generic container
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
+//        requires ((!std::is_reference_v<TArgs> && ...) && ((renderable<TArgs> && ...)))
         struct Container {
             std::tuple<TArgs...> children;
             Container(TArgs... args) : children(args...) {}

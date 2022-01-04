@@ -96,7 +96,8 @@ namespace QUC {
                                                             [this, parent](bool val) {
                                                                 toggleButton.value = val;
                                                                 toggleButton.value.clear();
-                                                                callback(this, val, parent);
+                                                                if (callback)
+                                                                    callback(this, val, parent);
                                                             });
                 auto nameTextTransform = CRASH_UNLESS(toggle->get_transform()->get_parent()->Find(il2cpp_utils::newcsstr("NameText")));
                 auto nameText = nameTextTransform->get_gameObject();

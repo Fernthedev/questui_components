@@ -181,6 +181,6 @@ namespace QUC {
         }
 
         T* ptr = nullptr;
-        QUC::inner::WeakPtrGOComponent const* keepAliveGO;
+        QUC::inner::WeakPtrGOComponent const* keepAliveGO = nullptr;
     };
 }

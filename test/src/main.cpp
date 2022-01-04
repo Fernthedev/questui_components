@@ -57,15 +57,25 @@ auto LoadingView(std::string_view loadingText) {
     );
 }
 
-void HandleLoadingView(QUC::RenderContext& ctx, bool& loaded) {
+auto HandleLoadingView(QUC::RenderContext& ctx, bool& loaded) {
     using namespace QUC;
 
     const std::string templateLoadingText = "Loading";
 
-    LoadingView(templateLoadingText).render(ctx);
+    Text text(templateLoadingText);
+    auto view = ScrollableContainer<Text&>(
+            text
+    );
+
+    auto transform = view.render(ctx);
+
+    getLogger().debug("Loading %p", transform);
+
+//    static UnityEngine::Transform* scrollTransform;
+//    scrollTransform = LoadingView(templateLoadingText).render(ctx);
 
     // async UI!
-    std::thread([templateLoadingText, ctx, &loaded]{
+    std::thread([templateLoadingText, ctx, &loaded, text]()mutable{
         int periodCount = 0;
         bool once = true;
 
@@ -80,15 +90,22 @@ void HandleLoadingView(QUC::RenderContext& ctx, bool& loaded) {
             if (periodCount > 4) periodCount = 1;
 
             std::string textStr(templateLoadingText + std::string(periodCount, '.'));
+            text.text = textStr;
+//            auto view = LoadingView(textStr);
 
-            QuestUI::MainThreadScheduler::Schedule([textStr, ctx, &loaded]() mutable {
+            QuestUI::MainThreadScheduler::Schedule([textStr, ctx, &loaded, text]() mutable {
                 if (!loaded) {
-                    // Updates the entire hierarchy
-                    LoadingView(textStr).render(ctx);
+                    text.update();
+//                    // Destroy old hierarchy
+//                    UnityEngine::Object::Destroy(scrollTransform->get_gameObject());
+//                    // Updates the entire hierarchy
+//                    scrollTransform = view.render(ctx);
                 }
             });
         }
     }).detach();
+
+    return transform;
 }
 #pragma endregion
 
@@ -105,7 +122,7 @@ auto tuple(QUC::ModalWrapper& modal) {
     );
 }
 
-auto DefaultView() {
+auto DefaultView(QUC::TacoImage& tacoImage) {
     using namespace QUC;
 
     Text pinkCuteText("this is cool! Pink Cute!", true, UnityEngine::Color(1.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f));
@@ -117,75 +134,71 @@ auto DefaultView() {
     // C++ life is sad
     Modal modal(tuple);
 
-    // Image has to be loaded on main thread
-    // When passing this to a container, it will take ownership, so we don't need to call delete
-    auto tacoImage = TacoImage({128, 128});
-
     return ScrollableContainer(
             HoverHint("hint", Text("hi!")),
             pinkCuteText,
 
             // TODO: we can create components using lambdas too
 
-            Button("More info!", [&modal](Button* button, UnityEngine::Transform* transform){
+            Button("More info!", [modal](Button* button, UnityEngine::Transform* transform)mutable{
                 modal.show();
-            }),
-            // Custom component
-            TestComponent("pink cute eris cute"),
-            RainbowText("Rainbow!"),
-
-            // Image is loaded on main thread
-            HorizontalLayoutGroup(
-                    VerticalLayoutGroup(
-                            tacoImage
-                            )
-                    ),
-
-            // Toggles
-            ToggleSetting("Toggle false", nullptr, false),
-            ToggleSetting("Toggle true", [](ToggleSetting* set, bool val, UnityEngine::Transform*) {
-                set->text->text =  "Toggle " + std::string(val ? "true" : "false");
-                set->toggleButton.value = val;
-                set->update();
-            }, true),
-            StringSetting("Text setting", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
-                getLogger().debug("Input! %s", input.c_str());
-            }, "The current val!"),
-            QUC::IncrementSetting("Increment!", [](QUC::IncrementSetting* set, float input, UnityEngine::Transform*){
-                getLogger().debug("Increment value! %f", input);
-                set->text = "Increment value: " + std::to_string(input);
-                set->update();
-            }, 5.0f, 2, 0.05f),
-            QUC::VariableDropdownSetting("Dropdowns are cool!", "some val", [](VariableDropdownSetting* set, const std::string& selected, UnityEngine::Transform*){
-                getLogger().debug("Dropdowns are cool %s", selected.c_str());
-                set->text = "Dropdowns are coeaweol!" + selected;
-                auto list = set->values.getData();
-                list.emplace_back(std::to_string(list.size()));
-                set->values = list;
-                set->update();
-            }, {"value1", "value2", "some val", "value3"}),
-
-            HoverHint("hintee", Text("hello from other world!")),
-            HoverHint("another hintee", Text("this is cooler!!")),
-            Button("Click me!", [](Button* button, UnityEngine::Transform* parentTransform) {
-                static bool clicked = false;
-                static Text newText("New text!");
-                static int count = 0;
-
-                if (!clicked) {
-                    clicked = true;
-                    RenderContext ctx(parentTransform);
-                    newText.render(ctx);
-                } else {
-                    count++;
-                    newText.text = "someOtherText" + std::to_string(count);
-                    newText.update();
-                }
-
-                // Update button text
-                button->text = "Clicked: " + std::to_string(count);
-                button->update();
             })
+//            // Custom component
+//            TestComponent("pink cute eris cute"),
+//            RainbowText("Rainbow!"),
+//
+////            // Image is loaded on main thread
+////            HorizontalLayoutGroup(
+////                    VerticalLayoutGroup(
+////                            TacoImage(tacoImage)
+////                            )
+////                    ),
+//
+//            // Toggles
+//            ToggleSetting("Toggle false", nullptr, false),
+//            ToggleSetting("Toggle true", [](ToggleSetting* set, bool val, UnityEngine::Transform*) {
+//                set->text->text =  "Toggle " + std::string(val ? "true" : "false");
+//                set->toggleButton.value = val;
+//                set->update();
+//            }, true),
+//            StringSetting("Text setting", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
+//                getLogger().debug("Input! %s", input.c_str());
+//            }, "The current val!"),
+//            QUC::IncrementSetting("Increment!", [](QUC::IncrementSetting* set, float input, UnityEngine::Transform*){
+//                getLogger().debug("Increment value! %f", input);
+//                set->text = "Increment value: " + std::to_string(input);
+//                set->update();
+//            }, 5.0f, 2, 0.05f),
+//            QUC::VariableDropdownSetting("Dropdowns are cool!", "some val", [](VariableDropdownSetting* set, const std::string& selected, UnityEngine::Transform*){
+//                getLogger().debug("Dropdowns are cool %s", selected.c_str());
+//                set->text = "Dropdowns are coeaweol!" + selected;
+//                auto list = set->values.getData();
+//                list.emplace_back(std::to_string(list.size()));
+//                set->values = list;
+//                set->update();
+//            }, {"value1", "value2", "some val", "value3"}),
+//
+//            HoverHint("hintee", Text("hello from other world!")),
+//            HoverHint("another hintee", Text("this is cooler!!")),
+//            Button("Click me!", [](Button* button, UnityEngine::Transform* parentTransform) {
+//                static bool clicked = false;
+//                static Text newText("New text!");
+//                static int count = 0;
+//
+//                if (!clicked) {
+//                    clicked = true;
+//                    RenderContext ctx(parentTransform);
+//                    newText.render(ctx);
+//                } else {
+//                    count++;
+//                    newText.text = "someOtherText" + std::to_string(count);
+//                    newText.update();
+//                }
+//
+//                // Update button text
+//                button->text = "Clicked: " + std::to_string(count);
+//                button->update();
+//            })
     );
 }
 #pragma endregion
@@ -196,32 +209,32 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
     getLogger().info("DidActivate: %p, %d, %d, %d", self, firstActivation, addedToHierarchy, screenSystemEnabling);
 
     RenderContext ctx(self->get_transform());
+    static UnityEngine::Transform* loadingViewTransform;
     if (firstActivation) {
         // keep these pointers alive so the lambdas can capture them. These would usually be instance fields in a ViewCoordinator
 
         static bool loaded = false;
 
         if (!loaded) {
-            HandleLoadingView(ctx, loaded);
+            loadingViewTransform = HandleLoadingView(ctx, loaded);
         }
 
-        static Text newText;
-        static int count = 0;
-
-
+        // Image has to be loaded on main thread
+        // When passing this to a container, it will take ownership, so we don't need to call delete
+        static auto tacoImage = TacoImage({128, 128});
 
 #pragma region FullyLoadedUI
-
-
-
         std::thread([ctx]{
             // Simulate slow UI
             std::this_thread::sleep_for(std::chrono::seconds(2));
 
-            auto defaultView = DefaultView();
 
-            QuestUI::MainThreadScheduler::Schedule([defaultView, ctx]() mutable {
+
+            QuestUI::MainThreadScheduler::Schedule([ctx]() mutable {
                 loaded = true;
+                RenderContext loadingCtx(loadingViewTransform);
+                DestroyTree(loadingCtx);
+                auto defaultView = DefaultView(tacoImage);
                 defaultView.render(ctx);
 
                 // Multiple renders should simply just update, not crash or duplicate.
@@ -229,7 +242,6 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                 defaultView.render(ctx);
             });
         }).detach();
-#pragma clang diagnostic pop
 
 #pragma endregion
     }
