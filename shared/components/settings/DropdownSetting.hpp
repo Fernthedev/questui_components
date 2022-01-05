@@ -44,7 +44,7 @@ namespace QUC {
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto& settingData = data.getData<RenderDropdownData>();
             auto& dropdown = settingData.dropdown;
-            // TODO: Cache this properly
+
             auto parent = &ctx.parentTransform;
             if (!dropdown) {
                 auto cbk = [callback = this->callback, parent, &ctx, this](std::string_view val) mutable {

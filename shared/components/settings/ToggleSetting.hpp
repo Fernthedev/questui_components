@@ -69,13 +69,13 @@ namespace QUC {
         };
 
         using OnCallback = std::function<void(ToggleSetting&, bool, UnityEngine::Transform*, RenderContext& ctx)>;
-        OnCallback callback; // TODO: Const-ify
+        const OnCallback callback;
         HeldData<bool> enabled;
 
         // initialized at render
         std::optional<ToggleText> text;
         ToggleButton toggleButton;
-        const std::optional<UnityEngine::Vector2> anchoredPosition; // TODO: Const-ify
+        const std::optional<UnityEngine::Vector2> anchoredPosition;
         const Key key;
 
 

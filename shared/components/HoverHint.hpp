@@ -29,7 +29,6 @@ namespace QUC {
                 if (!hoverHint)
                     hoverHint = QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), text);
 
-                // TODO: Return child or transform of hover hint?
                 return res;
             }
 

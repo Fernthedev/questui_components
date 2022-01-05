@@ -88,7 +88,7 @@ namespace QUC {
                         callback(this, arg);
                 });
 
-                // TODO: Add proper tree recaching on parent context.
+
                 if (sizeDelta) {
                     if (anchoredPosition) {
                         innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, *sizeDelta,

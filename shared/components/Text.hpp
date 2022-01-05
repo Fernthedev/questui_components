@@ -30,8 +30,8 @@ namespace QUC {
         HeldData<std::optional<Sombrero::FastColor>> color;
         HeldData<float> fontSize;
         HeldData<bool> italic;
-        Sombrero::FastVector2 anchoredPosition; // TODO: Const-ify
-        Sombrero::FastVector2 sizeDelta; // TODO: Const-ify
+        const Sombrero::FastVector2 anchoredPosition;
+        const Sombrero::FastVector2 sizeDelta;
 
         const Key key;
 

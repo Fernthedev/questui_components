@@ -37,7 +37,7 @@ namespace QUC {
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto &settingData = data.getData<RenderIncrementSetting>();
             auto &setting = settingData.setting;
-            // TODO: Cache this properly
+
             auto parent = &ctx.parentTransform;
             if (!setting) {
                 auto cbk = std::function<void(float)>(
