@@ -20,12 +20,13 @@ namespace QUC {
     public:
         using ModalCallback = std::function<void(ModalWrapper*, HMUI::ModalView*)>;
 
-        const UnityEngine::Vector2 sizeDelta;
-        const UnityEngine::Vector2 anchoredPosition;
+        const std::optional<UnityEngine::Vector2> sizeDelta;
+        const std::optional<UnityEngine::Vector2> anchoredPosition;
         const bool dismissOnBlockerClicked;
         const ModalCallback callback;
+        const std::shared_ptr<HMUI::ModalView*> modalViewPtr = std::make_shared<HMUI::ModalView*>();
 
-        ModalWrapper(const UnityEngine::Vector2 &sizeDelta, const UnityEngine::Vector2 &anchoredPosition,
+        ModalWrapper(const std::optional<UnityEngine::Vector2> &sizeDelta, const std::optional<UnityEngine::Vector2> &anchoredPosition,
                      bool dismissOnBlockerClicked, ModalCallback callback = {}) : sizeDelta(sizeDelta),
                                                                                     anchoredPosition(anchoredPosition),
                                                                                     dismissOnBlockerClicked(
@@ -34,12 +35,18 @@ namespace QUC {
 
         void dismiss() {
             if (!innerModal)
+                innerModal = *modalViewPtr;
+
+            if (!innerModal)
                 throw std::runtime_error("Not rendered yet");
 
             innerModal->Hide(true, nullptr);
         }
 
         void show() {
+            if (!innerModal)
+                innerModal = *modalViewPtr;
+
             if (!innerModal)
                 throw std::runtime_error("Not rendered yet");
 
@@ -61,27 +68,38 @@ namespace QUC {
 
         template<class ModalCreateFunc2 = ModalCreateFunc<TArgs...>>
         Modal(ModalCreateFunc2 childrenCallback, ModalCallback callable = nullptr,
-              UnityEngine::Vector2 sz = {30.0f, 40.0f}, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool dismiss = true)
+              std::optional<UnityEngine::Vector2> sz = std::nullopt, std::optional<UnityEngine::Vector2> anch = std::nullopt, bool dismiss = true)
                 : detail::Container<TArgs...>(childrenCallback(*this)),
                         ModalWrapper(sz, anch, dismiss, callable)
                         {}
 
         // TODO: How to make children a second parameter with the sizes default?
         template<class F>
-        Modal(F callable, std::tuple<TArgs...> children, UnityEngine::Vector2 sz = {30.0f, 40.0f}, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool dismiss = true)
+        Modal(F callable, std::tuple<TArgs...> children, std::optional<UnityEngine::Vector2> sz = std::nullopt, std::optional<UnityEngine::Vector2> anch = std::nullopt, bool dismiss = true)
             : detail::Container<TArgs...>(children), ModalWrapper(sz, anch, dismiss, callable) {}
 
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             innerModal = data.getData<HMUI::ModalView*>();
             // if inner modal is already created, skip recreating and forward render calls
             if (!innerModal) {
-                std::function<void(HMUI::ModalView*)> cbk([this](HMUI::ModalView* arg) {
-                    callback(this, arg);
+                std::function<void(HMUI::ModalView*)> cbk([callback = this->callback, this](HMUI::ModalView* arg) {
+                    if (callback)
+                        callback(this, arg);
                 });
 
                 // TODO: Add proper tree recaching on parent context.
-                innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, sizeDelta, anchoredPosition, cbk,
-                                                               dismissOnBlockerClicked);
+                if (sizeDelta) {
+                    if (anchoredPosition) {
+                        innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, *sizeDelta, *anchoredPosition, cbk,
+                                                                       dismissOnBlockerClicked);
+                    } else {
+                        innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, *sizeDelta, cbk, dismissOnBlockerClicked);
+                    }
+                } else {
+                    innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, cbk, dismissOnBlockerClicked);
+                }
+
+                *modalViewPtr.get() = innerModal.getInner();
             }
 
 

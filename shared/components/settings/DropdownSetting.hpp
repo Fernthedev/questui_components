@@ -24,7 +24,7 @@ namespace QUC {
     public:
 
 //        static_assert(renderable<DropdownSetting>);
-        using OnCallback = std::function<void(DropdownSetting *, std::string const&, UnityEngine::Transform *, RenderContext& ctx)>;
+        using OnCallback = std::function<void(DropdownSetting&, std::string const&, UnityEngine::Transform *, RenderContext& ctx)>;
         HeldData<std::string> text;
         OnCallback callback;
         HeldData<bool> enabled;
@@ -48,10 +48,12 @@ namespace QUC {
             auto parent = &ctx.parentTransform;
             if (!dropdown) {
                 dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, *text, *value, *values,
-                                                                [this, parent, &ctx](std::string_view val) {
+                                                                [callback = this->callback, value = this->value, parent, &ctx, this](std::string_view val) mutable {
                                                                     value = val;
                                                                     value.clear();
-                                                                    callback(this, value.getData(), parent, ctx);
+
+                                                                    if (callback)
+                                                                    callback(*this, value.getData(), parent, ctx);
                                                                 });
                 assign<true>(settingData);
             } else {

@@ -27,10 +27,17 @@ namespace QUC {
     const Key key;
 
     UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
-        auto ret = Text::render(ctx, data);
+        auto ret = Text::render(ctx, ctx.getChildData(Text::key));
 
-        auto text = ret->GetComponent<TMPro::TextMeshProUGUI*>(); // TODO: Avoid this
-        text->StartCoroutine(reinterpret_cast<System::Collections::IEnumerator *>(custom_types::Helpers::CoroutineHelper::New(rainbowCoroutine(ctx, data))));
+        auto& coroStarted = data.getData<bool>();
+
+        if (!coroStarted) {
+            auto text = ret->GetComponent<TMPro::TextMeshProUGUI *>(); // TODO: Avoid this
+            text->StartCoroutine(
+                    reinterpret_cast<System::Collections::IEnumerator *>(custom_types::Helpers::CoroutineHelper::New(
+                            rainbowCoroutine(ctx, data))));
+            coroStarted = true;
+        }
 
         return ret;
     }
@@ -54,7 +61,7 @@ namespace QUC {
 
                 // Use HSV values to increase H in HSVToRGB. It looks like putting a value greater than 1 will round % 1 it
                 this->color = Sombrero::ColorHSVToRGB(h + UnityEngine::Time::get_deltaTime() * 0.25f * speed, s, v);
-                Text::render(ctx, data);
+                Text::render(ctx, ctx.getChildData(Text::key));
 
                 co_yield nullptr;
             }

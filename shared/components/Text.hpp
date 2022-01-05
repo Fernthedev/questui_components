@@ -75,8 +75,10 @@ namespace QUC {
         void copyFrom(TMPro::TextMeshProUGUI* textComp) {
             CRASH_UNLESS(textComp);
 
-            anchoredPosition = textComp->get_rectTransform()->get_anchoredPosition();
-            sizeDelta = textComp->get_rectTransform()->get_sizeDelta();
+            auto rectTransform = textComp->get_rectTransform();
+
+            anchoredPosition = rectTransform->get_anchoredPosition();
+            sizeDelta = rectTransform->get_sizeDelta();
 
 
             text = to_utf8(csstrtostr(textComp->get_text()));

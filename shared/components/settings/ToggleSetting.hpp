@@ -68,63 +68,70 @@ namespace QUC {
             friend class ToggleSetting;
         };
 
-        using OnCallback = std::function<void(ToggleSetting*, bool, UnityEngine::Transform*, RenderContext& ctx)>;
+        using OnCallback = std::function<void(ToggleSetting&, bool, UnityEngine::Transform*, RenderContext& ctx)>;
         OnCallback callback; // TODO: Const-ify
         HeldData<bool> enabled;
 
         // initialized at render
         std::optional<ToggleText> text;
         ToggleButton toggleButton;
-        const UnityEngine::Vector2 anchoredPosition; // TODO: Const-ify
+        const std::optional<UnityEngine::Vector2> anchoredPosition; // TODO: Const-ify
         const Key key;
 
 
 
         template<class F = OnCallback>
-        ToggleSetting(Text const& txt, F&& callable, bool currentValue = false, bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {})
+        ToggleSetting(Text const& txt, F&& callable, bool currentValue = false, bool enabled_ = true, bool interact = true, std::optional<UnityEngine::Vector2> anch = std::nullopt)
             : text(txt), callback(callable), enabled(enabled_), toggleButton(currentValue, interact), anchoredPosition(anch) {}
 
         template<class F = OnCallback>
-        ToggleSetting(std::string_view txt, F&& callable, bool currentValue = false, bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {})
+        ToggleSetting(std::string_view txt, F&& callable, bool currentValue = false, bool enabled_ = true, bool interact = true, std::optional<UnityEngine::Vector2> anch = std::nullopt)
                 : str(txt), callback(callable), enabled(enabled_), toggleButton(currentValue, interact), anchoredPosition(anch) {}
 
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto& toggle = data.getData<UnityEngine::UI::Toggle*>();
-            auto& cachedToggleText = ctx.getChildData(text->key).getData<TMPro::TextMeshProUGUI*>();
+            auto& toggleText = ctx.getChildData(text->key).getData<TMPro::TextMeshProUGUI*>();
 
             auto parent = &ctx.parentTransform;
             if (!toggle) {
                 auto const &usableText = text ? text->text : *str;
 
-                toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, toggleButton.value, anchoredPosition,
-                                                            [this, parent, &ctx](bool val) {
-                                                                toggleButton.value = val;
-                                                                toggleButton.value.clear();
-                                                                if (callback)
-                                                                    callback(this, val, parent, ctx);
-                                                            });
+                if (anchoredPosition) {
+                    toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, toggleButton.value, *anchoredPosition,
+                                                                [this, callback = this->callback, parent, &ctx](bool val) {
+                                                                    toggleButton.value = val;
+                                                                    toggleButton.value.clear();
+                                                                    if (callback)
+                                                                        callback(*this, val, parent, ctx);
+                                                                });
+                } else {
+                    toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, toggleButton.value,
+                                                                [this, callback = this->callback, parent, &ctx](bool val) {
+                                                                    toggleButton.value = val;
+                                                                    toggleButton.value.clear();
+                                                                    if (callback)
+                                                                        callback(*this, val, parent, ctx);
+                                                                });
+                }
+
                 auto nameTextTransform = CRASH_UNLESS(toggle->get_transform()->get_parent()->Find(il2cpp_utils::newcsstr("NameText")));
                 auto nameText = nameTextTransform->get_gameObject();
                 CRASH_UNLESS(nameText);
-                auto toggleText = nameText->GetComponent<TMPro::TextMeshProUGUI *>();
+                toggleText = nameText->GetComponent<TMPro::TextMeshProUGUI *>();
 
-                auto rectTransform = toggle->GetComponent<UnityEngine::RectTransform*>();
-                rectTransform->set_anchoredPosition(anchoredPosition);
-
-                cachedToggleText = toggleText;
-
-                // if text was created
+                // if text was not created
                 if (!text) {
+                    text.emplace(Text());
                     text->copyFrom(toggleText);
                 }
                 // first render
-                assign<true>(toggle, cachedToggleText);
+                assign<true>(toggle, toggleText);
 
                 text->render(ctx, ctx.getChildData(text->key));
             } else {
                 // update
-                CRASH_UNLESS(cachedToggleText);
-                assign<false>(toggle, cachedToggleText);
+                CRASH_UNLESS(toggleText);
+                assign<false>(toggle, toggleText);
             }
             return toggle->get_transform();
         }

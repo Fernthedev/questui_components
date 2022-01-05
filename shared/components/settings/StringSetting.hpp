@@ -12,7 +12,7 @@
 
 namespace QUC {
     struct StringSetting {
-        using OnCallback = std::function<void(StringSetting*, std::string const&, UnityEngine::Transform*, RenderContext& ctx)>;
+        using OnCallback = std::function<void(StringSetting&, std::string const&, UnityEngine::Transform*, RenderContext& ctx)>;
         HeldData<std::string> text;
         OnCallback callback;
         HeldData<bool> enabled;
@@ -34,10 +34,11 @@ namespace QUC {
             if (!inputFieldView) {
                 inputFieldView = QuestUI::BeatSaberUI::CreateStringSetting(parent, *text, *value, anchoredPosition,
                                                                            keyboardPositionOffset,
-                                                                           [this, parent, &ctx](std::string_view val) {
+                                                                           [callback = this->callback, value = this->value, parent, &ctx, this](std::string_view val)mutable {
                                                                                value = val;
                                                                                value.clear();
-                                                                               callback(this, value.getData(), parent, ctx);
+                                                                               if (callback)
+                                                                                   callback(*this, value.getData(), parent, ctx);
                                                                            });
                 assign<true>(inputFieldView);
             } else {

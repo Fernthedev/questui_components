@@ -17,7 +17,7 @@ namespace QUC {
         };
     public:
 
-        using OnCallback = std::function<void(IncrementSetting*, float, UnityEngine::Transform*, RenderContext& ctx)>;
+        using OnCallback = std::function<void(IncrementSetting&, float, UnityEngine::Transform*, RenderContext& ctx)>;
         HeldData<std::string> text;
         OnCallback callback;
         HeldData<bool> enabled;
@@ -51,11 +51,15 @@ namespace QUC {
                         min.getData().value_or(0.0f),
                         max.getData().value_or(0.0f),
                         anchoredPosition,
-                        std::function<void(float)>([this, parent, &ctx](float val) {
-                            value = val;
-                            value.clear();
-                            callback(this, val, parent, ctx);
-                        }));
+                        std::function<void(float)>(
+                                [callback = this->callback, value = this->value, parent, &ctx, this](
+                                        float val) mutable {
+                                    value = val;
+                                    value.clear();
+
+                                    if (callback)
+                                    callback(*this, val, parent, ctx);
+                                }));
 
                 assign<true>(settingData);
             } else {

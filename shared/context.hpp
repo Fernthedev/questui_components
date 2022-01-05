@@ -95,9 +95,23 @@ namespace QUC {
 
 #pragma endregion
 
+        template<bool includeParent = false>
         void destroyTree() {
-            if (parentTransform.m_CachedPtr)
-                UnityEngine::Object::Destroy(parentTransform.get_gameObject());
+            if (parentTransform.m_CachedPtr) {
+                if constexpr (includeParent) {
+                    UnityEngine::Object::Destroy(parentTransform.get_gameObject());
+                } else {
+                    int childCount = parentTransform.GetChildCount();
+                    std::vector<UnityEngine::Transform*> transforms;
+                    for (int i = 0; i < childCount; i++) {
+                        auto transform = parentTransform.GetChild(i);
+                        transforms.emplace_back(transform);
+                    }
+                    for (auto transform :transforms) {
+                        UnityEngine::Object::Destroy(transform->get_gameObject());
+                    }
+                }
+            }
         }
 
 

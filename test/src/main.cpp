@@ -49,21 +49,13 @@ extern "C" void setup(ModInfo& info) {
 #pragma region Loading
 
 
-auto LoadingView(std::string_view loadingText) {
-    using namespace QUC;
-
-    return ScrollableContainer(
-            Text(loadingText)
-    );
-}
-
 auto HandleLoadingView(QUC::RenderContext& ctx, bool& loaded) {
     using namespace QUC;
 
     const std::string templateLoadingText = "Loading";
 
-    Text text(templateLoadingText);
-    auto view = ScrollableContainer<Text&>(
+    static Text text(templateLoadingText);
+    static auto view = ScrollableContainer<Text&>(
             text
     );
 
@@ -75,7 +67,7 @@ auto HandleLoadingView(QUC::RenderContext& ctx, bool& loaded) {
 //    scrollTransform = LoadingView(templateLoadingText).render(ctx);
 
     // async UI!
-    std::thread([templateLoadingText, ctx, &loaded, text, view]()mutable{
+    std::thread([templateLoadingText, &ctx, &loaded]()mutable{
         int periodCount = 0;
         bool once = true;
 
@@ -91,9 +83,8 @@ auto HandleLoadingView(QUC::RenderContext& ctx, bool& loaded) {
 
             std::string textStr(templateLoadingText + std::string(periodCount, '.'));
             text.text = textStr;
-//            auto view = LoadingView(textStr);
 
-            QuestUI::MainThreadScheduler::Schedule([ctx, &loaded, text, view]() mutable {
+            QuestUI::MainThreadScheduler::Schedule([&ctx, &loaded]() mutable {
                 if (!loaded) {
                     detail::renderSingle(view, ctx);
 //                    // Destroy old hierarchy
@@ -115,7 +106,7 @@ auto tuple(QUC::ModalWrapper& modal) {
     return std::tuple(
             HorizontalLayoutGroup(
                     Text("Look at me!"),
-                    Button("Close!", [&modal](Button *button, UnityEngine::Transform *, RenderContext& ctx) {
+                    Button("Close!", [&modal](Button& button, UnityEngine::Transform *, RenderContext& ctx) {
                         modal.dismiss();
                     })
             )
@@ -135,67 +126,67 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
     Modal modal(tuple);
 
     return ScrollableContainer(
-            HoverHint("hint", Text("hi!")),
-            pinkCuteText,
+//            HoverHint("hint", Text("hi!")),
+            Text(pinkCuteText),
 
             // TODO: we can create components using lambdas too
-
-            Button("More info!", [modal](Button* button, UnityEngine::Transform* transform, RenderContext& ctx)mutable{
+            Modal(modal),
+            Button("More info!", [modal](Button& button, UnityEngine::Transform* transform, RenderContext& ctx)mutable{
                 modal.show();
             }),
             // Custom component
             TestComponent("pink cute eris cute"),
             RainbowText("Rainbow!"),
 
-//            // Image is loaded on main thread
+            // Image is loaded on main thread
             HorizontalLayoutGroup(
-                    VerticalLayoutGroup(
-                            TacoImage(tacoImage)
-                            )
-                    ),
+                VerticalLayoutGroup(
+                    TacoImage(tacoImage)
+                )
+            ),
 
-            // Toggles
+//             Toggles
             ToggleSetting("Toggle false", nullptr, false),
-            ToggleSetting("Toggle true", [](ToggleSetting* set, bool val, UnityEngine::Transform*, RenderContext& ctx) {
-                set->text->text =  "Toggle " + std::string(val ? "true" : "false");
-                set->toggleButton.value = val;
-                set->update(ctx);
+            ToggleSetting("Toggle true", [](ToggleSetting& set, bool val, UnityEngine::Transform*, RenderContext& ctx) {
+                set.text->text =  "Toggle " + std::string(val ? "true" : "false");
+                set.toggleButton.value = val;
+                set.update(ctx);
             }, true),
-            StringSetting("Text setting", [](StringSetting*, const std::string& input, UnityEngine::Transform*, RenderContext& ctx){
+            StringSetting("Text setting", [](StringSetting&, const std::string& input, UnityEngine::Transform*, RenderContext& ctx){
                 getLogger().debug("Input! %s", input.c_str());
             }, "The current val!"),
-            QUC::IncrementSetting("Increment!", [](QUC::IncrementSetting* set, float input, UnityEngine::Transform*, RenderContext& ctx){
+            QUC::IncrementSetting("Increment!", [](QUC::IncrementSetting& set, float input, UnityEngine::Transform*, RenderContext& ctx){
                 getLogger().debug("Increment value! %f", input);
-                set->text = "Increment value: " + std::to_string(input);
-                set->update(ctx);
+                set.text = "Increment value: " + std::to_string(input);
+                set.update(ctx);
             }, 5.0f, 2, 0.05f),
-            QUC::VariableDropdownSetting("Dropdowns are cool!", "some val", [](VariableDropdownSetting* set, const std::string& selected, UnityEngine::Transform*, RenderContext& ctx){
+            QUC::VariableDropdownSetting("Dropdowns are cool!", "some val", [](VariableDropdownSetting& set, const std::string& selected, UnityEngine::Transform*, RenderContext& ctx){
                 getLogger().debug("Dropdowns are cool %s", selected.c_str());
-                set->text = "Dropdowns are coeaweol!" + selected;
-                auto list = set->values.getData();
+                set.text = "Dropdowns are coeaweol!" + selected;
+                auto list = set.values.getData();
                 list.emplace_back(std::to_string(list.size()));
-                set->values = list;
-                set->update(ctx);
+                set.values = list;
+                set.update(ctx);
             }, {"value1", "value2", "some val", "value3"}),
 
             HoverHint("hintee", Text("hello from other world!")),
             HoverHint("another hintee", Text("this is cooler!!")),
-            Button("Click me!", [](Button* button, UnityEngine::Transform* parentTransform, RenderContext& ctx) {
+            Button("Click me!", [](Button& button, UnityEngine::Transform* parentTransform, RenderContext& ctx) {
                 static bool clicked = false;
                 static Text newText("New text!");
                 static int count = 0;
 
                 if (!clicked) {
                     clicked = true;
-                    detail::renderSingle(newText, ctx);
                 } else {
                     count++;
                     newText.text = "someOtherText" + std::to_string(count);
                 }
+                detail::renderSingle(newText, ctx);
 
                 // Update button text
-                button->text = "Clicked: " + std::to_string(count);
-                button->update(ctx);
+                button.text = "Clicked: " + std::to_string(count);
+                button.update(ctx);
             })
     );
 }
@@ -206,7 +197,13 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
 
     getLogger().info("DidActivate: %p, %d, %d, %d", self, firstActivation, addedToHierarchy, screenSystemEnabling);
 
-    RenderContext loadingCtx(self->get_transform());
+    static RenderContext loadingCtx(self->get_transform());
+    static RenderContext ctx(self->get_transform());
+
+    // Image has to be loaded on main thread
+    // When passing this to a container, it will take ownership, so we don't need to call delete
+    static auto tacoImage = TacoImage({128, 128});
+
     static UnityEngine::Transform* loadingViewTransform;
     if (firstActivation) {
         // keep these pointers alive so the lambdas can capture them. These would usually be instance fields in a ViewCoordinator
@@ -217,22 +214,19 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
             loadingViewTransform = HandleLoadingView(loadingCtx, loaded);
         }
 
-        // Image has to be loaded on main thread
-        // When passing this to a container, it will take ownership, so we don't need to call delete
-        static auto tacoImage = TacoImage({128, 128});
+
 
 #pragma region FullyLoadedUI
-        std::thread([loadingCtx, self]{
+        std::thread([]{
             // Simulate slow UI
             std::this_thread::sleep_for(std::chrono::seconds(2));
 
+            static auto defaultView = DefaultView(tacoImage);
 
-
-            QuestUI::MainThreadScheduler::Schedule([loadingCtx, self]() mutable {
+            QuestUI::MainThreadScheduler::Schedule([]() {
                 loaded = true;
                 loadingCtx.destroyTree();
-                RenderContext ctx(self->get_transform());
-                auto defaultView = DefaultView(tacoImage);
+
                 detail::renderSingle(defaultView, ctx);
 
                 // Multiple renders should simply just update, not crash or duplicate.
