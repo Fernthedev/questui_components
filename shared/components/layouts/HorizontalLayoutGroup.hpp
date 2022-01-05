@@ -11,12 +11,22 @@ namespace QUC {
         requires ((renderable<TArgs> && ...))
         struct HorizontalLayoutGroup : Container<TArgs...> {
             HorizontalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
-            auto render(RenderContext& ctx) {
-                // TODO: Cache this properly
-                auto obj = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(&ctx.parentTransform)->get_transform();
-                RenderContext ctx2(obj);
-                Container<TArgs...>::render(ctx2);
-                return obj;
+
+            const Key key;
+
+            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+                auto& horizontalLayout = data.getData<UnityEngine::UI::HorizontalLayoutGroup*>();
+                auto &parent = ctx.parentTransform;
+                if (!horizontalLayout) {
+                    // It's actually EASIER for us to destroy and remake the entire tree instead of changing some elements.
+                    horizontalLayout = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(&parent);
+                }
+
+                RenderContext& childrenCtx = ctx.getChildContext<UnityEngine::UI::HorizontalLayoutGroup>(key, [horizontalLayout]() {
+                    return horizontalLayout->get_transform();
+                });
+                detail::Container<TArgs...>::render(childrenCtx, data);
+                return &childrenCtx.parentTransform;
             }
         };
     }

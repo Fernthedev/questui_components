@@ -11,15 +11,18 @@ namespace QUC {
 //        requires ((!std::is_reference_v<TArgs> && ...) && ((renderable<TArgs> && ...)))
         struct Container {
             std::tuple<TArgs...> children;
+            const Key key;
             Container(TArgs... args) : children(args...) {}
             Container(std::tuple<TArgs...> args) : children(args) {}
 
-            void render(RenderContext& ctx) {
-                QUC::detail::renderTuple(children, ctx);
-            }
 
             [[nodiscard]] std::tuple<TArgs...> clone() const {
                 return QUC::detail::cloneTuple(children);
+            }
+
+
+            void render(RenderContext& ctx, RenderContextChildData& data) {
+                QUC::detail::renderTuple(children, ctx);
             }
         };
     }

@@ -1,64 +1,177 @@
 #pragma once
 
+#include "key.hpp"
+
 #include <concepts>
 #include <tuple>
+#include <any>
 
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Transform.hpp"
 
 namespace QUC {
+    template <typename T>
+    struct PtrWrapper {
+        T ptr;
+    };
+
+    struct RenderContextChildData {
+        std::any childData;
+
+        template<typename T>
+        T& getData() {
+            if (!childData.has_value()) {
+                childData = std::make_any<T>();
+            }
+            return std::any_cast<T &>(childData);
+        }
+    };
+
     struct RenderContext {
+        using ChildContextKey = Key; // 64 bit number
+        using ChildData = Il2CppObject*;
+
         /// @brief The parent transform to render on to.
         UnityEngine::Transform& parentTransform;
-        // TODO: Add a way of performing tree diffs, context to context.
+
         // For now, if we ever need to trigger a rebuild we simply say that we need to on the component side.
         // Alternatively, any time we show a component, we call render, which will generate what we need and set everything accordingly.
         // For now, we will do this, though there are quite a few optimizations we may be able to make in the future.
 
-        constexpr RenderContext(UnityEngine::Transform* ptr) : parentTransform(*ptr) {}
-        constexpr RenderContext(UnityEngine::Transform& ref) : parentTransform(ref) {}
+        RenderContext(UnityEngine::Transform* ptr) : parentTransform(*ptr) {}
+        RenderContext(UnityEngine::Transform& ref) : parentTransform(ref) {}
+
+
+        auto& getChildData(ChildContextKey index) {
+            return dataContext[index];
+        }
+
+#pragma region child Context Clutter
+        // TODO: Figure this out better
+        // maybe not needed
+        template<typename T, typename F = std::function<UnityEngine::Transform*()>>
+        RenderContext& getChildContext(ChildContextKey id, F transform) {
+            auto it = childrenContexts.find(id);
+
+            std::hash<void*> hash;
+            auto klassHash = hash(classof(T*));
+
+            if (it == childrenContexts.end()) {
+                return childrenContexts.try_emplace(id, klassHash, transform()).first->second.second;
+            } else {
+                auto& object = it->second;
+
+                auto const& klassHashObject = object.first;
+                auto& data = object.second;
+
+
+
+                if (klassHash == klassHashObject) {
+                    return data;
+                }
+
+                if (data.parentTransform.m_CachedPtr) {
+                    // Destroy old context tree
+                    UnityEngine::Object::Destroy(data.parentTransform.get_gameObject());
+                }
+
+                return childrenContexts.try_emplace(id, klassHash, transform()).first->second.second;
+            }
+        }
+
+        void destroyChildContext(ChildContextKey id) {
+            auto contextIt = childrenContexts.find(id);
+            if (contextIt != childrenContexts.end()) {
+                auto& context = contextIt->second;
+                auto const& data = context.second;
+                if (data.parentTransform.m_CachedPtr) {
+                    // Destroy old context tree
+                    UnityEngine::Object::Destroy(data.parentTransform.get_gameObject());
+                }
+
+                childrenContexts.erase(contextIt);
+            }
+        }
+
+#pragma endregion
+
+        void destroyTree() {
+            if (parentTransform.m_CachedPtr)
+                UnityEngine::Object::Destroy(parentTransform.get_gameObject());
+        }
+
+
+    private:
+//        template<typename InnerData>
+//        struct RenderContextData {
+//            // https://stackoverflow.com/a/994368/9816000
+//            const size_t klassHash;
+//            InnerData data;
+//
+//            template<typename T>
+//            requires (std::is_convertible_v<T, Il2CppObject*>)
+//            RenderContextData(InnerData const& data) : data(data) {
+//                static auto klass = klassHash = std::hash<T>()(classof(T));
+//            }
+//        };
+
+
+        // TODO: Figure out cleaning unusued keys
+        std::unordered_map<ChildContextKey, RenderContextChildData> dataContext;
+        std::unordered_map<ChildContextKey, std::pair<size_t, RenderContext>> childrenContexts;
     };
 
-    static void DestroyTree(RenderContext& ctx) {
-        UnityEngine::Object::Destroy(ctx.parentTransform.get_gameObject());
-    }
+    template<typename T>
+    concept keyed = std::is_convertible_v<T, const QUC::Key>;
 
     // Allows both copies and references
     template<class T>
     /// @brief A concept for renderable components.
     /// @tparam T The type to check.
-    concept renderable = requires (T t, RenderContext c) {
-        t.render(c);
+    concept renderable = requires (T t, RenderContext c, RenderContextChildData& data) {
+        t.render(c, data);
+    } && requires(T const t) {
+        {t.key} -> keyed;
     };
 
     template<class T, class U>
     concept pointer_type_match = std::is_pointer_v<T> && std::is_convertible_v<T, U>;
 
     template<class T, class U>
-    concept renderable_return = requires (T t, RenderContext c) {
-        {t.render(c)} -> pointer_type_match<U>;
+    concept renderable_return = requires (T t, RenderContext c, RenderContextChildData& data) {
+        {t.render(c, data)} -> pointer_type_match<U>;
     };
 
     template<class T>
     /// @brief A concept for updatable components.
     /// @tparam T The type to check.
-    concept updatable = requires (T t) {
-        {t.update()};
+    concept updatable = requires (T t, RenderContext c) {
+        t;
+//        {t.update()};
     };
 
     template<class T>
     /// @brief A concept for cloneable components.
     /// @tparam T The type to check.
-    concept cloneable = requires (T const t) {
-        {t.clone()} -> std::same_as<T>;
+    concept cloneable = requires (T t, RenderContext c) {
+        t;
+//        {t.clone()} -> std::same_as<T>;
     };
 
     namespace detail {
+        template<class T>
+        requires (renderable<T>)
+        static constexpr auto renderSingle(T& child, RenderContext& ctx) {
+            auto& childData = ctx.getChildData(child.key);
+            return child.render(ctx, childData);
+        }
+
         template<size_t idx = 0, class... TArgs>
         requires ((renderable<TArgs> && ...))
         static constexpr void renderTuple(std::tuple<TArgs...>& args, RenderContext& ctx) {
             if constexpr (idx < sizeof...(TArgs)) {
-                std::get<idx>(args).render(ctx);
+                auto& child = std::get<idx>(args);
+                renderSingle(child, ctx); // render child
                 renderTuple<idx + 1>(args, ctx);
             }
         }

@@ -33,48 +33,29 @@ namespace QUC {
         Sombrero::FastVector2 anchoredPosition; // TODO: Const-ify
         Sombrero::FastVector2 sizeDelta; // TODO: Const-ify
 
+        const Key key;
+
         Text(std::string_view t = "", bool enabled_ = true, std::optional<Sombrero::FastColor> c = std::nullopt, float fontSize_ = 4, bool italic_ = true, UnityEngine::Vector2 anch = {0.0f, 0.0f}, UnityEngine::Vector2 sd = {60.0f, 10.0f})
             : text(t), enabled(enabled_), color(c), fontSize(fontSize_), italic(italic_), anchoredPosition(anch), sizeDelta(sd) {}
 
-        UnityEngine::Transform* render(RenderContext& ctx) {
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& textComp = data.getData<TMPro::TextMeshProUGUI*>();
             auto& parent = ctx.parentTransform;
             // Recreating our own is not very bueno... ASSUMING we can avoid it, which we should be able to.
             if (textComp) {
                 // Rewrite our existing text instance instead of making a new one
-                assign();
+                assign(textComp);
             } else {
                 textComp = QuestUI::BeatSaberUI::CreateText(&parent, text.getData(), *italic, anchoredPosition,
                                                             sizeDelta);
 
-                textComp->set_fontSize(fontSize.getData());
-                if (color) {
-                    textComp->set_color(**color);
-                }
 
-                auto rectTransform = textComp->get_rectTransform();
 
-                rectTransform->set_anchoredPosition(anchoredPosition);
-                rectTransform->set_sizeDelta(sizeDelta);
-                rectTransform->set_anchorMin(UnityEngine::Vector2(0.5f, 0.5f));
-                rectTransform->set_anchorMax(UnityEngine::Vector2(0.5f, 0.5f));
-
-                textComp->set_richText(true);
-
-                assign<true>();
+                assign<true>(textComp);
             }
             return textComp->get_transform();
         }
 
-        inline void update() {
-            CRASH_UNLESS(textComp);
-            assign<false>();
-        }
-
-        [[nodiscard]] Text clone() const {
-            Text clone(*this);
-            clone.textComp = nullptr;
-            return clone;
-        }
 
 
 #pragma region internal
@@ -83,7 +64,20 @@ namespace QUC {
                 anchoredPosition(textComp->get_rectTransform()->get_anchoredPosition()),
                 sizeDelta(textComp->get_rectTransform()->get_sizeDelta()) {
             CRASH_UNLESS(textComp);
-            this->textComp = textComp;
+
+            text = to_utf8(csstrtostr(textComp->get_text()));
+            italic = text.getData().starts_with("<i>") && text.getData().ends_with("</i>");
+            fontSize = textComp->get_fontSize();
+            enabled = textComp->get_enabled();
+            color = textComp->get_color();
+        }
+
+        void copyFrom(TMPro::TextMeshProUGUI* textComp) {
+            CRASH_UNLESS(textComp);
+
+            anchoredPosition = textComp->get_rectTransform()->get_anchoredPosition();
+            sizeDelta = textComp->get_rectTransform()->get_sizeDelta();
+
 
             text = to_utf8(csstrtostr(textComp->get_text()));
             italic = text.getData().starts_with("<i>") && text.getData().ends_with("</i>");
@@ -93,10 +87,8 @@ namespace QUC {
         }
 
     protected:
-        WeakPtrGO<TMPro::TextMeshProUGUI> textComp;
-
         template<bool created = false>
-        void assign() {
+        void assign(TMPro::TextMeshProUGUI* textComp) {
             CRASH_UNLESS(textComp);
             if (enabled) {
                 textComp->set_enabled(*enabled);
@@ -135,6 +127,24 @@ namespace QUC {
 
                     color.clear();
                 }
+            }
+
+            if constexpr (created) {
+                textComp->set_fontSize(fontSize.getData());
+                fontSize.clear();
+                if (*color) {
+                    textComp->set_color(**color);
+                }
+                color.clear();
+
+                auto rectTransform = textComp->get_rectTransform();
+
+                rectTransform->set_anchoredPosition(anchoredPosition);
+                rectTransform->set_sizeDelta(sizeDelta);
+                rectTransform->set_anchorMin(UnityEngine::Vector2(0.5f, 0.5f));
+                rectTransform->set_anchorMax(UnityEngine::Vector2(0.5f, 0.5f));
+
+                textComp->set_richText(true);
             }
         }
 

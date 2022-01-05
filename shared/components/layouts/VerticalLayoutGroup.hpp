@@ -8,13 +8,23 @@ namespace QUC {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
         struct VerticalLayoutGroup : Container<TArgs...> {
+            const Key key;
+
             VerticalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
-            auto render(RenderContext& ctx) {
-                // TODO: Cache this properly
-                auto obj = QuestUI::BeatSaberUI::CreateVerticalLayoutGroup(&ctx.parentTransform)->get_transform();
-                RenderContext ctx2(obj);
-                Container<TArgs...>::render(ctx2);
-                return obj;
+
+            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+                auto& viewLayout = data.getData<UnityEngine::UI::VerticalLayoutGroup*>();
+                auto &parent = ctx.parentTransform;
+                if (!viewLayout) {
+                    // It's actually EASIER for us to destroy and remake the entire tree instead of changing some elements.
+                    viewLayout = QuestUI::BeatSaberUI::CreateVerticalLayoutGroup(&parent);
+                }
+
+                RenderContext& childrenCtx = ctx.getChildContext<UnityEngine::UI::VerticalLayoutGroup>(key, [viewLayout]() {
+                    return viewLayout->get_transform();
+                });
+                detail::Container<TArgs...>::render(childrenCtx, data);
+                return &childrenCtx.parentTransform;
             }
         };
     }

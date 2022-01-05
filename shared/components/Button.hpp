@@ -16,6 +16,13 @@ namespace UnityEngine::UI {
 
 namespace QUC {
     struct Button {
+    private:
+        struct RenderButtonData {
+            UnityEngine::UI::Button* button;
+            TMPro::TextMeshProUGUI* buttonText;
+        };
+    public:
+
         HeldData<std::string> text;
         HeldData<bool> enabled;
         HeldData<bool> interactable;
@@ -24,43 +31,51 @@ namespace QUC {
         const UnityEngine::Vector2 sizeDelta;
         const std::string buttonTemplate;
 
+        const Key key;
+
         template<class F>
         Button(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, UnityEngine::Vector2 anch = {}, UnityEngine::Vector2 sz = {}, std::string buttonTemplate_ = "")
             : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(std::move(buttonTemplate_)), click(callable) {}
-        auto render(RenderContext& ctx) {
-            // TODO: Cache this for avoiding tree reparses
+
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& buttonData = data.getData<RenderButtonData>();
             auto parent = &ctx.parentTransform;
 
+            auto& button = buttonData.button;
             if (!button) {
-                std::function<void()> callback = [this, parent]{
-                    click(this, parent);
+                std::function<void()> callback = [this, parent, &ctx]{
+                    click(this, parent, ctx);
                 };
 
                 button = QuestUI::BeatSaberUI::CreateUIButton(parent, *text, buttonTemplate, anchoredPosition,
                                                               sizeDelta, callback);
-                assign<true>();
+                assign<true>(buttonData);
             } else {
-                assign<false>();
+                assign<false>(buttonData);
             }
 
             return button->get_transform();
         }
 
-        void update() {
-            assign<false>();
+        void update(RenderContext& ctx) {
+            auto& data = ctx.getChildData(key);
+            auto& buttonData = data.getData<RenderButtonData>();
+
+            assign<false>(buttonData);
         }
 
         [[nodiscard]] Button clone() const {
             Button clone(*this);
-            clone.button = nullptr;
-            clone.buttonText = nullptr;
 
             return clone;
         }
 
     protected:
         template<bool created = false>
-        void assign() {
+        void assign(RenderButtonData& buttonData) {
+            auto& button = buttonData.button;
+            auto& buttonText = buttonData.buttonText;
+
             if (enabled) {
                 button->set_enabled(*enabled);
                 enabled.clear();
@@ -92,12 +107,8 @@ namespace QUC {
                 }
             }
         }
-
-        private:
-        WeakPtrGO<UnityEngine::UI::Button> button;
-        WeakPtrGO<TMPro::TextMeshProUGUI> buttonText;
-
-        std::function<void(Button* button, UnityEngine::Transform* transform)> click;
+    private:
+        std::function<void(Button* button, UnityEngine::Transform* transform, RenderContext& ctx)> click;
     };
     static_assert(renderable<Button>);
     static_assert(cloneable<Button>);

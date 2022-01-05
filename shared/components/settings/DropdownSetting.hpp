@@ -16,14 +16,23 @@ namespace QUC {
 
     template<size_t sz, typename Container = std::array<std::string, sz>>
     struct DropdownSetting {
+    protected:
+        struct RenderDropdownData {
+            HMUI::SimpleTextDropdown* dropdown;
+            TMPro::TextMeshProUGUI* uiText;
+        };
+    public:
+
 //        static_assert(renderable<DropdownSetting>);
-        using OnCallback = std::function<void(DropdownSetting *, std::string const&, UnityEngine::Transform *)>;
+        using OnCallback = std::function<void(DropdownSetting *, std::string const&, UnityEngine::Transform *, RenderContext& ctx)>;
         HeldData<std::string> text;
         OnCallback callback;
         HeldData<bool> enabled;
         HeldData<bool> interactable;
         HeldData<std::string> value;
         HeldData<Container> values;
+
+        const Key key;
 
         template<class F>
         constexpr DropdownSetting(std::string_view txt, std::string_view current, F &&callable,
@@ -32,35 +41,39 @@ namespace QUC {
                 : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(current),
                   values(v) {}
 
-        UnityEngine::Transform* render(RenderContext &ctx) {
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& settingData = data.getData<RenderDropdownData>();
+            auto& dropdown = settingData.dropdown;
             // TODO: Cache this properly
             auto parent = &ctx.parentTransform;
             if (!dropdown) {
                 dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, *text, *value, *values,
-                                                                [this, parent](std::string_view val) {
+                                                                [this, parent, &ctx](std::string_view val) {
                                                                     value = val;
                                                                     value.clear();
-                                                                    callback(this, value.getData(), parent);
+                                                                    callback(this, value.getData(), parent, ctx);
                                                                 });
-                assign<true>();
+                assign<true>(settingData);
             } else {
-                update();
+                assign<false>(settingData);
             }
 
 
             return dropdown->get_transform();
         }
 
-        inline void update() {
-            assign<false>();
+        void update(RenderContext& ctx) {
+            auto& data = ctx.getChildData(key);
+            auto& renderDropdownData = data.getData<RenderDropdownData>();
+
+            assign<false>(renderDropdownData);
         }
 
     protected:
-        WeakPtrGO<HMUI::SimpleTextDropdown> dropdown;
-        WeakPtrGO<TMPro::TextMeshProUGUI> uiText;
-
         template<bool created>
-        void assign() {
+        void assign(RenderDropdownData& renderDropdownData) {
+            auto& dropdown = renderDropdownData.dropdown;
+            auto& uiText = renderDropdownData.uiText;
             CRASH_UNLESS(dropdown);
 
             if (enabled) {

@@ -12,45 +12,51 @@
 
 namespace QUC {
     struct StringSetting {
-        using OnCallback = std::function<void(StringSetting*, std::string const&, UnityEngine::Transform*)>;
+        using OnCallback = std::function<void(StringSetting*, std::string const&, UnityEngine::Transform*, RenderContext& ctx)>;
         HeldData<std::string> text;
         OnCallback callback;
         HeldData<bool> enabled;
         HeldData<bool> interactable;
         HeldData<std::string> value;
-        UnityEngine::Vector2 anchoredPosition;
-        UnityEngine::Vector3 keyboardPositionOffset;
+        const UnityEngine::Vector2 anchoredPosition;
+        const UnityEngine::Vector3 keyboardPositionOffset;
+
+        const Key key;
 
         template<class F>
         constexpr StringSetting(std::string_view txt, F&& callable, std::string_view currentValue = "", bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {}, UnityEngine::Vector3 offt = {})
             : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), anchoredPosition(anch), keyboardPositionOffset(offt) {}
 
-        auto render(RenderContext& ctx) {
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& inputFieldView = data.getData<HMUI::InputFieldView*>();
             // TODO: Cache this properly
             auto parent = &ctx.parentTransform;
             if (!inputFieldView) {
                 inputFieldView = QuestUI::BeatSaberUI::CreateStringSetting(parent, *text, *value, anchoredPosition,
                                                                            keyboardPositionOffset,
-                                                                           [this, parent](std::string_view val) {
+                                                                           [this, parent, &ctx](std::string_view val) {
                                                                                value = val;
                                                                                value.clear();
-                                                                               callback(this, value.getData(), parent);
+                                                                               callback(this, value.getData(), parent, ctx);
                                                                            });
-                assign<true>();
+                assign<true>(inputFieldView);
             } else {
-                assign<false>();
+                assign<false>(inputFieldView);
             }
 
             return inputFieldView->get_transform();
         }
 
-        inline void update() {
-            assign<false>();
+        void update(RenderContext& ctx) {
+            auto& data = ctx.getChildData(key);
+            auto& inputFieldView = data.getData<HMUI::InputFieldView*>();
+
+            assign<false>(inputFieldView);
         }
 
     private:
         template<bool created>
-        void assign() {
+        void assign(HMUI::InputFieldView* inputFieldView) {
             CRASH_UNLESS(inputFieldView);
             if (enabled) {
                 inputFieldView->set_enabled(*enabled);
@@ -83,8 +89,6 @@ namespace QUC {
                 }
             }
         }
-
-        WeakPtrGO<HMUI::InputFieldView> inputFieldView;
     };
     static_assert(renderable<StringSetting>);
 

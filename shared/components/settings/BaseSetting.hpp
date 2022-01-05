@@ -129,18 +129,19 @@ namespace QUC {
 
         // reference capture should be safe here
         ConfigUtils::ConfigValue<ConfigValueType>& configValue;
-        WeakPtrGO<HMUI::HoverHint> hoverHint;
+        const Key key;
 
 
-        UnityEngine::Transform *render(UnityEngine::Transform *parentTransform) override {
-            SettingType::render(parentTransform);
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& hoverHint = data.getData<HMUI::HoverHint*>();
+            Key parentKey = SettingType::key;
+            auto res = SettingType::render(ctx, ctx.getChildData(parentKey));
 
             if (!configValue.GetHoverHint().empty() && !hoverHint) {
-                hoverHint = QuestUI::BeatSaberUI::AddHoverHint(this->getTransform()->get_gameObject(), configValue.GetHoverHint());
+                hoverHint = QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), configValue.GetHoverHint());
             }
 
-            return this;
-
+            return res;
         };
     };
 #endif

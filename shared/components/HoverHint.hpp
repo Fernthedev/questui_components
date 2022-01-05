@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shared/context.hpp"
+#include "Text.hpp"
 #include <string>
 #include <string_view>
 #include "questui/shared/BeatSaberUI.hpp"
@@ -15,11 +16,15 @@ namespace QUC {
         requires (renderable_return<T, UnityEngine::Transform*>)
         struct HoverHint {
             std::string text;
+            const Key key;
 
             HoverHint(std::string_view txt, T&& arg) : text(txt), child(arg) {}
-            UnityEngine::Transform* render(RenderContext& ctx) {
+
+            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+                auto& hoverHint = data.getData<HMUI::HoverHint*>();
+
                 // First render our child to our parent.
-                auto res = child.render(ctx);
+                auto res = detail::renderSingle<T>(child, ctx);
                 // Now, we know the result is convertible to Transform*, so we can pass that into make hover hint
                 if (!hoverHint)
                     hoverHint = QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), text);
@@ -36,8 +41,6 @@ namespace QUC {
 
             private:
             T child;
-
-            WeakPtrGO<HMUI::HoverHint> hoverHint;
         };
 
         static_assert(renderable<HoverHint<Text>>);

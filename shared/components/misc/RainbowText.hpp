@@ -24,12 +24,13 @@ namespace QUC {
         explicit RainbowText(std::string_view prefix) : Text(prefix) {}
 
     float speed = 1.0f;
+    const Key key;
 
-    UnityEngine::Transform* render(RenderContext& ctx) {
-        auto ret = Text::render(ctx);
+    UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+        auto ret = Text::render(ctx, data);
 
         auto text = ret->GetComponent<TMPro::TextMeshProUGUI*>(); // TODO: Avoid this
-        text->StartCoroutine(reinterpret_cast<System::Collections::IEnumerator *>(custom_types::Helpers::CoroutineHelper::New(rainbowCoroutine(ctx))));
+        text->StartCoroutine(reinterpret_cast<System::Collections::IEnumerator *>(custom_types::Helpers::CoroutineHelper::New(rainbowCoroutine(ctx, data))));
 
         return ret;
     }
@@ -37,7 +38,7 @@ namespace QUC {
     protected:
        std::optional<Sombrero::FastColor> color;
 
-        custom_types::Helpers::Coroutine rainbowCoroutine(RenderContext ctx) {
+        custom_types::Helpers::Coroutine rainbowCoroutine(RenderContext& ctx, RenderContextChildData& data) {
             co_yield nullptr;
 
 #pragma clang diagnostic push
@@ -53,7 +54,7 @@ namespace QUC {
 
                 // Use HSV values to increase H in HSVToRGB. It looks like putting a value greater than 1 will round % 1 it
                 this->color = Sombrero::ColorHSVToRGB(h + UnityEngine::Time::get_deltaTime() * 0.25f * speed, s, v);
-                Text::render(ctx);
+                Text::render(ctx, data);
 
                 co_yield nullptr;
             }

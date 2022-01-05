@@ -14,20 +14,24 @@ namespace QUC {
     struct ScrollableContainer : detail::Container<TArgs...> {
         ScrollableContainer(TArgs... args) : detail::Container<TArgs...>(args...) {}
 
-        UnityEngine::Transform *render(RenderContext &ctx) {
+        const Key key;
+
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& scrollContainer = data.getData<UnityEngine::GameObject*>();
             auto &parent = ctx.parentTransform;
             if (!scrollContainer) {
                 // It's actually EASIER for us to destroy and remake the entire tree instead of changing some elements.
                 scrollContainer = QuestUI::BeatSaberUI::CreateScrollableSettingsContainer(&parent);
             }
 
-            RenderContext childrenCtx(scrollContainer->get_transform());
-            detail::Container<TArgs...>::render(childrenCtx);
+            RenderContext& childrenCtx = ctx.getChildContext<HMUI::ScrollView>(key, [scrollContainer]() {
+                return scrollContainer->get_transform();
+            });
+            detail::Container<TArgs...>::render(childrenCtx, data);
             return &childrenCtx.parentTransform;
         }
-
-    private:
-        WeakPtrGO<UnityEngine::GameObject> scrollContainer;
     };
+
+    static_assert(renderable<ScrollableContainer<Text>>);
 
 }

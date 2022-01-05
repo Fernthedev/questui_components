@@ -20,27 +20,25 @@ namespace QUC {
         const UnityEngine::Vector2 anchoredPosition;
         HeldData<bool> enabled;
         HeldData<UnityEngine::Sprite*> sprite;
+        const Key key;
 
         Image(UnityEngine::Sprite* spr, UnityEngine::Vector2 sd, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool enabled_ = true)
             : sizeDelta(sd), anchoredPosition(anch), enabled(enabled_), sprite(spr) {}
-        
-        auto render(RenderContext& ctx) {
+
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& image = data.getData<HMUI::ImageView*>();
             if (!image) {
                 image = QuestUI::BeatSaberUI::CreateImage(&ctx.parentTransform, *sprite, anchoredPosition, sizeDelta);
-                assign<true>();
+                assign<true>(image);
             } else {
-                assign<false>();
+                assign<false>(image);
             }
             return image->get_transform();
         }
 
-        void update() {
-            assign<false>();
-        }
-
     protected:
         template<bool created = false>
-        void assign() {
+        void assign(HMUI::ImageView* image) {
             CRASH_UNLESS(image);
 
             if (enabled) {
@@ -59,8 +57,6 @@ namespace QUC {
                 }
             }
         }
-
-        WeakPtrGO<HMUI::ImageView> image;
     };
     static_assert(renderable<Image>);
 }

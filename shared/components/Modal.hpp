@@ -57,6 +57,8 @@ namespace QUC {
     requires ((renderable<TArgs> && ...))
     struct Modal : detail::Container<TArgs...>, public ModalWrapper {
 
+        const Key key;
+
         template<class ModalCreateFunc2 = ModalCreateFunc<TArgs...>>
         Modal(ModalCreateFunc2 childrenCallback, ModalCallback callable = nullptr,
               UnityEngine::Vector2 sz = {30.0f, 40.0f}, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool dismiss = true)
@@ -69,7 +71,8 @@ namespace QUC {
         Modal(F callable, std::tuple<TArgs...> children, UnityEngine::Vector2 sz = {30.0f, 40.0f}, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool dismiss = true)
             : detail::Container<TArgs...>(children), ModalWrapper(sz, anch, dismiss, callable) {}
 
-        auto render(RenderContext& ctx) {
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            innerModal = data.getData<HMUI::ModalView*>();
             // if inner modal is already created, skip recreating and forward render calls
             if (!innerModal) {
                 std::function<void(HMUI::ModalView*)> cbk([this](HMUI::ModalView* arg) {
@@ -83,10 +86,12 @@ namespace QUC {
 
 
             // TODO: If modal is hidden, should we rerender inner comps?
-            RenderContext childrenCtx(innerModal->get_transform());
-            detail::Container<TArgs...>::render(childrenCtx);
+            RenderContext& childrenCtx = ctx.getChildContext<HMUI::ModalView>(key, [this]() {
+                return innerModal->get_transform();
+            });
+            detail::Container<TArgs...>::render(childrenCtx, data);
 
-            return childrenCtx.parentTransform;
+            return &childrenCtx.parentTransform;
         }
 
 

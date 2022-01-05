@@ -10,7 +10,14 @@
 
 namespace QUC {
     struct IncrementSetting {
-        using OnCallback = std::function<void(IncrementSetting*, float, UnityEngine::Transform*)>;
+    private:
+        struct RenderIncrementSetting {
+            QuestUI::IncrementSetting* setting;
+            TMPro::TextMeshProUGUI* textSetting;
+        };
+    public:
+
+        using OnCallback = std::function<void(IncrementSetting*, float, UnityEngine::Transform*, RenderContext& ctx)>;
         HeldData<std::string> text;
         OnCallback callback;
         HeldData<bool> enabled;
@@ -20,13 +27,16 @@ namespace QUC {
         HeldData<float> increment;
         HeldData<std::optional<float>> min;
         HeldData<std::optional<float>> max;
-        UnityEngine::Vector2 anchoredPosition;
+        const UnityEngine::Vector2 anchoredPosition;
+        const Key key;
 
         template<class F>
         IncrementSetting(std::string_view txt, F&& callable, float currentValue = 0.0f, int decimals_ = 1, float increment = 1.0f, std::optional<float> min_ = std::nullopt, std::optional<float> max_ = std::nullopt,  bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {})
             : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), decimals(decimals_), min(min_), max(max_), anchoredPosition(anch) {}
 
-        auto render(RenderContext& ctx) {
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& settingData = data.getData<RenderIncrementSetting>();
+            auto& setting = settingData.setting;
             // TODO: Cache this properly
             auto parent = &ctx.parentTransform;
             if (!setting) {
@@ -41,15 +51,15 @@ namespace QUC {
                         min.getData().value_or(0.0f),
                         max.getData().value_or(0.0f),
                         anchoredPosition,
-                        std::function<void(float)>([this, parent](float val) {
+                        std::function<void(float)>([this, parent, &ctx](float val) {
                             value = val;
                             value.clear();
-                            callback(this, val, parent);
+                            callback(this, val, parent, ctx);
                         }));
 
-                assign<true>();
+                assign<true>(settingData);
             } else {
-                assign<false>();
+                assign<false>(settingData);
             }
 
 
@@ -57,13 +67,18 @@ namespace QUC {
             return setting->get_transform();
         }
 
-        void update() {
-            assign<false>();
+        void update(RenderContext& ctx) {
+            auto& data = ctx.getChildData(key);
+            auto& inputFieldView = data.getData<RenderIncrementSetting>();
+
+            assign<false>(inputFieldView);
         }
 
     protected:
         template<bool created = false>
-        void assign() {
+        void assign(RenderIncrementSetting& renderIncrementSetting) {
+            auto setting = renderIncrementSetting.setting;
+            auto& textSetting = renderIncrementSetting.textSetting;
             CRASH_UNLESS(setting);
 
             if (enabled) {
@@ -119,8 +134,6 @@ namespace QUC {
             }
         }
 
-        WeakPtrGO<QuestUI::IncrementSetting> setting;
-        WeakPtrGO<TMPro::TextMeshProUGUI> textSetting;
     };
 
 #if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")

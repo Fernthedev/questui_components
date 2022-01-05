@@ -14,12 +14,22 @@ namespace QUC {
         struct ModifierContainer : Container<TArgs...> {
             static_assert(renderable<ModifierContainer<TArgs...>>);
             ModifierContainer(TArgs... args) : Container<TArgs...>(args...) {}
-            auto render(RenderContext& ctx) {
-                // TODO: Cache this properly
-                auto obj = QuestUI::BeatSaberUI::CreateModifierContainer(&ctx.parentTransform)->get_transform();
-                RenderContext ctx2(obj);
-                Container<TArgs...>::render(ctx2);
-                return obj;
+
+            const Key key;
+
+            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+                auto& modifierLayout = data.getData<UnityEngine::UI::VerticalLayoutGroup*>();
+                auto &parent = ctx.parentTransform;
+                if (!modifierLayout) {
+                    // It's actually EASIER for us to destroy and remake the entire tree instead of changing some elements.
+                    modifierLayout = QuestUI::BeatSaberUI::CreateModifierContainer(&parent);
+                }
+
+                RenderContext& childrenCtx = ctx.getChildContext<UnityEngine::UI::VerticalLayoutGroup>(key, [modifierLayout]() {
+                    return modifierLayout->get_transform();
+                });
+                detail::Container<TArgs...>::render(childrenCtx, data);
+                return &childrenCtx.parentTransform;
             }
         };
     }
