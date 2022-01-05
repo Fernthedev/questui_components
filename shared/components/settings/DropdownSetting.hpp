@@ -47,14 +47,14 @@ namespace QUC {
             // TODO: Cache this properly
             auto parent = &ctx.parentTransform;
             if (!dropdown) {
-                dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, *text, *value, *values,
-                                                                [callback = this->callback, value = this->value, parent, &ctx, this](std::string_view val) mutable {
-                                                                    value = val;
-                                                                    value.clear();
+                auto cbk = [callback = this->callback, parent, &ctx, this](std::string_view val) mutable {
+                    value = val;
+                    value.clear();
 
-                                                                    if (callback)
-                                                                    callback(*this, value.getData(), parent, ctx);
-                                                                });
+                    if (callback)
+                        callback(*this, value.getData(), parent, ctx);
+                };
+                dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, *text, *value, *values, cbk);
                 assign<true>(settingData);
             } else {
                 assign<false>(settingData);
@@ -127,8 +127,10 @@ namespace QUC {
                             selectedIndex = i;
                         }
                         if (list)
-                            list->Add(il2cpp_utils::newcsstr(*value));
+                            list->Add(il2cpp_utils::newcsstr(dropdownValue));
                     }
+
+                    dropdown->SetTexts(reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<Il2CppString*>*>(list));
 
                     if (dropdown->selectedIndex != selectedIndex)
                         dropdown->SelectCellWithIdx(selectedIndex);

@@ -59,11 +59,7 @@ namespace QUC {
             if (it == childrenContexts.end()) {
                 return childrenContexts.try_emplace(id, klassHash, transform()).first->second.second;
             } else {
-                auto& object = it->second;
-
-                auto const& klassHashObject = object.first;
-                auto& data = object.second;
-
+                auto& [klassHashObject, data] = it->second;
 
 
                 if (klassHash == klassHashObject) {

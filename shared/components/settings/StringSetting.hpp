@@ -32,14 +32,15 @@ namespace QUC {
             // TODO: Cache this properly
             auto parent = &ctx.parentTransform;
             if (!inputFieldView) {
+                auto cbk = [callback = this->callback, parent, &ctx, this](std::string_view val)mutable {
+                    value = val;
+                    value.clear();
+                    if (callback)
+                        callback(*this, value.getData(), parent, ctx);
+                };
                 inputFieldView = QuestUI::BeatSaberUI::CreateStringSetting(parent, *text, *value, anchoredPosition,
                                                                            keyboardPositionOffset,
-                                                                           [callback = this->callback, value = this->value, parent, &ctx, this](std::string_view val)mutable {
-                                                                               value = val;
-                                                                               value.clear();
-                                                                               if (callback)
-                                                                                   callback(*this, value.getData(), parent, ctx);
-                                                                           });
+                                                                           cbk);
                 assign<true>(inputFieldView);
             } else {
                 assign<false>(inputFieldView);

@@ -18,24 +18,23 @@ namespace QUC {
 
     struct ModalWrapper {
     public:
-        using ModalCallback = std::function<void(ModalWrapper*, HMUI::ModalView*)>;
+        using ModalCallback = std::function<void(ModalWrapper *, HMUI::ModalView *)>;
 
         const std::optional<UnityEngine::Vector2> sizeDelta;
         const std::optional<UnityEngine::Vector2> anchoredPosition;
         const bool dismissOnBlockerClicked;
         const ModalCallback callback;
-        const std::shared_ptr<HMUI::ModalView*> modalViewPtr = std::make_shared<HMUI::ModalView*>();
 
-        ModalWrapper(const std::optional<UnityEngine::Vector2> &sizeDelta, const std::optional<UnityEngine::Vector2> &anchoredPosition,
+        ModalWrapper(const std::optional<UnityEngine::Vector2> &sizeDelta,
+                     const std::optional<UnityEngine::Vector2> &anchoredPosition,
                      bool dismissOnBlockerClicked, ModalCallback callback = {}) : sizeDelta(sizeDelta),
-                                                                                    anchoredPosition(anchoredPosition),
-                                                                                    dismissOnBlockerClicked(
-                                                                                            dismissOnBlockerClicked),
-                                                                                    callback(std::move(callback)) {}
+                                                                                  anchoredPosition(anchoredPosition),
+                                                                                  dismissOnBlockerClicked(
+                                                                                          dismissOnBlockerClicked),
+                                                                                  callback(std::move(callback)) {}
 
         void dismiss() {
-            if (!innerModal)
-                innerModal = *modalViewPtr;
+            auto innerModal = *modalViewPtr;
 
             if (!innerModal)
                 throw std::runtime_error("Not rendered yet");
@@ -44,8 +43,7 @@ namespace QUC {
         }
 
         void show() {
-            if (!innerModal)
-                innerModal = *modalViewPtr;
+            auto innerModal = *modalViewPtr;
 
             if (!innerModal)
                 throw std::runtime_error("Not rendered yet");
@@ -54,35 +52,38 @@ namespace QUC {
         }
 
     protected:
-        WeakPtrGO<HMUI::ModalView> innerModal;
+        const std::shared_ptr<HMUI::ModalView *> modalViewPtr = std::make_shared<HMUI::ModalView *>();
     };
 
     template<class... TArgs>
-    using ModalCreateFunc = std::function<std::tuple<TArgs...>(ModalWrapper& modal)>;
+    using ModalCreateFunc = std::function<std::tuple<TArgs...>(ModalWrapper &modal)>;
 
-    template<class... TArgs>
-    requires ((renderable<TArgs> && ...))
+
+    template<class... TArgs> requires ((renderable<TArgs>
+    && ...))
+
     struct Modal : detail::Container<TArgs...>, public ModalWrapper {
 
         const Key key;
 
         template<class ModalCreateFunc2 = ModalCreateFunc<TArgs...>>
         Modal(ModalCreateFunc2 childrenCallback, ModalCallback callable = nullptr,
-              std::optional<UnityEngine::Vector2> sz = std::nullopt, std::optional<UnityEngine::Vector2> anch = std::nullopt, bool dismiss = true)
-                : detail::Container<TArgs...>(childrenCallback(*this)),
-                        ModalWrapper(sz, anch, dismiss, callable)
-                        {}
+              std::optional<UnityEngine::Vector2> sz = std::nullopt,
+              std::optional<UnityEngine::Vector2> anch = std::nullopt, bool dismiss = true)
+                : ModalWrapper(sz, anch, dismiss, callable),
+                  detail::Container<TArgs...>(childrenCallback(*this)) {}
 
         // TODO: How to make children a second parameter with the sizes default?
         template<class F>
-        Modal(F callable, std::tuple<TArgs...> children, std::optional<UnityEngine::Vector2> sz = std::nullopt, std::optional<UnityEngine::Vector2> anch = std::nullopt, bool dismiss = true)
-            : detail::Container<TArgs...>(children), ModalWrapper(sz, anch, dismiss, callable) {}
+        Modal(F callable, std::tuple<TArgs...> children, std::optional<UnityEngine::Vector2> sz = std::nullopt,
+              std::optional<UnityEngine::Vector2> anch = std::nullopt, bool dismiss = true)
+                : ModalWrapper(sz, anch, dismiss, callable), detail::Container<TArgs...>(children) {}
 
-        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
-            innerModal = data.getData<HMUI::ModalView*>();
+        UnityEngine::Transform *render(RenderContext &ctx, RenderContextChildData &data) {
+            auto &innerModal = data.getData<HMUI::ModalView *>();
             // if inner modal is already created, skip recreating and forward render calls
             if (!innerModal) {
-                std::function<void(HMUI::ModalView*)> cbk([callback = this->callback, this](HMUI::ModalView* arg) {
+                std::function<void(HMUI::ModalView *)> cbk([callback = this->callback, this](HMUI::ModalView *arg) {
                     if (callback)
                         callback(this, arg);
                 });
@@ -90,21 +91,24 @@ namespace QUC {
                 // TODO: Add proper tree recaching on parent context.
                 if (sizeDelta) {
                     if (anchoredPosition) {
-                        innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, *sizeDelta, *anchoredPosition, cbk,
+                        innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, *sizeDelta,
+                                                                       *anchoredPosition, cbk,
                                                                        dismissOnBlockerClicked);
                     } else {
-                        innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, *sizeDelta, cbk, dismissOnBlockerClicked);
+                        innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, *sizeDelta, cbk,
+                                                                       dismissOnBlockerClicked);
                     }
                 } else {
-                    innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, cbk, dismissOnBlockerClicked);
+                    innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, cbk,
+                                                                   dismissOnBlockerClicked);
                 }
 
-                *modalViewPtr.get() = innerModal.getInner();
+                *modalViewPtr.get() = innerModal;
             }
 
 
             // TODO: If modal is hidden, should we rerender inner comps?
-            RenderContext& childrenCtx = ctx.getChildContext<HMUI::ModalView>(key, [this]() {
+            RenderContext &childrenCtx = ctx.getChildContext<HMUI::ModalView>(key, [this, innerModal]() {
                 return innerModal->get_transform();
             });
             detail::Container<TArgs...>::render(childrenCtx, data);
@@ -114,18 +118,24 @@ namespace QUC {
 
 
         [[nodiscard]] Modal clone() const {
-            Modal m(this);
+            Modal m(ModalWrapper(this));
             m.innerModal = nullptr;
+
             m.children = detail::Container<TArgs...>::clone();
             return m;
         }
     };
 
     template<class... TArgs>
-    Modal(ModalCreateFunc<TArgs...> childrenCallback) -> Modal<typename std::result_of_t<ModalCreateFunc<TArgs...>>>;
+    Modal(ModalCreateFunc<TArgs...>
+    childrenCallback) ->
+    Modal<typename std::result_of_t<ModalCreateFunc<TArgs...>>>;
 
     template<class... TArgs>
-    Modal(std::tuple<TArgs...>(*)(QUC::ModalWrapper &)) -> Modal<TArgs...>;
+    Modal(std::tuple<TArgs...>(*)
+    (QUC::ModalWrapper &)) ->
+    Modal<TArgs...>;
+
 
 //    template<class... TArgs>
 //    requires ((renderable<TArgs> && ...))
@@ -142,5 +152,5 @@ namespace QUC {
 //    }
 
     static_assert(renderable<Modal<Text>>);
-    static_assert(cloneable<Modal<Text>>);
+    static_assert(cloneable < Modal < Text >> );
 }

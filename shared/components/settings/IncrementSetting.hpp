@@ -32,14 +32,23 @@ namespace QUC {
 
         template<class F>
         IncrementSetting(std::string_view txt, F&& callable, float currentValue = 0.0f, int decimals_ = 1, float increment = 1.0f, std::optional<float> min_ = std::nullopt, std::optional<float> max_ = std::nullopt,  bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {})
-            : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), decimals(decimals_), min(min_), max(max_), anchoredPosition(anch) {}
+            : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), increment(increment), decimals(decimals_), min(min_), max(max_), anchoredPosition(anch) {}
 
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
-            auto& settingData = data.getData<RenderIncrementSetting>();
-            auto& setting = settingData.setting;
+            auto &settingData = data.getData<RenderIncrementSetting>();
+            auto &setting = settingData.setting;
             // TODO: Cache this properly
             auto parent = &ctx.parentTransform;
             if (!setting) {
+                auto cbk = std::function<void(float)>(
+                        [callback = this->callback, parent, &ctx, this](float val) mutable {
+                            value = val;
+                            value.clear();
+
+                            if (callback)
+                                callback(*this, val, parent, ctx);
+                        });
+
                 setting = QuestUI::BeatSaberUI::CreateIncrementSetting(
                         parent,
                         *text,
@@ -51,21 +60,12 @@ namespace QUC {
                         min.getData().value_or(0.0f),
                         max.getData().value_or(0.0f),
                         anchoredPosition,
-                        std::function<void(float)>(
-                                [callback = this->callback, value = this->value, parent, &ctx, this](
-                                        float val) mutable {
-                                    value = val;
-                                    value.clear();
-
-                                    if (callback)
-                                    callback(*this, val, parent, ctx);
-                                }));
+                        cbk);
 
                 assign<true>(settingData);
             } else {
                 assign<false>(settingData);
             }
-
 
 
             return setting->get_transform();
@@ -117,23 +117,18 @@ namespace QUC {
                 }
                 if (max) {
                     setting->MaxValue = max.getData().value_or(0);
+                    setting->HasMax = static_cast<bool>(max.getData());
                     max.clear();
                 }
                 if (min) {
                     setting->MinValue = min.getData().value_or(0);
-                    min.clear();
-                }
-
-                if (max) {
-                    setting->HasMax = static_cast<bool>(max.getData());
-                }
-
-                if (min) {
                     setting->HasMin = static_cast<bool>(min.getData());
+                    min.clear();
                 }
 
                 if (value) {
                     setting->CurrentValue = *value;
+                    value.clear();
                 }
             }
         }

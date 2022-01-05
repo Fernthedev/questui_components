@@ -105,10 +105,13 @@ auto tuple(QUC::ModalWrapper& modal) {
     using namespace QUC;
     return std::tuple(
             HorizontalLayoutGroup(
-                    Text("Look at me!"),
-                    Button("Close!", [&modal](Button& button, UnityEngine::Transform *, RenderContext& ctx) {
-                        modal.dismiss();
-                    })
+                    VerticalLayoutGroup(
+                            Text("Look at me!"),
+                            Button("Close!",
+                                   [&modal](Button &button, UnityEngine::Transform *, RenderContext &ctx)mutable {
+                                       modal.dismiss();
+                                   })
+                    )
             )
     );
 }
@@ -123,15 +126,21 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
     // C++ can't deduct the type of Modal from the lambda since Modal<> can't accept children of std::tuple<blah, blah, blah>()
     // and C++ won't deduct the type based on constructor arguments from the lambda return type
     // C++ life is sad
-    Modal modal(tuple);
+    static Modal modal(tuple);
 
     return ScrollableContainer(
-//            HoverHint("hint", Text("hi!")),
+            HoverHint("hint", Text("hi!")),
             Text(pinkCuteText),
 
-            // TODO: we can create components using lambdas too
             Modal(modal),
-            Button("More info!", [modal](Button& button, UnityEngine::Transform* transform, RenderContext& ctx)mutable{
+            Button("More info!", [](Button& button, UnityEngine::Transform* transform, RenderContext& ctx)mutable{
+//                auto modal = BeatSaberUI::CreateModal(transform);
+//                auto horizontal = BeatSaberUI::CreateHorizontalLayoutGroup(modal->get_transform());
+//                auto vertical = BeatSaberUI::CreateVerticalLayoutGroup(horizontal->get_transform());
+//                auto text = BeatSaberUI::CreateText(vertical->get_transform(), "Ha");
+//                auto buttonT = BeatSaberUI::CreateUIButton(vertical->get_transform(), "t", []{});
+//
+//                modal->Show(true, true, nullptr);
                 modal.show();
             }),
             // Custom component

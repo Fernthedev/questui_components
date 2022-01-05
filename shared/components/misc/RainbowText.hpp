@@ -29,38 +29,36 @@ namespace QUC {
     UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
         auto ret = Text::render(ctx, ctx.getChildData(Text::key));
 
-        auto& coroStarted = data.getData<bool>();
+        auto& text = data.getData<TMPro::TextMeshProUGUI *>();
 
-        if (!coroStarted) {
-            auto text = ret->GetComponent<TMPro::TextMeshProUGUI *>(); // TODO: Avoid this
+        if (!text) {
+            text = ctx.getChildData(Text::key).getData<TMPro::TextMeshProUGUI *>();
             text->StartCoroutine(
                     reinterpret_cast<System::Collections::IEnumerator *>(custom_types::Helpers::CoroutineHelper::New(
                             rainbowCoroutine(ctx, data))));
-            coroStarted = true;
         }
 
         return ret;
     }
 
     protected:
-       std::optional<Sombrero::FastColor> color;
-
         custom_types::Helpers::Coroutine rainbowCoroutine(RenderContext& ctx, RenderContextChildData& data) {
             co_yield nullptr;
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
             while (true) {
-                if (!color) color = UnityEngine::Color(1.0f, 0.0f, 0.0f, 1.0f);
+                if (!color && !*color) color = UnityEngine::Color(1.0f, 0.0f, 0.0f, 1.0f);
 
                 // https://forum.unity.com/threads/solved-rainbow-hue-shift-over-time-c-script.351751/#post-6651745
                 // Assign HSV values to float h, s & v. (Since data.color is stored in RGB)
                 float h, s, v;
 
-                Sombrero::ColorRGBToHSV(color.value(), h, s, v);
+                Sombrero::ColorRGBToHSV(**color, h, s, v);
 
                 // Use HSV values to increase H in HSVToRGB. It looks like putting a value greater than 1 will round % 1 it
                 this->color = Sombrero::ColorHSVToRGB(h + UnityEngine::Time::get_deltaTime() * 0.25f * speed, s, v);
+
                 Text::render(ctx, ctx.getChildData(Text::key));
 
                 co_yield nullptr;

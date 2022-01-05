@@ -72,7 +72,7 @@ namespace QUC {
             color = textComp->get_color();
         }
 
-        void copyFrom(TMPro::TextMeshProUGUI* textComp) {
+        void copyFrom(TMPro::TextMeshProUGUI* textComp, RenderContext& ctx) {
             CRASH_UNLESS(textComp);
 
             auto rectTransform = textComp->get_rectTransform();
@@ -86,6 +86,9 @@ namespace QUC {
             fontSize = textComp->get_fontSize();
             enabled = textComp->get_enabled();
             color = textComp->get_color();
+
+            // avoid creating another text later
+            ctx.getChildData(key).getData<TMPro::TextMeshProUGUI*>() = textComp;
         }
 
     protected:
