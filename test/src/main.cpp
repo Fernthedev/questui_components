@@ -113,11 +113,9 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
 
     Text pinkCuteText("this is cool! Pink Cute!", true, UnityEngine::Color(1.0f, 61.0f / 255.0f, 171.0f / 255.0f, 1.0f));
 
-    // TODO: Allow lambda construction here
-    // We need to figure out how to do type deduction using lambda
-    // C++ can't deduct the type of Modal from the lambda since Modal<> can't accept children of std::tuple<blah, blah, blah>()
-    // and C++ won't deduct the type based on constructor arguments from the lambda return type
-    // C++ life is sad
+    // We create a ModalWrapper which holds the Modal data
+    // This will store the Modal instance data even across copies of Modal
+    // And is reference counted
     auto modalWrapper = std::make_shared<ModalWrapper>();
     Modal modal(modalWrapper,
         HorizontalLayoutGroup(
