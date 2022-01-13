@@ -19,14 +19,15 @@ namespace QUC {
         UnsafeAny() = default;
         UnsafeAny(UnsafeAny const&) = delete;
 
-        // TODO: Copy constructor copies the data with a new ptr?
-
         template<typename T, typename... TArgs>
         T& make_any(TArgs&&... args) {
-            if (dtor != nullptr) dtor(data);
+            if (dtor != nullptr) {
+                dtor(data);
+            }
+            free(data);
             data = new T(std::forward<TArgs>(args)...);
             dtor = &destroy_data<T>;
-            return *static_cast<T*>(data);
+            return get_any<T>();
         }
 
         template<typename T>
@@ -61,7 +62,7 @@ namespace QUC {
         template<typename T>
         T& getData() {
             if (!childData.has_value()) {
-                childData.make_any<T>();
+                return childData.make_any<T>();
             }
             return childData.get_any<T>();
         }
