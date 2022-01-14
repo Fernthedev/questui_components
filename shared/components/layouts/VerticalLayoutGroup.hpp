@@ -20,7 +20,7 @@ namespace QUC {
                     viewLayout = QuestUI::BeatSaberUI::CreateVerticalLayoutGroup(&parent);
                 }
 
-                RenderContext& childrenCtx = ctx.getChildContext<UnityEngine::UI::VerticalLayoutGroup>(key, [viewLayout]() {
+                RenderContext& childrenCtx = data.getChildContext([viewLayout] {
                     return viewLayout->get_transform();
                 });
                 detail::Container<TArgs...>::render(childrenCtx, data);

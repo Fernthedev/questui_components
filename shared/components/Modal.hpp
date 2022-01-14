@@ -101,7 +101,7 @@ namespace QUC {
 
 
             // TODO: If modal is hidden, should we rerender inner comps?
-            RenderContext &childrenCtx = ctx.getChildContext<HMUI::ModalView>(key, [this, innerModal]() {
+            RenderContext &childrenCtx = data.getChildContext([this, innerModal]() {
                 return innerModal->get_transform();
             });
             detail::Container<TArgs...>::render(childrenCtx, data);

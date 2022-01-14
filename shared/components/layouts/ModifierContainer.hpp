@@ -25,7 +25,7 @@ namespace QUC {
                     modifierLayout = QuestUI::BeatSaberUI::CreateModifierContainer(&parent);
                 }
 
-                RenderContext& childrenCtx = ctx.getChildContext<UnityEngine::UI::VerticalLayoutGroup>(key, [modifierLayout]() {
+                RenderContext& childrenCtx = data.getChildContext([modifierLayout]() {
                     return modifierLayout->get_transform();
                 });
                 detail::Container<TArgs...>::render(childrenCtx, data);

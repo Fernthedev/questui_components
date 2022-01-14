@@ -10,11 +10,6 @@
 #include "UnityEngine/Transform.hpp"
 
 namespace QUC {
-    template <typename T>
-    struct PtrWrapper {
-        T ptr;
-    };
-
     struct UnsafeAny {
         UnsafeAny() = default;
         UnsafeAny(UnsafeAny const&) = delete;
@@ -56,8 +51,12 @@ namespace QUC {
         void(*dtor)(void*) = nullptr;
     };
 
-    struct RenderContextChildData {
+    struct RenderContext;
+
+    template<typename RenderContextT = RenderContext>
+    struct RenderContextChildDataT {
         UnsafeAny childData;
+        std::optional<RenderContextT> childContext;
 
         template<typename T>
         T& getData() {
@@ -66,7 +65,18 @@ namespace QUC {
             }
             return childData.get_any<T>();
         }
+
+        template<typename F = std::function<UnityEngine::Transform*()>>
+        constexpr RenderContextT& getChildContext(F transform) {
+            if (!childContext) {
+                return childContext.template emplace(transform());
+            }
+
+            return *childContext;
+        }
     };
+
+    using RenderContextChildData = RenderContextChildDataT<RenderContext>;
 
     struct RenderContext {
         using ChildContextKey = Key; // 64 bit number
@@ -88,48 +98,24 @@ namespace QUC {
         }
 
 #pragma region child Context Clutter
-        // TODO: Figure this out better
-        // maybe not needed
-        template<typename T, typename F = std::function<UnityEngine::Transform*()>>
-        RenderContext& getChildContext(ChildContextKey id, F transform) {
-            auto it = childrenContexts.find(id);
-
-            std::hash<void*> hash;
-            auto klassHash = hash(classof(T*));
-
-            if (it == childrenContexts.end()) {
-                return childrenContexts.try_emplace(id, klassHash, transform()).first->second.second;
-            } else {
-                auto& [klassHashObject, data] = it->second;
-
-
-                if (klassHash == klassHashObject) {
-                    return data;
-                }
-
-                if (data.parentTransform.m_CachedPtr) {
-                    // Destroy old context tree
-                    UnityEngine::Object::Destroy(data.parentTransform.get_gameObject());
-                }
-
-                return childrenContexts.try_emplace(id, klassHash, transform()).first->second.second;
-            }
-        }
-
         void destroyChildContext(ChildContextKey id) {
-            auto contextIt = childrenContexts.find(id);
-            if (contextIt != childrenContexts.end()) {
-                auto& context = contextIt->second;
-                auto const& data = context.second;
-                if (data.parentTransform.m_CachedPtr) {
-                    // Destroy old context tree
-                    UnityEngine::Object::Destroy(data.parentTransform.get_gameObject());
-                }
+            auto contextIt = dataContext.find(id);
+            if (contextIt == dataContext.end()) return;
 
-                childrenContexts.erase(contextIt);
+            auto& context = contextIt->second;
+
+            if (!context.childContext)
+                return;
+
+            auto const& data = *context.childContext;
+            if (data.parentTransform.m_CachedPtr) {
+                // Destroy old context tree
+                UnityEngine::Object::Destroy(data.parentTransform.get_gameObject());
             }
-        }
 
+
+            dataContext.erase(contextIt);
+        }
 #pragma endregion
 
         template<bool includeParent = false>
@@ -149,27 +135,13 @@ namespace QUC {
                     }
                 }
             }
+            dataContext.clear();
         }
 
 
     private:
-//        template<typename InnerData>
-//        struct RenderContextData {
-//            // https://stackoverflow.com/a/994368/9816000
-//            const size_t klassHash;
-//            InnerData data;
-//
-//            template<typename T>
-//            requires (std::is_convertible_v<T, Il2CppObject*>)
-//            RenderContextData(InnerData const& data) : data(data) {
-//                static auto klass = klassHash = std::hash<T>()(classof(T));
-//            }
-//        };
-
-
         // TODO: Figure out cleaning unusued keys
         std::unordered_map<ChildContextKey, RenderContextChildData> dataContext;
-        std::unordered_map<ChildContextKey, std::pair<size_t, RenderContext>> childrenContexts;
     };
 
     template<typename T>

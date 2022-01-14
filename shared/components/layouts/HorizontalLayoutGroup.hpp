@@ -22,7 +22,7 @@ namespace QUC {
                     horizontalLayout = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(&parent);
                 }
 
-                RenderContext& childrenCtx = ctx.getChildContext<UnityEngine::UI::HorizontalLayoutGroup>(key, [horizontalLayout]() {
+                RenderContext& childrenCtx = data.getChildContext([horizontalLayout]() {
                     return horizontalLayout->get_transform();
                 });
                 detail::Container<TArgs...>::render(childrenCtx, data);

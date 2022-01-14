@@ -24,7 +24,7 @@ namespace QUC {
                 scrollContainer = QuestUI::BeatSaberUI::CreateScrollableSettingsContainer(&parent);
             }
 
-            RenderContext& childrenCtx = ctx.getChildContext<HMUI::ScrollView>(key, [scrollContainer]() {
+            RenderContext& childrenCtx = data.getChildContext([scrollContainer]() {
                 return scrollContainer->get_transform();
             });
             detail::Container<TArgs...>::render(childrenCtx, data);
