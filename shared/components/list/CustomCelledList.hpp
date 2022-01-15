@@ -21,11 +21,10 @@ namespace QUC {
 
     template <typename DataSource, typename CustomTypeComponentCell, typename CellData, typename QCell>
     requires(
-            std::is_convertible_v<CustomTypeComponentCell, HMUI::TableCell> &&
+            QUC::CustomTypeList::IsValidQUCTableData<DataSource> &&
             // Component data
-            std::is_convertible_v<CellData, QUC::CustomTypeList::QUCDescriptor>) &&
-            std::is_same_v<CellData, typename DataSource::CustomQUCDescriptorT> &&
-            ComponentCellRenderable<QCell, CellData>
+            QUC::CustomTypeList::IsValidQUCTableCell<CustomTypeComponentCell> &&
+            ComponentCellRenderable<QCell, CellData>)
     struct RecycledTable {
         const Key key;
         const std::vector<CellData> cellDatas;

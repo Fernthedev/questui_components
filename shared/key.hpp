@@ -13,6 +13,9 @@ namespace QUC {
         friend class std::hash<QUC::Key>;
         friend class std::hash<const QUC::Key>;
     };
+
+    template<typename T>
+    concept keyed = std::is_convertible_v<T, const QUC::Key>;
 }
 
 namespace std {

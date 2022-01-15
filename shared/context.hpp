@@ -105,9 +105,6 @@ namespace QUC {
         std::unordered_map<ChildContextKey, RenderContextChildData> dataContext;
     };
 
-    template<typename T>
-    concept keyed = std::is_convertible_v<T, const QUC::Key>;
-
     // Allows both copies and references
     template<class T>
     /// @brief A concept for renderable components.

@@ -19,8 +19,10 @@
 #include "custom-types/shared/macros.hpp"
 #include "shared/UnsafeAny.hpp"
 #include "shared/key.hpp"
+#include "shared/concepts.hpp"
 
 #include <functional>
+#include <concepts>
 
 #define GET_FIND_METHOD(mPtr) \
     il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
@@ -53,6 +55,32 @@ namespace QUC::CustomTypeList {
         playerCell->Setup();
         return playerCell;
     }
+
+    template<typename T>
+    concept IsValidQUCTableCell = requires(T t) {
+        IsQUCConvertible<T, HMUI::TableCell>;
+        {t.key} -> keyed;
+        {t.Setup()};
+        {t.isCreated()} -> std::same_as<bool>;
+    };
+
+    template<typename T>
+    concept IsValidQUCTableData = requires(T t, QUC::CustomTypeList::QUCTableInitData const& initData) {
+        // using aliases
+        typename T::CustomQUCDescriptorT;
+        IsQUCConvertible<typename T::CustomQUCDescriptorT, QUC::CustomTypeList::QUCDescriptor>;
+
+        typename T::CustomQUCCustomCellT;
+        IsValidQUCTableCell<typename T::CustomQUCCustomCellT>;
+
+        typename T::CreateCellCallback;
+        IsQUCConvertible<typename T::CreateCellCallback, std::function<void(typename T::CustomQUCCustomCellT*, bool, typename T::CustomQUCDescriptorT const& descriptor)>>;
+
+        {t.buildCell} -> IsQUCConvertible<std::function<void(typename T::CustomQUCCustomCellT*, bool, typename T::CustomQUCDescriptorT const& descriptor)>>;
+        {t.tableView} -> IsQUCConvertible<QuestUI::TableView*>;
+        {t.descriptors} -> IsQUCConvertible<std::vector<typename T::CustomQUCDescriptorT>>;
+        {t.Init(initData)};
+    };
 }
 
 #define DECLARE_OVERRIDE_METHOD_MATCH(retval, method, mptr, ...) \
@@ -83,7 +111,9 @@ ___DECLARE_TYPE_WRAPPER_INHERITANCE(namespaze, name, Il2CppTypeEnum::IL2CPP_TYPE
             std::vector<CustomQUCDescriptorT> descriptors; \
             private:  \
             QUC::CustomTypeList::QUCTableInitData initData; \
-)
+)                                                                                             \
+static_assert(QUC::CustomTypeList::IsValidQUCTableData<namespaze::name>);
+
 // TODO: Should descriptors be allowed to be modified at runtime?
 
 #define DECLARE_QUC_TABLE_CELL(namespaze, name, __VA_ARGS__) \
@@ -95,7 +125,8 @@ DECLARE_CLASS_CODEGEN(namespaze, name, HMUI::TableCell,      \
       DECLARE_SIMPLE_DTOR();                                 \
 private: \
 bool created = false; \
-)
+)                                                            \
+static_assert(QUC::CustomTypeList::IsValidQUCTableCell<namespaze::name>);
 
 // cell
 #define DEFINE_QUC_CUSTOMLIST_CELL(namespaze, clazzName) \
