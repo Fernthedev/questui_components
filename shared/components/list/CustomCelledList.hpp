@@ -28,11 +28,11 @@ namespace QUC {
             ComponentCellRenderable<QCell, CellData>
     struct RecycledTable {
         const Key key;
-        const std::vector<CellData> cellData;
+        const std::vector<CellData> cellDatas;
         const CustomTypeList::QUCTableInitData initData;
 
-        constexpr RecycledTable(std::vector<CellData> const &cellData, CustomTypeList::QUCTableInitData const &initData) : cellData(cellData), initData(initData)  {}
-        constexpr RecycledTable(std::initializer_list<CellData> const &cellData, CustomTypeList::QUCTableInitData const &initData) : cellData(cellData), initData(initData) {}
+        constexpr RecycledTable(std::vector<CellData> const &cellData, CustomTypeList::QUCTableInitData const &initData) : cellDatas(cellData), initData(initData)  {}
+        constexpr RecycledTable(std::initializer_list<CellData> const &cellData, CustomTypeList::QUCTableInitData const &initData) : cellDatas(cellData), initData(initData) {}
 
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto& dataSource = data.getData<DataSource*>();
@@ -48,7 +48,7 @@ namespace QUC {
                 };
 
                 dataSource = QUC::CustomTypeList::CreateCustomList<DataSource>(&ctx.parentTransform, buildCell, initData);
-                dataSource->descriptors = cellData;
+                dataSource->descriptors = cellDatas;
                 dataSource->Init(initData);
             }
 

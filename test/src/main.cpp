@@ -129,6 +129,9 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
         )
     );
 
+    QUC::CustomTypeList::QUCTableInitData tableInitData;
+    tableInitData.sizeDelta = {60, 70};
+
     return ScrollableContainer(
             HoverHint("hint", Text("hi!")),
             Text(pinkCuteText),
@@ -201,7 +204,7 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
 
             RecycledTable<QUCObjectTableData, QUCObjectTableCell, CellData, CellComponent>(
                     {CellData("data"), CellData("thing"),{"magic"}, {"school"}, {"bus"}, {"tacos"}, {"are"}, {"cool"}, {"why"}, {"do"}, {"I"}, {"do"}, {"this"}},
-                    QUC::CustomTypeList::QUCTableInitData()
+                    tableInitData
             )
 
     );
