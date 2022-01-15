@@ -10,9 +10,7 @@ using namespace UnityEngine;
 using namespace UnityEngine::UI;
 using namespace QuestUI::BeatSaberUI;
 
-// Header
-DECLARE_QUC_TABLE_CELL(QUC::CustomTypeList, QUCObjectTableCell,)
-DECLARE_QUC_TABLE_DATA(QUC::CustomTypeList, QUCObjectTableData, QUC::CustomTypeList::QUCDescriptor, QUCObjectTableCell,);
+
 
 //DEFINE_TYPE(QUC::CustomTypeList, QUCObjectTableCell);
 //DEFINE_TYPE(QUC::CustomTypeList, QUCObjectTableData);
@@ -48,6 +46,3 @@ DECLARE_QUC_TABLE_DATA(QUC::CustomTypeList, QUCObjectTableData, QUC::CustomTypeL
 //    }
 //}
 
-// Source
-DEFINE_QUC_CUSTOMLIST_TABLEDATA(QUC::CustomTypeList, QUCObjectTableData);
-DEFINE_QUC_CUSTOMLIST_CELL(QUC::CustomTypeList, QUCObjectTableCell);

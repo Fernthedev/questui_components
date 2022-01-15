@@ -11,7 +11,6 @@
 #include "shared/components/Modal.hpp"
 #include "shared/components/layouts/VerticalLayoutGroup.hpp"
 #include "shared/components/layouts/HorizontalLayoutGroup.hpp"
-#include "shared/components/layouts/ModifierContainer.hpp"
 #include "shared/components/settings/ToggleSetting.hpp"
 #include "shared/components/settings/StringSetting.hpp"
 #include "shared/components/settings/IncrementSetting.hpp"
@@ -21,6 +20,7 @@
 // Custom components
 #include "TestComponent.hpp"
 #include "TacoImage.hpp"
+#include "TestTable.hpp"
 
 #include "UnityEngine/UI/Image.hpp"
 
@@ -59,7 +59,7 @@ auto HandleLoadingView(QUC::RenderContext& ctx, bool& loaded) {
             text
     );
 
-    auto transform = detail::renderSingle(view, ctx);
+    auto transform = QUC::detail::renderSingle(view, ctx);
 
     getLogger().debug("Loading %p", transform);
 
@@ -86,7 +86,7 @@ auto HandleLoadingView(QUC::RenderContext& ctx, bool& loaded) {
 
             QuestUI::MainThreadScheduler::Schedule([&ctx, &loaded]() mutable {
                 if (!loaded) {
-                    detail::renderSingle(view, ctx);
+                    QUC::detail::renderSingle(view, ctx);
 //                    // Destroy old hierarchy
 //                    UnityEngine::Object::Destroy(scrollTransform->get_gameObject());
 //                    // Updates the entire hierarchy
@@ -192,12 +192,18 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
                     count++;
                     newText.text = "someOtherText" + std::to_string(count);
                 }
-                detail::renderSingle(newText, ctx);
+                QUC::detail::renderSingle(newText, ctx);
 
                 // Update button text
                 button.text = "Clicked: " + std::to_string(count);
                 button.update(ctx);
-            })
+            }),
+
+            RecycledTable<QUCObjectTableData, QUCObjectTableCell, CellData, CellComponent>(
+                    {CellData("data"), CellData("thing"),{"magic"}, {"school"}, {"bus"}, {"tacos"}, {"are"}, {"cool"}, {"why"}, {"do"}, {"I"}, {"do"}, {"this"}},
+                    QUC::CustomTypeList::QUCTableInitData()
+            )
+
     );
 }
 #pragma endregion
@@ -237,11 +243,11 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                 loaded = true;
                 loadingCtx.destroyTree();
 
-                detail::renderSingle(defaultView, ctx);
+                QUC::detail::renderSingle(defaultView, ctx);
 
                 // Multiple renders should simply just update, not crash or duplicate.
-                detail::renderSingle(defaultView, ctx);
-                detail::renderSingle(defaultView, ctx);
+                QUC::detail::renderSingle(defaultView, ctx);
+                QUC::detail::renderSingle(defaultView, ctx);
             });
         }).detach();
 

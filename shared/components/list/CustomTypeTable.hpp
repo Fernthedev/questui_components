@@ -5,7 +5,7 @@
 #include "HMUI/TableCell.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/TableView_IDataSource.hpp"
-#include "HMUI/HoverHint.hpp"
+#include "HMUI/Touchable.hpp"
 #include "HMUI/TableCell.hpp"
 
 #include "UnityEngine/MonoBehaviour.hpp"
@@ -13,9 +13,12 @@
 
 #include "TMPro/TextMeshProUGUI.hpp"
 
-#include "custom-types/shared/macros.hpp"
-#include "UnsafeAny.hpp"
+#include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
 
+#include "custom-types/shared/macros.hpp"
+#include "shared/UnsafeAny.hpp"
+#include "shared/key.hpp"
 
 #include <functional>
 
@@ -28,8 +31,16 @@ namespace QUC::CustomTypeList {
     };
 
     struct QUCTableInitData {
-        StringW reuseIdentifier;
-        float cellSize;
+        StringW reuseIdentifier = "QUC_ReuseIdentifier";
+        float cellSize = 12.0f;
+        bool scrollable = true;
+        UnityEngine::Vector2 anchorPosition;
+        UnityEngine::Vector2 sizeDelta;
+
+        constexpr QUCTableInitData() = default;
+
+        constexpr QUCTableInitData(StringW const &reuseIdentifier, float cellSize) : reuseIdentifier(
+                reuseIdentifier), cellSize(cellSize) {}
     };
 
     template<typename T>
@@ -54,30 +65,34 @@ ___DECLARE_TYPE_WRAPPER_INHERITANCE(namespaze, name, Il2CppTypeEnum::IL2CPP_TYPE
             \
             DECLARE_OVERRIDE_METHOD_MATCH(HMUI::TableCell*, CellForIdx, &HMUI::TableView::IDataSource::CellForIdx, HMUI::TableView* tableView, int idx); \
             DECLARE_OVERRIDE_METHOD_MATCH(float, CellSize, &HMUI::TableView::IDataSource::CellSize); \
-            DECLARE_OVERRIDE_METHOD_MATCH(int, NumberOfCells, &HMUI::TableView::IDataSource::NumberOfCells); \
+            DECLARE_OVERRIDE_METHOD_MATCH(int, NumberOfCells, &HMUI::TableView::IDataSource::NumberOfCells);                                                                          \
+            DECLARE_INSTANCE_FIELD(QuestUI::TableView*, tableView);   \
             \
             public: \
             using CustomQUCDescriptorT = CustomQUCDescriptor;         \
             using CustomQUCCustomCellT = CustomCell;                                            \
             static_assert(std::is_convertible_v<CustomQUCDescriptorT*, QUC::CustomTypeList::QUCDescriptor*>);  \
-            void Init(QUCTableInitData const& initData); \
+            void Init(QUC::CustomTypeList::QUCTableInitData const& initData); \
             \
             \
             std::function<HMUI::TableCell*(HMUI::TableView* tableView, int idx)> getCellForIdx = nullptr; \
-            using CreateCellCallback = std::function<void(QUCObjectTableCell* cell, bool created, CustomQUCDescriptorT const& descriptor)>; \
+            using CreateCellCallback = std::function<void(CustomQUCCustomCellT* cell, bool created, CustomQUCDescriptorT const& descriptor)>; \
             \
             CreateCellCallback buildCell; \
             \
             std::vector<CustomQUCDescriptorT> descriptors; \
             private:  \
-            QUCTableInitData initData; \
+            QUC::CustomTypeList::QUCTableInitData initData; \
 )
 // TODO: Should descriptors be allowed to be modified at runtime?
 
 #define DECLARE_QUC_TABLE_CELL(namespaze, name, __VA_ARGS__) \
-DECLARE_CLASS_CODEGEN(namespaze, name, HMUI::TableCell,                           \
+DECLARE_CLASS_CODEGEN(namespaze, name, HMUI::TableCell,      \
       void Setup();                                          \
-      bool isCreated(); \
+      bool isCreated();                                      \
+      const Key key;                                         \
+      DECLARE_DEFAULT_CTOR();                                \
+      DECLARE_SIMPLE_DTOR();                                 \
 private: \
 bool created = false; \
 )
@@ -88,7 +103,6 @@ DEFINE_TYPE(namespaze, clazzName); \
 void namespaze::clazzName::Setup() \
 { \
     if (!created) { \
-        get_gameObject()->AddComponent<HMUI::Touchable *>(); \
         created = true; \
     } \
 } \
@@ -99,32 +113,33 @@ bool namespaze::clazzName::isCreated() { \
 // table data
 #define DEFINE_QUC_CUSTOMLIST_TABLEDATA(namespaze, clazzName) \
 DEFINE_TYPE(namespaze, clazzName); \
-void namespaze::clazzName::Init(QUCTableInitData const &initData) { \
-    this->initData = initData; \
-} \
+void namespaze::clazzName::Init(QUC::CustomTypeList::QUCTableInitData const &initData) { \
+    this->initData = initData;                                \
+    this->tableView->ReloadData();                                                          \
+    } \
  \
 float namespaze::clazzName::CellSize() { \
     return initData.cellSize; \
 } \
 \
-int namespaze::clazzName::NumberOfCells() { \
+int namespaze::clazzName::NumberOfCells() {                   \
     return descriptors.size(); \
 } \
 \
 HMUI::TableCell * namespaze::clazzName::CellForIdx(HMUI::TableView *tableView, int idx) { \
-    if (getCellForIdx(tableView, idx)) return getCellForIdx(tableView, idx); \
-    auto tableCell = reinterpret_cast<CustomQUCCustomCellT *>(tableView->DequeueReusableCellForIdentifier( \
-            initData.reuseIdentifier)); \
+    if (getCellForIdx) return getCellForIdx(tableView, idx); \
+    auto tableCell = reinterpret_cast<CustomQUCCustomCellT *>(tableView->DequeueReusableCellForIdentifier(initData.reuseIdentifier)); \
     if (!tableCell) { \
-        tableCell = CreateQUCCell<CustomQUCCustomCellT>(); \
-    } \
+        tableCell = QUC::CustomTypeList::CreateQUCCell<CustomQUCCustomCellT>(); \
+    }                                                         \
     tableCell->set_reuseIdentifier(initData.reuseIdentifier); \
 \
     auto const &data = descriptors[idx]; \
     bool newlyCreated = tableCell->isCreated(); \
 \
     tableCell->Setup(); \
-    tableCell->set_interactable(data.interactable); \
+    tableCell->set_interactable(data.interactable);           \
+    CRASH_UNLESS(buildCell);                                  \
     buildCell(tableCell, newlyCreated, data); \
     return tableCell; \
 }
@@ -132,12 +147,13 @@ HMUI::TableCell * namespaze::clazzName::CellForIdx(HMUI::TableView *tableView, i
 
 namespace QUC::CustomTypeList {
     template<typename TableData, typename CreateCellCallback = typename TableData::CreateCellCallback>
-    TableData *CreateCustomList(UnityEngine::Transform *parent, CreateCellCallback createCell) {
-        UnityEngine::GameObject *go = UnityEngine::GameObject::New_ctor(StringW("QUC_CustomList"));
-        auto transform = go->get_transform();
-        transform->SetParent(parent, false);
-
-        auto list = go->AddComponent<TableData *>();
+    TableData *CreateCustomList(UnityEngine::Transform *parent, CreateCellCallback createCell, QUCTableInitData const& initData) {
+        TableData* list;
+        if (initData.scrollable) {
+            list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<TableData *>(parent, initData.anchorPosition, initData.sizeDelta);
+        } else {
+            list = QuestUI::BeatSaberUI::CreateCustomSourceList<TableData *>(parent, initData.anchorPosition, initData.sizeDelta);
+        }
 
         list->buildCell = createCell;
 
