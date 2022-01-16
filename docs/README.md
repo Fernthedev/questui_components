@@ -8,7 +8,7 @@ QUC v2 aims to fix these problems by focusing on compile-time `constexpr` render
 The compiler makes good work of these changes and is able to optimize them in ways I can't explain since they're above my pay grade. 
 Just magical compiler stuff that makes cooler assembly.
 
-This also causes components to be copy constructed, which means modifications may only apply to their copies depending on how it's done. This is where the [`RenderCtx`](#Render Context) and [`Key`](#Key) data types come in.
+This also causes components to be copy constructed, which means modifications may only apply to their copies depending on how it's done. This is where the [`RenderCtx`](#render-context) and [`Key`](#Key) data types come in.
 
 # Components
 Components are the first part of making your UI. There is a wide variety of [core components](../shared/components) that you can use already. 
