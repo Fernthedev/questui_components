@@ -109,7 +109,7 @@ namespace QUC {
     template<class T>
     /// @brief A concept for renderable components.
     /// @tparam T The type to check.
-    concept renderable = requires (T t, RenderContext c, RenderContextChildData& data) {
+    concept renderable = requires (T t, RenderContext& c, RenderContextChildData& data) {
         t.render(c, data);
     } && requires(T const t) {
         {t.key} -> keyed;
