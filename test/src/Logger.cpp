@@ -1,4 +1,4 @@
-#include "shared/Logger.hpp"
+#include "test/include/Logger.hpp"
 
 // Returns a logger, useful for printing debug messages
 Logger& QuestUI_Components::Loggerr::getLogger() {
