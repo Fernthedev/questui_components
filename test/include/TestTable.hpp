@@ -19,10 +19,14 @@ DECLARE_QUC_TABLE_CELL(QUC, QUCObjectTableCell,)
 DECLARE_QUC_TABLE_DATA(QUC, QUCObjectTableData, QUC::CellData, QUCObjectTableCell,);
 
 namespace QUC {
-    struct CellComponent {
+    // Both of these components are valid and usable
+
+    // More traditional QuestUI component
+    struct QuestUICellComponent {
         Button button = Button("", nullptr);
 
-        static void render(UnityEngine::Transform* parent, CellData const& cellData, RenderContext& ctx, RenderContextChildData& data) {
+        static void render(UnityEngine::Transform *cellTransform, CellData const &cellData, RenderContext &tableCtx,
+                           RenderContextChildData &cellCtx) {
 //            auto& tmpText = data.getData<UnityEngine::UI::Button*>();
 //
 //            if (!tmpText) {
@@ -34,10 +38,20 @@ namespace QUC {
 //                auto buttonText = tmpText->GetComponentInChildren<TMPro::TextMeshProUGUI *>();
 //                buttonText->set_text(static_cast<Il2CppString *>(StringW(cell.displayedText).convert()));
 //            }
-            // copy to lose const&
-            CellComponent& cellComp = data.getData<CellComponent>();
+
+            // The commented code above is identical to this
+            auto &cellComp = cellCtx.getData<QuestUICellComponent>();
             cellComp.button.text = cellData.displayedText;
-            QUC::detail::renderSingle(cellComp.button, data.getChildContext([parent]{return parent; }));
+            QUC::detail::renderSingle(cellComp.button, cellCtx.getChildContext([cellTransform] { return cellTransform; }));
+        }
+    };
+
+    struct CellComponent {
+        Button button = Button("", nullptr);
+
+        void render(CellData const& cellData, RenderContext& cellCtx) {
+            button.text = cellData.displayedText;
+            QUC::detail::renderSingle(button, cellCtx);
         }
     };
     static_assert(ComponentCellRenderable<CellComponent, CellData>);

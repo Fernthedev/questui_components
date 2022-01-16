@@ -15,11 +15,20 @@
 namespace QUC {
 
     template<typename T, typename CellData>
-    concept ComponentCellRenderable = requires(T t, CellData cellData, UnityEngine::Transform* parent, RenderContext& ctx, RenderContextChildData& data) {
-        T::render(parent, cellData, ctx, data);
-    };
+    concept ComponentCellRenderable = requires(T t) {
+        std::is_trivially_default_constructible_v<T>;
+    } &&
+    // Render methods
+    (
+    requires(T t, CellData cellData, UnityEngine::Transform* cellTransform, RenderContext& tableCtx, RenderContextChildData& cellCtxData) {
+        T::render(cellTransform, cellData, tableCtx, cellCtxData);
+    } || requires(T t, CellData cellData, RenderContext& cellCtx) {
+        t.render(cellData, cellCtx);
+    });
 
-    template <typename DataSource, typename CustomTypeComponentCell, typename CellData, typename QCell>
+    template <typename DataSource,typename QCell,
+            typename CustomTypeComponentCell = typename DataSource::CustomQUCCustomCellT, // Boiler plate defaults
+            typename CellData = typename DataSource::CustomQUCDescriptorT>
     requires(
             QUC::CustomTypeList::IsValidQUCTableData<DataSource> &&
             // Component data
@@ -43,7 +52,17 @@ namespace QUC {
                             });
 
                     auto& cellData = tableContext.getChildData(cell->key);
-                    QCell::render(cell->get_transform(), descriptor, tableContext, cellData);
+                    if constexpr(requires(QCell) {QCell::render;}) {
+                        QCell::render(cell->get_transform(), descriptor, tableContext, cellData);
+                    } else {
+                        // construct a QCell and give it more QUC-like data
+                        auto cellTransform = cell->get_transform();
+
+                        QCell& qCell = cellData.template getData<QCell>();
+                        auto& cellContext = cellData.template getChildContext([cellTransform]{return cellTransform;});
+
+                        qCell.render(descriptor, cellContext);
+                    }
                 };
 
                 dataSource = QUC::CustomTypeList::CreateCustomList<DataSource>(&ctx.parentTransform, buildCell, initData);
