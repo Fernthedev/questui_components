@@ -149,6 +149,7 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
             }),
             // Custom component
             TestComponent("pink cute eris cute"),
+//            MoreComplexType("taco"),
             RainbowText("Rainbow!"),
 
             // Image is loaded on main thread
