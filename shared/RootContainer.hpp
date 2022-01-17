@@ -25,6 +25,19 @@ namespace QUC {
                 QUC::detail::renderTuple(children, ctx);
             }
         };
+
+        template<typename Component, typename InnerList = std::vector<Component>>
+        struct VariableContainer {
+            const InnerList children;
+
+            VariableContainer(InnerList const& children) : children(children) {}
+
+            VariableContainer(std::initializer_list<Component> const children) : children(children) {}
+
+            void render(RenderContext& ctx, RenderContextChildData& data) {
+                QUC::detail::renderTuple(children, ctx);
+            }
+        };
     }
     template<class... TArgs>
     requires ((renderable<TArgs> && ...))

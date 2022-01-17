@@ -99,6 +99,19 @@ namespace QUC {
             dataContext.clear();
         }
 
+        template<bool destroyGO = true>
+        void destroyChild(ChildContextKey key) {
+            auto it = dataContext.find(key);
+            if (it == dataContext.end()) return;
+
+            auto& o = it->second.childContext;
+
+            if (o && o->parentTransform.m_CachedPtr)
+                UnityEngine::Object::Destroy(&o->parentTransform);
+
+            dataContext.erase(it);
+        }
+
 
     private:
         // TODO: Figure out cleaning unusued keys
