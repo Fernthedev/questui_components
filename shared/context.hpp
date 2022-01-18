@@ -53,6 +53,12 @@ namespace QUC {
         RenderContext(UnityEngine::Transform* ptr) : parentTransform(*ptr) {}
         RenderContext(UnityEngine::Transform& ref) : parentTransform(ref) {}
 
+        RenderContext(RenderContext&&) = default;
+
+        RenderContext& operator=(RenderContext&& other) {
+            new (this) RenderContext(std::move(other));
+            return *this;
+        }
 
         auto& getChildData(ChildContextKey index) {
             return dataContext[index];
@@ -81,6 +87,13 @@ namespace QUC {
 
         template<bool includeParent = false>
         void destroyTree() {
+            // yeah yeah I know stupid
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundefined-bool-conversion"
+            if (!&parentTransform)
+                return;
+#pragma clang diagnostic pop
+
             if (parentTransform.m_CachedPtr) {
                 if constexpr (includeParent) {
                     UnityEngine::Object::Destroy(parentTransform.get_gameObject());
