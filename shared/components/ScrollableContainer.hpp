@@ -1,6 +1,8 @@
 #pragma once
 
 #include "shared/RootContainer.hpp"
+// TODO: Dummy component
+#include "Text.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
 #include "HMUI/TextPageScrollView.hpp"
