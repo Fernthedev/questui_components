@@ -117,7 +117,15 @@ namespace QUC {
     public:
         template<typename F, typename... TArgs>
         explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable, TArgs&&... args) :
-                ConfigUtilsSetting(configValue.GetValue(), configValue, callable, std::forward<TArgs>(args)...) {}
+                ConfigUtilsSetting(configValue.GetValue(), configValue, std::forward<F>(callable), std::forward<TArgs>(args)...) {}
+
+        template<typename... TArgs>
+        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, std::nullptr_t nullCallback, TArgs&&... args) :
+                ConfigUtilsSetting(configValue.GetValue(), configValue, buildCallback(configValue), std::forward<TArgs>(args)...) {}
+
+        template<typename... TArgs>
+        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) :
+                ConfigUtilsSetting(configValue.GetValue(), configValue, buildCallback(configValue), std::forward<TArgs>(args)...) {}
 
 //        template<typename F>
 //        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable)
@@ -156,14 +164,28 @@ namespace QUC {
 
         template<typename F, typename... TArgs>
         explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable, TArgs&&... args) :
-                configValue(configValue), SettingType(configValue.GetName(), buildCallback(configValue, callable), currentValue, args...) {}
+                configValue(configValue), SettingType(configValue.GetName(), buildCallback<F>(configValue, std::forward<F>(callable)), currentValue, args...) {}
 
+        template<typename... TArgs>
+        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) :
+                configValue(configValue), SettingType(configValue.GetName(), buildCallback(configValue), currentValue, args...) {}
 
         template<typename F = typename SettingType::OnCallback const&>
-        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F callback) {
-            return [callback, &configValue](auto& setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx){
+        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callback) {
+            return [callback, &configValue](auto& setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
                 configValue.SetValue(val);
-                return callback(setting, val, t, ctx);
+                if (callback) {
+                    return callback(setting, val, t, ctx);
+                } else {
+                    return {};
+                }
+            };
+        }
+
+        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<ConfigValueType>& configValue) {
+            return [&configValue](auto& setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
+                configValue.SetValue(val);
+                return {};
             };
         }
 

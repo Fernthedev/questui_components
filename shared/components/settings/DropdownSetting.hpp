@@ -2,6 +2,8 @@
 
 #include "UnityEngine/Vector2.hpp"
 
+#include "BaseSetting.hpp"
+
 #include "HMUI/SimpleTextDropdown.hpp"
 
 #include "shared/context.hpp"
@@ -36,8 +38,8 @@ namespace QUC {
 
         template<class F>
         constexpr DropdownSetting(std::string_view txt, std::string_view current, F &&callable,
-                        Container v = Container(), bool enabled_ = true,
-                        bool interact = true)
+                                  Container v = Container(), bool enabled_ = true,
+                                  bool interact = true)
                 : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(current),
                   values(v) {}
 
@@ -205,23 +207,23 @@ namespace QUC {
 enum struct EnumName {                            \
     __VA_ARGS__                                   \
 };                                                \
-namespace QuestUI_Components {             \
+namespace QUC {             \
 enum FakeEnum__##EnumName {                       \
     __VA_ARGS__                                   \
 };                                                         \
-template<> struct ::QuestUI_Components::EnumToStr<EnumName> {                      \
+template<> struct ::QUC::EnumToStr<EnumName> {                      \
     inline static const EnumToStrType<EnumName> map = createFromKeysAndValues<EnumName>({__VA_ARGS__}, {strlist}); \
     static EnumToStrType<EnumName> get() {                                       \
         return map;                                          \
     }                                              \
 };                                                \
-template<> struct ::QuestUI_Components::StrToEnum<EnumName> {                      \
-    inline static const QuestUI_Components::StrToEnumType<EnumName> map = createFromKeysAndValues<EnumName>({strlist}, {__VA_ARGS__}); \
+template<> struct ::QUC::StrToEnum<EnumName> {                      \
+    inline static const QUC::StrToEnumType<EnumName> map = createFromKeysAndValues<EnumName>({strlist}, {__VA_ARGS__}); \
     static StrToEnumType<EnumName> get() {                                       \
         return map;                                          \
     }                                              \
 };                                                \
-template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {                      \
+template<> struct ::QUC::EnumStrValues<EnumName> {                      \
     inline static const std::vector<std::string> values = std::vector<std::string>({strlist}); \
     static std::vector<std::string> get() {                                       \
         return values;                                          \
@@ -233,9 +235,9 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
     // c++ inheritance is a pain
     template<typename EnumType, size_t sz, typename EnumConfigValue = int, bool CrashOnBoundsExit = false>
     requires(std::is_enum_v<EnumType>)
-    class ConfigUtilsEnumDropdownSetting : public DropdownSetting<sz> {
+    struct ConfigUtilsEnumDropdownSetting : public DropdownSetting<sz, std::vector<std::string>> {
+        using SettingType = DropdownSetting<sz, std::vector<std::string>>;
 
-    public:
         static_assert(&EnumToStr<EnumType>::get, "Please create a type specialization for EnumToStr");
         static_assert(&StrToEnum<EnumType>::get, "Please create a type specialization for StrToEnum");
         static_assert(&EnumStrValues<EnumType>::get, "Please create a type specialization for EnumStrValues");
@@ -244,34 +246,43 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
         explicit
         ConfigUtilsEnumDropdownSetting(ConfigUtils::ConfigValue<EnumConfigValue> &configValue, TArgs &&... args)
                 : configValue(configValue),
-                  DropdownSetting<sz>(configValue.GetName(), "", EnumStrValues<EnumType>::values, args...) {
-            this->setValueOfData(this->data, this->getValue());
+                  SettingType(configValue.GetName(), "", buildCallback(configValue), EnumStrValues<EnumType>::values, args...) {
+
         }
 
-    protected:
-        // reference capture should be safe here
-        ConfigUtils::ConfigValue<int> &configValue;
-        WeakPtrGO<HMUI::HoverHint> hoverHint;
+        template<typename F, typename... TArgs>
+        explicit
+        ConfigUtilsEnumDropdownSetting(ConfigUtils::ConfigValue<EnumConfigValue> &configValue, F&& callback, TArgs &&... args)
+                : configValue(configValue),
+                  SettingType(configValue.GetName(), "", buildCallback<F>(std::forward<F>(callback), configValue), EnumStrValues<EnumType>::values, args...) {
 
-        UnityEngine::Transform *render(UnityEngine::Transform *parentTransform) override {
-            DropdownSetting<sz>::render(parentTransform);
+        }
+
+        const Key key;
+
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            SettingType::setValue(getValue());
+            auto& hoverHint = data.getData<HMUI::HoverHint*>();
+            Key parentKey = SettingType::key;
+            auto res = SettingType::render(ctx, ctx.getChildData(parentKey));
 
             if (!configValue.GetHoverHint().empty() && !hoverHint) {
-                hoverHint = QuestUI::BeatSaberUI::AddHoverHint(this->getTransform()->get_gameObject(),
-                                                               configValue.GetHoverHint());
+                hoverHint = QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), configValue.GetHoverHint());
             }
 
-            return this;
-
+            return res;
         };
 
+        std::string_view getValue() {
+            return getValue(configValue);
+        }
 
-        std::string getValue() override {
-            EnumToStrType<EnumType> map = EnumToStr<EnumType>::map;
+        static std::string_view getValue(ConfigUtils::ConfigValue<int>& configValue) {
+            EnumToStrType<EnumType> const& map = EnumToStr<EnumType>::map;
             if constexpr (CrashOnBoundsExit) {
-                return map[(EnumType) this->configValue];
+                return map.at((EnumType) configValue);
             } else {
-                auto it = map.find((EnumType) this->configValue.GetValue());
+                auto it = map.find((EnumType) configValue.GetValue());
 
                 if (it == map.end()) {
                     if (map.size() == 0) return "";
@@ -282,21 +293,48 @@ template<> struct ::QuestUI_Components::EnumStrValues<EnumName> {               
             }
         };
 
-        void internalSetValue(const std::string &val) override {
-            StrToEnumType<EnumType> map = StrToEnum<EnumType>::map;
+        void setValue(const std::string &val) {
+            return setValue(val, configValue);
+        }
+
+        static void setValue(const std::string &val, ConfigUtils::ConfigValue<int>& configValue) {
+            StrToEnumType<EnumType> const& map = StrToEnum<EnumType>::map;
             if constexpr (CrashOnBoundsExit) {
-                EnumType newValue = map[val];
-                this->configValue.SetValue((int) newValue);
+                EnumType newValue = map.at(val);
+                configValue.SetValue((int) newValue);
             } else {
                 auto it = map.find(val);
 
                 if (it == map.end()) {
-                    if (map.size() == 0) this->configValue.SetValue((int) 0);
-                    else this->configValue.SetValue((int) map.cbegin()->second);
+                    if (map.size() == 0) configValue.SetValue((int) 0);
+                    else configValue.SetValue((int) map.cbegin()->second);
                 }
 
-                this->configValue.SetValue((int) it->second);
+                configValue.SetValue((int) it->second);
             }
+        }
+
+    protected:
+        // reference capture should be safe here
+        ConfigUtils::ConfigValue<int> &configValue;
+
+        template<typename F = typename SettingType::OnCallback const&>
+        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<EnumConfigValue>& configValue, F callback) {
+            return [callback, &configValue](auto& setting, std::string const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
+                configValue.SetValue(val);
+                if (callback) {
+                    return callback(setting, val, t, ctx);
+                } else {
+                    return {};
+                }
+            };
+        }
+
+        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<EnumConfigValue>& configValue) {
+            return [&configValue](auto& setting, std::string const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
+                setValue(val, configValue);
+                return {};
+            };
         }
     };
 
