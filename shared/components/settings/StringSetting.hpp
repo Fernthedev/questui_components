@@ -49,6 +49,14 @@ namespace QUC {
             return inputFieldView->get_transform();
         }
 
+        [[nodiscard]] std::string const& getValue() const {
+            return *value;
+        }
+
+        void setValue(std::string_view val) {
+            value = val;
+        }
+
         void update(RenderContext& ctx) {
             auto& data = ctx.getChildData(key);
             auto& inputFieldView = data.getData<HMUI::InputFieldView*>();
@@ -93,6 +101,7 @@ namespace QUC {
         }
     };
     static_assert(renderable<StringSetting>);
+    static_assert(IsConfigType<StringSetting, std::string>);
 
 #if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
     using ConfigUtilsStringSetting = ConfigUtilsSetting<std::string, StringSetting>;

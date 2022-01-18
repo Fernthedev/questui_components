@@ -71,6 +71,14 @@ namespace QUC {
             return setting->get_transform();
         }
 
+        [[nodiscard]] float getValue() const {
+            return *value;
+        }
+
+        void setValue(float val) {
+            value = val;
+        }
+
         void update(RenderContext& ctx) {
             auto& data = ctx.getChildData(key);
             auto& inputFieldView = data.getData<RenderIncrementSetting>();

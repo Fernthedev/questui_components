@@ -64,6 +64,14 @@ namespace QUC {
             return dropdown->get_transform();
         }
 
+        [[nodiscard]] std::string const& getValue() const {
+            return *value;
+        }
+
+        void setValue(std::string_view val) {
+            value = val;
+        }
+
         void update(RenderContext& ctx) {
             auto& data = ctx.getChildData(key);
             auto& renderDropdownData = data.getData<RenderDropdownData>();
@@ -143,6 +151,7 @@ namespace QUC {
     };
 
     using VariableDropdownSetting = DropdownSetting<0, std::vector<std::string>>;
+    static_assert(IsConfigType<VariableDropdownSetting, std::string>);
 
 // TODO: Test if it works
 #pragma region ConfigEnum

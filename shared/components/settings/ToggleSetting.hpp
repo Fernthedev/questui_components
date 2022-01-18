@@ -78,7 +78,13 @@ namespace QUC {
         const std::optional<UnityEngine::Vector2> anchoredPosition;
         const Key key;
 
+        [[nodiscard]] bool getValue() const {
+            return *toggleButton.value;
+        }
 
+        void setValue(bool val) {
+            toggleButton.value = val;
+        }
 
         template<class F = OnCallback>
         ToggleSetting(Text const& txt, F&& callable, bool currentValue = false, bool enabled_ = true, bool interact = true, std::optional<UnityEngine::Vector2> anch = std::nullopt)
@@ -164,6 +170,7 @@ namespace QUC {
     };
     static_assert(renderable<ToggleSetting>);
     static_assert(renderable_return<ToggleSetting, UnityEngine::Transform*>);
+    static_assert(IsConfigType<ToggleSetting, bool>);
 
 #if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
     using ConfigUtilsToggleSetting = ConfigUtilsSetting<bool, ToggleSetting>;

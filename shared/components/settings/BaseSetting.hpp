@@ -2,6 +2,7 @@
 
 #include "UnityEngine/Vector2.hpp"
 
+#include "shared/concepts.hpp"
 #include "shared/RootContainer.hpp"
 #include "shared/components/HoverHint.hpp"
 
@@ -99,40 +100,44 @@ namespace QUC {
 //        }
 //    };
 
+    template<typename T, typename Value>
+    concept IsConfigType = requires(T const t) {
+        {t.getValue()} -> QUC::IsQUCConvertible<Value>;
+
+        typename T::OnCallback;
+        IsQUCConvertible<typename T::OnCallback,std::function<void(T&, Value const&, UnityEngine::Transform *, RenderContext& ctx)>>;
+    } && requires(T t, Value value) {
+        {t.setValue(value)};
+    };
 
 #if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
     template<typename ValueType, typename SettingType, typename ConfigValueType = ValueType>
+    requires(IsConfigType<SettingType, ValueType>)
     class ConfigUtilsSetting : public SettingType {
     public:
-        template<typename... TArgs>
-        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) : ConfigUtilsSetting(configValue.GetValue(), configValue, args...) {}
+        template<typename F, typename... TArgs>
+        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable, TArgs&&... args) :
+                ConfigUtilsSetting(configValue.GetValue(), configValue, callable, std::forward<TArgs>(args)...) {}
 
-        ValueType getValue() override {
+//        template<typename F>
+//        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable)
+//        : ConfigUtilsSetting(configValue.GetValue(), configValue, callable) {}
+
+        ValueType getValue() {
             return configValue.GetValue();
         }
 
-        void setValue(const ValueType& val) override {
+        void setValue(const ValueType& val) {
             configValue.SetValue(val);
         }
 
         void resetChange() {}
 
-        void update() override {
-            SettingType::update();
-        }
-
-    protected:
-        template<typename... TArgs>
-        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) :
-                configValue(configValue), SettingType(configValue.GetName(), currentValue, args...) {}
-
-
-        // reference capture should be safe here
-        ConfigUtils::ConfigValue<ConfigValueType>& configValue;
         const Key key;
 
 
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            SettingType::setValue(getValue());
             auto& hoverHint = data.getData<HMUI::HoverHint*>();
             Key parentKey = SettingType::key;
             auto res = SettingType::render(ctx, ctx.getChildData(parentKey));
@@ -143,6 +148,27 @@ namespace QUC {
 
             return res;
         };
+
+    protected:
+//        template<typename F>
+//        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable) :
+//                configValue(configValue), SettingType(configValue.GetName(), callable, currentValue) {}
+
+        template<typename F, typename... TArgs>
+        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable, TArgs&&... args) :
+                configValue(configValue), SettingType(configValue.GetName(), buildCallback(configValue, callable), currentValue, args...) {}
+
+
+        template<typename F = typename SettingType::OnCallback const&>
+        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F callback) {
+            return [callback, &configValue](auto& setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx){
+                configValue.SetValue(val);
+                return callback(setting, val, t, ctx);
+            };
+        }
+
+        // reference capture should be safe here
+        ConfigUtils::ConfigValue<ConfigValueType>& configValue;
     };
 #endif
 }
