@@ -1,7 +1,7 @@
 #pragma once
 
 #include "shared/context.hpp"
-#include "shared/unity/WeakPtrGO.hpp"
+#include "shared/RootContainer.hpp"
 #include <string>
 #include <string_view>
 
@@ -17,15 +17,19 @@ namespace QUC {
         template<class T>
         requires (renderable_return<T, UnityEngine::Transform*>)
         struct Backgroundable {
-            static_assert(renderable<Backgroundable>);
+            const std::string backgroundType;
+            const bool replaceExisting;
+            T child;
+            const Key key;
 
             Backgroundable(std::string_view bkgType, bool replace, T&& child_)
-                : backgroundType(bkgType), replaceExisting(replace), child(child_) {}
-            auto render(RenderContext& ctx) {
-                auto res = child.render(ctx);
-                auto go = res->get_gameObject();
+                    : backgroundType(bkgType), replaceExisting(replace), child(child_) {}
+            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+                auto res = detail::renderSingle(child, ctx);
+                auto backgroundable = data.getData<QuestUI::Backgroundable*>();
 
                 if (replaceExisting || !backgroundable) {
+                    auto go = res->get_gameObject();
                     backgroundable = go->template AddComponent<QuestUI::Backgroundable*>();
                 }
 
@@ -33,27 +37,27 @@ namespace QUC {
 
                 return backgroundable->get_transform();
             }
-            private:
-            const std::string backgroundType;
-            const bool replaceExisting;
-            T child;
-            WeakPtrGO<QuestUI::Backgroundable> backgroundable;
+
+
         };
     }
     template<class T>
     auto Backgroundable(std::string_view bkgType, bool replace, T&& child) {
-        return detail::Backgroundable<T>(bkgType, replace, child);
+        return detail::Backgroundable<T>(bkgType, replace, std::forward<T>(child));
     }
 
     namespace detail {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
-        struct BackgroundableContainer {
-            static_assert(renderable<BackgroundableContainer>);
-            BackgroundableContainer(std::string_view type, TArgs... args) : backgroundType(type), children(args...) {}
+        struct BackgroundableContainer : Container<TArgs...> {
+            const Key key;
+            const std::string backgroundType;
 
-            auto render(RenderContext& ctx) {
+            BackgroundableContainer(std::string_view type, TArgs... args) : backgroundType(type), Container<TArgs...>(args...) {}
+
+            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
                 UnityEngine::Transform* transform;
+                auto& container = data.getData<UnityEngine::GameObject*>();
 
                 if (!container) {
                     container = UnityEngine::GameObject::New_ctor();
@@ -78,14 +82,10 @@ namespace QUC {
                     transform = container->get_transform();
 
                 // Then we render our children to ourselves.
-                RenderContext ctx2(transform);
-                renderTuple(children, ctx2);
+                auto& ctx2 = data.getChildContext([transform] {return transform; });
+                detail::Container<TArgs...>::render(ctx2, data);
                 return transform;
             }
-            private:
-            const std::string backgroundType;
-            std::tuple<TArgs...> children;
-            WeakPtrGO<UnityEngine::GameObject> container;
         };
     }
 
