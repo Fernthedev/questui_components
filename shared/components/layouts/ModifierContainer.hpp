@@ -12,7 +12,6 @@ namespace QUC {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
         struct ModifierContainer : Container<TArgs...> {
-            static_assert(renderable<ModifierContainer<TArgs...>>);
             ModifierContainer(TArgs... args) : Container<TArgs...>(args...) {}
 
             const Key key;
