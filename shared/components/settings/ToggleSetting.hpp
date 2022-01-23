@@ -73,7 +73,7 @@ namespace QUC {
         HeldData<bool> enabled;
 
         // initialized at render
-        std::optional<ToggleText> text;
+        ToggleText text;
         ToggleButton toggleButton;
         const std::optional<UnityEngine::Vector2> anchoredPosition;
         const Key key;
@@ -88,19 +88,19 @@ namespace QUC {
 
         template<class F = OnCallback>
         ToggleSetting(Text const& txt, F&& callable, bool currentValue = false, bool enabled_ = true, bool interact = true, std::optional<UnityEngine::Vector2> anch = std::nullopt)
-            : text(txt), callback(callable), enabled(enabled_), toggleButton(currentValue, interact), anchoredPosition(anch) {}
+                : text(txt), callback(callable), enabled(enabled_), toggleButton(currentValue, interact), anchoredPosition(anch) {}
 
         template<class F = OnCallback>
         ToggleSetting(std::string_view txt, F&& callable, bool currentValue = false, bool enabled_ = true, bool interact = true, std::optional<UnityEngine::Vector2> anch = std::nullopt)
-                : str(txt), callback(callable), enabled(enabled_), toggleButton(currentValue, interact), anchoredPosition(anch) {}
+                : text(txt), callback(callable), enabled(enabled_), toggleButton(currentValue, interact), anchoredPosition(anch) {}
 
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto& toggle = data.getData<UnityEngine::UI::Toggle*>();
-            auto& toggleText = ctx.getChildData(text->key).getData<TMPro::TextMeshProUGUI*>();
+            auto& toggleText = ctx.getChildData(text.key).getData<TMPro::TextMeshProUGUI*>();
 
             auto parent = &ctx.parentTransform;
             if (!toggle) {
-                auto const &usableText = text ? text->text : *str;
+                auto const &usableText = *text.text;
 
                 auto cbk = [this, callback = this->callback, parent, &ctx](bool val) {
                     toggleButton.value = val;
@@ -120,14 +120,9 @@ namespace QUC {
                 toggleText = nameText->GetComponent<TMPro::TextMeshProUGUI *>();
 
                 // if text was not created
-                if (!text) {
-                    text.emplace(Text());
-                    text->copyFrom(toggleText, ctx);
-                }
+                text.text.clear();
                 // first render
                 assign<true>(toggle, toggleText);
-
-                text->render(ctx, ctx.getChildData(text->key));
             } else {
                 // update
                 CRASH_UNLESS(toggleText);
@@ -139,7 +134,7 @@ namespace QUC {
         void update(RenderContext& ctx) {
             auto& data = ctx.getChildData(key);
             auto& toggle = data.getData<UnityEngine::UI::Toggle*>();
-            auto& cachedToggleText = ctx.getChildData(text->key).getData<TMPro::TextMeshProUGUI*>();
+            auto& cachedToggleText = ctx.getChildData(text.key).getData<TMPro::TextMeshProUGUI*>();
 
             assign<false>(toggle, cachedToggleText);
         }
@@ -160,13 +155,10 @@ namespace QUC {
 
             if constexpr (!created) {
                 // Only set these properties if we did NOT JUST create the text.
-                text->assign<created>(toggleText);
+                text.assign<created>(toggleText);
                 toggleButton.assign<created>(toggle);
             }
         }
-
-        // TODO: Somehow not require this
-        std::optional<std::string> str = std::nullopt;
     };
     static_assert(renderable<ToggleSetting>);
     static_assert(renderable_return<ToggleSetting, UnityEngine::Transform*>);

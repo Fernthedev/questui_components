@@ -49,8 +49,6 @@ namespace QUC {
                 textComp = QuestUI::BeatSaberUI::CreateText(&parent, text.getData(), *italic, anchoredPosition,
                                                             sizeDelta);
 
-
-
                 assign<true>(textComp);
             }
             return textComp->get_transform();

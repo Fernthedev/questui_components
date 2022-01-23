@@ -140,7 +140,10 @@ namespace QUC {
                             list->Add(il2cpp_utils::newcsstr(dropdownValue));
                     }
 
-                    dropdown->SetTexts(reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<Il2CppString*>*>(list));
+                    if (list) {
+                        dropdown->SetTexts(
+                                reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<Il2CppString *> *>(list));
+                    }
 
                     if (dropdown->selectedIndex != selectedIndex)
                         dropdown->SelectCellWithIdx(selectedIndex);
@@ -318,8 +321,7 @@ template<> struct ::QUC::EnumStrValues<EnumName> {                      \
         // reference capture should be safe here
         ConfigUtils::ConfigValue<int> &configValue;
 
-        template<typename F = typename SettingType::OnCallback const&>
-        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<EnumConfigValue>& configValue, F callback) {
+        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<EnumConfigValue>& configValue, typename SettingType::OnCallback const& callback) {
             return [callback, &configValue](auto& setting, std::string const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
                 configValue.SetValue(val);
                 if (callback) {
@@ -327,6 +329,15 @@ template<> struct ::QUC::EnumStrValues<EnumName> {                      \
                 } else {
                     return {};
                 }
+            };
+        }
+
+        template<typename F = typename SettingType::OnCallback const&>
+        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<EnumConfigValue>& configValue, F callback) {
+            return [callback, &configValue](auto& setting, std::string const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
+                configValue.SetValue(val);
+
+                return callback(setting, val, t, ctx);
             };
         }
 
