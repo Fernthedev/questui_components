@@ -28,7 +28,7 @@
     },
     {
       "id": "codegen",
-      "versionRange": "^0.18",
+      "versionRange": "^0.19",
       "additionalData": {}
     },
     {
@@ -45,7 +45,7 @@
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.14.0",
+      "versionRange": "^0.15.0",
       "additionalData": {}
     },
     {
