@@ -8,7 +8,7 @@
 #include "beatsaber-hook/shared/config/config-utils.hpp"
 #include "beatsaber-hook/shared/utils/il2cpp-functions.hpp"
 
-#include "shared/Logger.hpp"
+#include "test/include/Logger.hpp"
 
 // Define these functions here so that we can easily read configuration and log information from other files
 Configuration& getConfig();

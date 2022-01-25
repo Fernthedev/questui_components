@@ -1,24 +1,38 @@
 #pragma once
 
+#include "shared/context.hpp"
 #include "shared/RootContainer.hpp"
+#include "UnityEngine/UI/HorizontalLayoutGroup.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
 
-#include <utility>
-#include <vector>
+namespace QUC {
+    namespace detail {
+        template<class... TArgs>
+        requires ((renderable<TArgs> && ...))
+        struct HorizontalLayoutGroup : Container<TArgs...> {
+            HorizontalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
-namespace UnityEngine::UI {
-    class HorizontalLayoutGroup;
-}
+            const Key key;
 
-namespace QuestUI_Components {
+            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+                auto& horizontalLayout = data.getData<UnityEngine::UI::HorizontalLayoutGroup*>();
+                auto &parent = ctx.parentTransform;
+                if (!horizontalLayout) {
+                    // It's actually EASIER for us to destroy and remake the entire tree instead of changing some elements.
+                    horizontalLayout = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(&parent);
+                }
 
-    class HorizontalLayoutGroup : public BaseContainer {
-    public:
-        explicit HorizontalLayoutGroup(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
-        explicit HorizontalLayoutGroup(std::vector<ComponentWrapper> children) : BaseContainer(children) {}
-
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        UnityEngine::UI::HorizontalLayoutGroup* horizontalLayoutGroup = nullptr;
-    };
+                RenderContext& childrenCtx = data.getChildContext([horizontalLayout]() {
+                    return horizontalLayout->get_transform();
+                });
+                detail::Container<TArgs...>::render(childrenCtx, data);
+                return &childrenCtx.parentTransform;
+            }
+        };
+    }
+    template<class... TArgs>
+    requires ((renderable<TArgs> && ...))
+    auto HorizontalLayoutGroup(TArgs&&... args) {
+        return detail::HorizontalLayoutGroup<TArgs...>(std::forward<TArgs>(args)...);
+    }
 }

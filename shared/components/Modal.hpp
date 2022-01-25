@@ -1,54 +1,135 @@
 #pragma once
 
 #include "shared/RootContainer.hpp"
+#include "shared/context.hpp"
+#include "shared/unity/WeakPtrGO.hpp"
 
-#include <optional>
-#include <utility>
-#include <vector>
+#include "questui/shared/BeatSaberUI.hpp"
 
 #include "UnityEngine/Vector2.hpp"
+#include <functional>
+#include <utility>
 
 namespace HMUI {
     class ModalView;
 }
 
+namespace QUC {
 
-namespace QuestUI_Components {
+    struct ModalWrapper;
 
-    class Modal : public BaseContainer {
+    using ModalPtrWrapper = std::shared_ptr<ModalWrapper>;
+    using ModalCallback = std::function<void(ModalWrapper *, HMUI::ModalView *)>;
+
+    struct ModalWrapper {
     public:
-        using BlockerClickedCallback = std::function<void(Modal*, HMUI::ModalView*)>;
+        const std::optional<UnityEngine::Vector2> sizeDelta;
+        const std::optional<UnityEngine::Vector2> anchoredPosition;
+        const bool dismissOnBlockerClicked;
+        const ModalCallback callback;
 
-        struct ModalInitData {
-            UnityEngine::Vector2 sizeDelta = {30.0f, 40.0f};
-            UnityEngine::Vector2 anchoredPosition = {0.0f, 0.0f};
-            bool dismissOnBlockerClicked = true;
-        };
+        HMUI::ModalView* modalViewPtr;
 
-        explicit Modal(std::initializer_list<ComponentWrapper> children, BlockerClickedCallback onBlockerClicked,
-                       ModalInitData initData) :
-                       onBlockerClicked(std::move(onBlockerClicked)),
-                       initData(std::make_optional(initData)), BaseContainer(children) {}
+        ModalWrapper(const std::optional<UnityEngine::Vector2> &sizeDelta = std::nullopt,
+                     const std::optional<UnityEngine::Vector2> &anchoredPosition = std::nullopt,
+                     bool dismissOnBlockerClicked = true, ModalCallback callback = {}) : sizeDelta(sizeDelta),
+                                                                                  anchoredPosition(anchoredPosition),
+                                                                                  dismissOnBlockerClicked(
+                                                                                          dismissOnBlockerClicked),
+                                                                                  callback(std::move(callback))
+                                                                                  {}
 
-        explicit Modal(std::initializer_list<ComponentWrapper> children, BlockerClickedCallback onBlockerClicked,
-                       std::optional<ModalInitData> initData = std::nullopt) :
-                       onBlockerClicked(std::move(onBlockerClicked)),
-                       initData(initData), BaseContainer(children) {}
+        void dismiss() const {
+            auto innerModal = modalViewPtr;
 
-        void dismiss();
-        void show();
+            if (!innerModal)
+                throw std::runtime_error("Not rendered yet");
 
-        [[nodiscard]] HMUI::ModalView *getModalView() const {
-            return modalView;
+            innerModal->Hide(true, nullptr);
         }
 
-        CONSTRUCT_AFTER_COMPONENT(Modal)
+        void show() const {
+            auto innerModal = modalViewPtr;
+
+            if (!innerModal)
+                throw std::runtime_error("Not rendered yet");
+
+            innerModal->Show(true, true, nullptr);
+        }
+    };
+
+    template<class... TArgs>
+    using ModalCreateFunc = std::function<std::tuple<TArgs...>(ModalWrapper &modal)>;
+
+
+    template<class... TArgs> requires ((renderable<TArgs>&& ...))
+    struct Modal : detail::Container<TArgs...> {
+        const Key key;
+
+        Modal(TArgs... children)
+                : detail::Container<TArgs...>(children...) {}
+
+        Modal(ModalPtrWrapper ptr, TArgs... children)
+                : modalViewPtr(std::move(ptr)), detail::Container<TArgs...>(children...) {}
+
+        UnityEngine::Transform *render(RenderContext &ctx, RenderContextChildData &data) {
+            auto &innerModal = data.getData<HMUI::ModalView *>();
+            // if inner modal is already created, skip recreating and forward render calls
+            if (!innerModal) {
+                std::function<void(HMUI::ModalView *)> cbk([callback = modalViewPtr->callback, this](HMUI::ModalView *arg) {
+                    if (callback)
+                        callback(modalViewPtr.get(), arg);
+                });
+
+
+                if (modalViewPtr->sizeDelta) {
+                    if (modalViewPtr->anchoredPosition) {
+                        innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, *modalViewPtr->sizeDelta,
+                                                                       *modalViewPtr->anchoredPosition, cbk,
+                                                                       modalViewPtr->dismissOnBlockerClicked);
+                    } else {
+                        innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, *modalViewPtr->sizeDelta, cbk,
+                                                                       modalViewPtr->dismissOnBlockerClicked);
+                    }
+                } else {
+                    innerModal = QuestUI::BeatSaberUI::CreateModal(&ctx.parentTransform, cbk,
+                                                                   modalViewPtr->dismissOnBlockerClicked);
+                }
+
+                modalViewPtr->modalViewPtr = innerModal;
+            }
+
+
+            // TODO: If modal is hidden, should we rerender inner comps?
+            RenderContext &childrenCtx = data.getChildContext([this, innerModal]() {
+                return innerModal->get_transform();
+            });
+            detail::Container<TArgs...>::render(childrenCtx, data);
+
+            return &childrenCtx.parentTransform;
+        }
+
+
+        [[nodiscard]] Modal clone() const {
+            Modal m(ModalWrapper(this));
+            m.innerModal = nullptr;
+
+            m.children = detail::Container<TArgs...>::clone();
+            return m;
+        }
+
+        void dismiss() const {
+            modalViewPtr->dismiss();
+        }
+
+        void show() const {
+            modalViewPtr->show();
+        }
 
     protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        HMUI::ModalView* modalView = nullptr;
-        std::optional<ModalInitData> initData;
-        BlockerClickedCallback onBlockerClicked;
+        const ModalPtrWrapper modalViewPtr = std::make_shared<ModalWrapper>();
     };
+
+    static_assert(renderable<Modal<Text>>);
+    static_assert(cloneable < Modal < Text >> );
 }

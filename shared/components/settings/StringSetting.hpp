@@ -1,56 +1,111 @@
 #pragma once
 
 #include "UnityEngine/Vector2.hpp"
+#include "UnityEngine/Vector3.hpp"
 
 #include "BaseSetting.hpp"
+#include "shared/context.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
+#include "HMUI/InputFieldView.hpp"
 
 #include <string>
-#include <utility>
-#include <vector>
 
-namespace UnityEngine::UI {
-    class Image;
-}
+namespace QUC {
+    struct StringSetting {
+        using OnCallback = std::function<void(StringSetting&, std::string const&, UnityEngine::Transform*, RenderContext& ctx)>;
+        HeldData<std::string> text;
+        OnCallback callback;
+        HeldData<bool> enabled;
+        HeldData<bool> interactable;
+        HeldData<std::string> value;
+        const UnityEngine::Vector2 anchoredPosition;
+        const UnityEngine::Vector3 keyboardPositionOffset;
 
-namespace HMUI {
-    class InputFieldView;
-}
+        const Key key;
 
-namespace TMPro {
-    class TextMeshPro;
-    class TextMeshProUGUI;
-}
+        template<class F>
+        constexpr StringSetting(std::string_view txt, F&& callable, std::string_view currentValue = "", bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {}, UnityEngine::Vector3 offt = {})
+            : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), anchoredPosition(anch), keyboardPositionOffset(offt) {}
 
-namespace QuestUI_Components {
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& inputFieldView = data.getData<HMUI::InputFieldView*>();
+            // TODO: Cache this properly
+            auto parent = &ctx.parentTransform;
+            if (!inputFieldView) {
+                auto cbk = [callback = this->callback, parent, &ctx, this](std::string_view val)mutable {
+                    value = val;
+                    value.clear();
+                    if (callback)
+                        callback(*this, value.getData(), parent, ctx);
+                };
+                inputFieldView = QuestUI::BeatSaberUI::CreateStringSetting(parent, *text, *value, anchoredPosition,
+                                                                           keyboardPositionOffset,
+                                                                           cbk);
+                assign<true>(inputFieldView);
+            } else {
+                assign<false>(inputFieldView);
+            }
 
-    using MutableStringSettingsData = MutableSettingsData<std::string>;
+            return inputFieldView->get_transform();
+        }
 
-    class StringSetting : public BaseSetting<std::string, StringSetting, MutableStringSettingsData> {
-    public:
-        struct InitStringSettingsData {
-            UnityEngine::Vector2 anchoredPosition;
-            UnityEngine::Vector3 keyboardPositionOffset;
-        };
+        [[nodiscard]] std::string const& getValue() const {
+            return *value;
+        }
 
-        explicit StringSetting(std::string_view text, std::string_view currentValue,
-                               OnCallback callback = nullptr, std::optional<InitStringSettingsData> stringData = std::nullopt)
-                               : BaseSetting(text, std::string(currentValue), std::move(callback)),
-        stringInitData(stringData) {}
+        void setValue(std::string_view val) {
+            value = val;
+        }
 
-    protected:
-        void update() override;
-        Component* render(UnityEngine::Transform *parentTransform) override;
+        void update(RenderContext& ctx) {
+            auto& data = ctx.getChildData(key);
+            auto& inputFieldView = data.getData<HMUI::InputFieldView*>();
+
+            assign<false>(inputFieldView);
+        }
+
     private:
-        // render time
-        HMUI::InputFieldView* uiString = nullptr;
+        template<bool created>
+        void assign(HMUI::InputFieldView* inputFieldView) {
+            CRASH_UNLESS(inputFieldView);
+            if (enabled) {
+                inputFieldView->set_enabled(*enabled);
+                enabled.clear();
+            }
 
-        // constructor time
-        const std::optional<InitStringSettingsData> stringInitData;
+            if (!*enabled) {
+                // Don't bother setting anything if we aren't enabled.
+                return;
+            }
+
+            if constexpr (created) {
+                inputFieldView->set_interactable(*interactable);
+                interactable.clear();
+            } else if (interactable) {
+                inputFieldView->set_interactable(*interactable);
+                interactable.clear();
+            }
+
+            if constexpr (!created) {
+                if (text) {
+                    auto txt = inputFieldView->placeholderText->GetComponent<TMPro::TextMeshProUGUI *>();
+                    CRASH_UNLESS(txt);
+                    txt->set_text(il2cpp_utils::newcsstr(*text));
+                    text.clear();
+                }
+
+                if (value) {
+                    inputFieldView->SetText(il2cpp_utils::newcsstr(*value));
+                }
+            }
+        }
     };
-
-
+    static_assert(renderable<StringSetting>);
+    static_assert(IsConfigType<StringSetting, std::string>);
 
 #if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
     using ConfigUtilsStringSetting = ConfigUtilsSetting<std::string, StringSetting>;
 #endif
+
+
 }

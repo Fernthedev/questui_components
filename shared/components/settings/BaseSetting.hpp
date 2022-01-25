@@ -2,7 +2,7 @@
 
 #include "UnityEngine/Vector2.hpp"
 
-#include "shared/Component.hpp"
+#include "shared/concepts.hpp"
 #include "shared/RootContainer.hpp"
 #include "shared/components/HoverHint.hpp"
 
@@ -11,6 +11,9 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "shared/state.hpp"
+#include "shared/unity/WeakPtrGO.hpp"
 
 #include "UnityEngine/Transform.hpp"
 #include "config-utils/shared/config-utils.hpp"
@@ -23,158 +26,171 @@ namespace TMPro {
     class TextMeshProUGUI;
 }
 
+namespace QUC {
+//    template<typename ValueType, typename SettingType>
+//    class BaseSetting {
+//    public:
+//        // Mutable variables
+//        HeldData<std::string> text;
+//        HeldData<bool> enabled = true;
+//        HeldData<bool> interactable = true;
+//
+//        using OnCallback = std::function<void(SettingType*, ValueType, UnityEngine::Transform*)>;
+//        using CallbackWrapper = std::function<void(ValueType)>;
+//
+//        constexpr BaseSetting(std::string_view text, OnCallback callback = nullptr, bool enabled = true, bool interactable = true) : text(text),
+//                enabled(enabled),
+//                interactable(interactable)
+//                {}
+//
+//    void resetChange() {
+//
+//    }
+//
+//
+//    protected:
+//        CallbackWrapper constructWrapperCallback(UnityEngine::Transform *parentTransform) {
+//            if (callback) {
+//                return [this, parentTransform](ValueType val) {
+//                    this->setValue(val);
+//                    this->resetChange();
+//                    // better way of doing this than reinterpret cast to child?
+//                    callback(reinterpret_cast<SettingType*>(this), val, parentTransform);
+//                };
+//            } else {
+//                return [this](ValueType val) {
+//                    this->setValue(val);
+//                    this->resetChange();
+//                };
+//            }
+//        }
+//
+//        void update() {
+//            if (uiText && text) {
+//                uiText->set_text(il2cpp_utils::newcsstr(*text));
+//                text.clear();
+//            }
+//        }
+//
+//
+//        // render time
+//        WeakPtrGO<TMPro::TextMeshProUGUI> uiText;
+//
+//        // constructor time
+//        const OnCallback callback;
+//    };
+//
+//    template<typename ValueType, typename SettingType>
+//    class SimpleBaseSetting : public BaseSetting<ValueType, SettingType> {
+//        HeldData<ValueType> value;
+//
+//
+//        // Override if needed. For example: config-utils
+//        ValueType getValue() {
+//            return this->value;
+//        }
+//
+//        // This is always called on set, whether your callback is nullptr or not.
+//        ValueType setValue(ValueType val) {
+//            return value = val;
+//        }
+//
+//        void resetChange() {
+//            value.clear();
+//        }
+//    };
 
+    template<typename T, typename Value>
+    concept IsConfigType = requires(T const t) {
+        {t.getValue()} -> QUC::IsQUCConvertible<Value>;
 
-namespace QuestUI_Components {
-
-    template<typename ValueType>
-    class BaseSettingModifier;
-
-    template<typename ValueType>
-    struct MutableSettingsData {
-        // Mutable variables
-        std::string text;
-
-        bool enabled = true;
-        bool interactable = true;
-
-        friend class BaseSettingModifier<ValueType>;
-
-        virtual ~MutableSettingsData() = default;
-    private:
-        // To edit this, use getValue() and setValue()
-        ValueType value;
+        typename T::OnCallback;
+        IsQUCConvertible<typename T::OnCallback,std::function<void(T&, Value const&, UnityEngine::Transform *, RenderContext& ctx)>>;
+    } && requires(T t, Value value) {
+        {t.setValue(value)};
     };
-
-    // For encapsulation magic, woohoo!
-    template<typename ValueType>
-    class BaseSettingModifier {
-    protected:
-        static inline ValueType getValueOfData(const MutableSettingsData<ValueType>& data) {
-            return data.value;
-        }
-
-        static inline ValueType setValueOfData(MutableSettingsData<ValueType>& data, const ValueType& value) {
-            data.value = value;
-
-            return data.value;
-        }
-    };
-
-    template<typename ValueType, typename SettingType, typename MutableData = MutableSettingsData<ValueType>>
-    class BaseSetting : public Component, public UpdateableComponent<MutableData>, protected BaseSettingModifier<ValueType> {
-    public:
-        using OnCallback = std::function<void(SettingType*, ValueType, UnityEngine::Transform*)>;
-        using CallbackWrapper = std::function<void(ValueType)>;
-//        using Modifier = BaseSettingModifier<ValueType>;
-
-        explicit BaseSetting(std::string_view text, ValueType currentValue, OnCallback callback = nullptr) : callback(callback) {
-            this->data.text = text;
-            this->setValueOfData(this->data, currentValue);
-        }
-
-        // Allow constructing with lambda
-        CONSTRUCT_AFTER_COMPONENT(SettingType)
-
-        // Override if needed. For example: config-utils
-        virtual ValueType getValue() {
-            return this->getValueOfData(this->data);
-        }
-
-        // This is always called on set, whether your callback is nullptr or not.
-        ValueType setValue(ValueType val) {
-            bool different = getValue() != val;
-            this->updated = this->updated || different;
-            if (different) {
-                internalSetValue(val);
-            }
-            return val;
-        }
-    protected:
-        CallbackWrapper constructWrapperCallback(UnityEngine::Transform *parentTransform) {
-            if (callback) {
-                return [this, parentTransform](ValueType val) {
-                    setValue(val);
-                    // better way of doing this than reinterpret cast to child?
-                    callback(reinterpret_cast<SettingType*>(this), val, parentTransform);
-                };
-            } else {
-                return [this](ValueType val) {
-                    setValue(val);
-                };
-            }
-        }
-
-        void update() override {
-            if (!rendered)
-                throw std::runtime_error("Toggle setting component has not rendered!");
-
-            if (uiText) {
-                uiText->set_text(il2cpp_utils::newcsstr(this->data.text));
-            }
-        }
-
-        virtual void internalSetValue(const ValueType& val) {
-            this->mutateData([&val, this](MutableData data) {
-                this->setValueOfData(data, val);
-                return data;
-            });
-        }
-        // render time
-        TMPro::TextMeshProUGUI* uiText = nullptr;
-
-        // constructor time
-        const OnCallback callback;
-    };
-
-
 
 #if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
     template<typename ValueType, typename SettingType, typename ConfigValueType = ValueType>
+    requires(IsConfigType<SettingType, ValueType>)
     class ConfigUtilsSetting : public SettingType {
     public:
+        template<typename F, typename... TArgs>
+        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable, TArgs&&... args) :
+                ConfigUtilsSetting(configValue.GetValue(), configValue, std::forward<F>(callable), std::forward<TArgs>(args)...) {}
+
         template<typename... TArgs>
-        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) : ConfigUtilsSetting(configValue.GetValue(), configValue, args...) {
+        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, std::nullptr_t nullCallback, TArgs&&... args) :
+                ConfigUtilsSetting(configValue.GetValue(), configValue, buildCallback(configValue), std::forward<TArgs>(args)...) {}
 
-        }
-
-        void doUpdate() override {
-            this->updated = true;
-            SettingType::doUpdate();
-        }
-
-    protected:
         template<typename... TArgs>
-        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) :
-        configValue(configValue), SettingType(configValue.GetName(), currentValue, args...) {}
+        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) :
+                ConfigUtilsSetting(configValue.GetValue(), configValue, buildCallback(configValue), std::forward<TArgs>(args)...) {}
 
+//        template<typename F>
+//        explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable)
+//        : ConfigUtilsSetting(configValue.GetValue(), configValue, callable) {}
 
-        // reference capture should be safe here
-        ConfigUtils::ConfigValue<ConfigValueType>& configValue;
-
-
-        ValueType getValue() override {
+        ValueType getValue() {
             return configValue.GetValue();
         }
 
-        void internalSetValue(const ValueType& val) override {
+        void setValue(const ValueType& val) {
             configValue.SetValue(val);
         }
 
-        Component *render(UnityEngine::Transform *parentTransform) override {
-            SettingType::render(parentTransform);
+        void resetChange() {}
 
-            if (!configValue.GetHoverHint().empty()) {
-                QuestUI::BeatSaberUI::AddHoverHint(this->getTransform()->get_gameObject(), configValue.GetHoverHint());
+        const Key key;
+
+
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            SettingType::setValue(getValue());
+            auto& hoverHint = data.getData<HMUI::HoverHint*>();
+            Key parentKey = SettingType::key;
+            auto res = SettingType::render(ctx, ctx.getChildData(parentKey));
+
+            if (!configValue.GetHoverHint().empty() && !hoverHint) {
+                hoverHint = QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), configValue.GetHoverHint());
             }
 
-            return this;
-
+            return res;
         };
 
-        void update() override {
-            SettingType::update();
-        };
+    protected:
+//        template<typename F>
+//        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable) :
+//                configValue(configValue), SettingType(configValue.GetName(), callable, currentValue) {}
+
+        template<typename F, typename... TArgs>
+        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable, TArgs&&... args) :
+                configValue(configValue), SettingType(configValue.GetName(), buildCallback<F>(configValue, std::forward<F>(callable)), currentValue, args...) {}
+
+        template<typename... TArgs>
+        explicit ConfigUtilsSetting(ValueType currentValue, ConfigUtils::ConfigValue<ConfigValueType>& configValue, TArgs&&... args) :
+                configValue(configValue), SettingType(configValue.GetName(), buildCallback(configValue), currentValue, args...) {}
+
+        template<typename F = typename SettingType::OnCallback const&>
+        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callback) {
+            return [callback, &configValue](auto& setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
+                configValue.SetValue(val);
+                if (callback) {
+                    return callback(setting, val, t, ctx);
+                } else {
+                    return {};
+                }
+            };
+        }
+
+        static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<ConfigValueType>& configValue) {
+            return [&configValue](auto& setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
+                configValue.SetValue(val);
+                return {};
+            };
+        }
+
+        // reference capture should be safe here
+        ConfigUtils::ConfigValue<ConfigValueType>& configValue;
     };
 #endif
 }

@@ -1,25 +1,36 @@
 #pragma once
 
-
 #include "shared/RootContainer.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
 
-#include <utility>
-#include <vector>
+namespace QUC {
+    namespace detail {
+        template<class... TArgs>
+        requires ((renderable<TArgs> && ...))
+        struct VerticalLayoutGroup : Container<TArgs...> {
+            const Key key;
 
-namespace UnityEngine::UI {
-    class VerticalLayoutGroup;
-}
+            VerticalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
-namespace QuestUI_Components {
+            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+                auto& viewLayout = data.getData<UnityEngine::UI::VerticalLayoutGroup*>();
+                auto &parent = ctx.parentTransform;
+                if (!viewLayout) {
+                    // It's actually EASIER for us to destroy and remake the entire tree instead of changing some elements.
+                    viewLayout = QuestUI::BeatSaberUI::CreateVerticalLayoutGroup(&parent);
+                }
 
-    class VerticalLayoutGroup : public BaseContainer {
-    public:
-        explicit VerticalLayoutGroup(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
-        explicit VerticalLayoutGroup(std::vector<ComponentWrapper> children) : BaseContainer(children) {}
-
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        UnityEngine::UI::VerticalLayoutGroup* verticalLayoutGroup = nullptr;
-    };
+                RenderContext& childrenCtx = data.getChildContext([viewLayout] {
+                    return viewLayout->get_transform();
+                });
+                detail::Container<TArgs...>::render(childrenCtx, data);
+                return &childrenCtx.parentTransform;
+            }
+        };
+    }
+    template<class... TArgs>
+    requires ((renderable<TArgs> && ...))
+    auto VerticalLayoutGroup(TArgs&&... args) {
+        return detail::VerticalLayoutGroup<TArgs...>(std::forward<TArgs>(args)...);
+    }
 }

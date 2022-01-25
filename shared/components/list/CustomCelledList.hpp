@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shared/RootContainer.hpp"
+#include "CustomTypeTable.hpp"
 
 #include "UnityEngine/Vector2.hpp"
 
@@ -9,74 +10,74 @@
 
 #include <utility>
 #include <vector>
+#include <concepts>
 
+namespace QUC {
 
-namespace QuestUI_Components {
+    template<typename T, typename CellData>
+    concept ComponentCellRenderable = requires(T t) {
+        std::is_trivially_default_constructible_v<T>;
+    } &&
+    // Render methods
+    (
+    requires(T t, CellData cellData, UnityEngine::Transform* cellTransform, RenderContext& tableCtx, RenderContextChildData& cellCtxData) {
+        T::render(cellTransform, cellData, tableCtx, cellCtxData);
+    } || requires(T t, CellData cellData, RenderContext& cellCtx) {
+        t.render(cellData, cellCtx);
+    });
 
-    // This is an extremely lazy attempt for a list, I hate it.
-    template<typename T = HMUI::TableView::IDataSource>
-    class CustomCelledList : public BaseContainer {
-    public:
-        using CallbackWrapper = std::function<void(int)>;
-        using Callback = std::function<void(CustomCelledList<T>* self, ComponentWrapper selectedComp, int selectedIndex)>;
-        struct CustomCelledListInitData {
-            UnityEngine::Vector2 anchoredPosition = {0,0};
-            UnityEngine::Vector2 sizeDelta;
-        };
+    template <typename DataSource,typename QCell,
+            typename CustomTypeComponentCell = typename DataSource::CustomQUCCustomCellT, // Boiler plate defaults
+            typename CellData = typename DataSource::CustomQUCDescriptorT>
+    requires(
+            QUC::CustomTypeList::IsValidQUCTableData<DataSource> &&
+            // Component data
+            QUC::CustomTypeList::IsValidQUCTableCell<CustomTypeComponentCell> &&
+            ComponentCellRenderable<QCell, CellData>)
+    struct RecycledTable {
+        const Key key;
+        const std::vector<CellData> cellDatas;
+        const CustomTypeList::QUCTableInitData initData;
 
-        explicit CustomCelledList(std::initializer_list<ComponentWrapper> children, std::optional<CustomCelledListInitData> initData = std::nullopt, Callback callback = nullptr) : onCellWithIdxClicked(callback), initData(initData), BaseContainer(children) {}
-        explicit CustomCelledList(std::vector<ComponentWrapper> const& children, std::optional<CustomCelledListInitData> initData = std::nullopt, Callback callback = nullptr) : onCellWithIdxClicked(callback), initData(initData), BaseContainer(children) {}
+        constexpr RecycledTable(std::vector<CellData> const &cellData, CustomTypeList::QUCTableInitData const &initData) : cellDatas(cellData), initData(initData)  {}
+        constexpr RecycledTable(std::initializer_list<CellData> const &cellData, CustomTypeList::QUCTableInitData const &initData) : cellDatas(cellData), initData(initData) {}
 
-    protected:
-        CallbackWrapper constructWrapperCallback() {
-            if (onCellWithIdxClicked) {
-                return [this](int index) {
-                    ComponentWrapper& wrapper = getComponentAt(index);
-                    // better way of doing this than reinterpret cast to child?
-                    callback(this, wrapper, index);
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& dataSource = data.getData<DataSource*>();
+            if (!dataSource) {
+                typename DataSource::CreateCellCallback buildCell =
+                        [&data, &dataSource](typename DataSource::CustomQUCCustomCellT* cell, bool created, typename DataSource::CustomQUCDescriptorT const& descriptor){
+                            auto& tableContext = data.template getChildContext([&dataSource]{
+                                return dataSource->get_transform();
+                            });
 
-                    updateComponent(wrapper);
+                    auto& cellData = tableContext.getChildData(cell->key);
+                    if constexpr(requires(QCell) {QCell::render;}) {
+                        QCell::render(cell->get_transform(), descriptor, tableContext, cellData);
+                    } else {
+                        // construct a QCell and give it more QUC-like data
+                        auto cellTransform = cell->get_transform();
+
+                        QCell& qCell = cellData.template getData<QCell>();
+                        auto& cellContext = cellData.template getChildContext([cellTransform]{return cellTransform;});
+
+                        qCell.render(descriptor, cellContext);
+                    }
                 };
-            } else {
-                return [this](int index) {
-                    setValue(getComponentAt(index));
-                };
+
+                dataSource = QUC::CustomTypeList::CreateCustomList<DataSource>(&ctx.parentTransform, buildCell, initData);
+                dataSource->descriptors = cellDatas;
+                dataSource->Init(initData);
             }
+
+            auto& childContext = data.template getChildContext([dataSource]{
+                return dataSource->get_transform();
+            });
+
+
+            return &childContext.parentTransform;
         }
 
-        ComponentWrapper& getComponentAt(int i) {
-            return getRenderChildren()[i];
-        }
-
-        void updateComponent(ComponentWrapper& wrapper) {
-            renderComponentInContainer(wrapper);
-        }
-
-        Component* render(UnityEngine::Transform *parentTransform) override {
-            using namespace QuestUI;
-            Callback callback = constructWrapperCallback();
-            if (initData) {
-                hmuiTable = BeatSaberUI::CreateCustomSourceList<T *>(parentTransform, initData->anchoredPosition, initData->sizeDelta, callback);
-            } else {
-                hmuiTable = BeatSaberUI::CreateCustomSourceList<T *>(parentTransform, callback);
-            }
-            monoBehaviour = il2cpp_utils::cast<UnityEngine::MonoBehaviour>(hmuiTable);
-            dataSource = il2cpp_utils::cast<HMUI::TableView::IDataSource>(hmuiTable);
-            transform = monoBehaviour->get_transform();
-
-            rendered = true;
-            update();
-
-            return this;
-        }
-
-        // constructor time
-        const Callback onCellWithIdxClicked = nullptr;
-        const std::optional<CustomCelledListInitData> initData;
-
-        // render time
-        T* hmuiTable = nullptr;
-        UnityEngine::MonoBehaviour* monoBehaviour = nullptr;
-        HMUI::TableView::IDataSource* dataSource = nullptr;
     };
+
 }

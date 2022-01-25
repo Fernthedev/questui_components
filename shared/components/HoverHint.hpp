@@ -1,25 +1,52 @@
 #pragma once
 
-#include "shared/Component.hpp"
-#include "shared/RootContainer.hpp"
-
+#include "shared/context.hpp"
+#include "Text.hpp"
 #include <string>
-#include <utility>
-#include <vector>
+#include <string_view>
+#include "questui/shared/BeatSaberUI.hpp"
 
-namespace QuestUI_Components {
+namespace UnityEngine {
+    class Transform;
+}
 
-    class HoverHint : public Component, public ComponentRenderer, public UpdateableComponentBase {
-    public:
-        explicit HoverHint(std::string_view hint, ComponentWrapper child) : text(hint), child(std::move(child)) {}
+namespace QUC {
+    namespace detail {
+        template<class T>
+        requires (renderable_return<T, UnityEngine::Transform*>)
+        struct HoverHint {
+            std::string text;
+            const Key key;
 
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
+            HoverHint(std::string_view txt, T&& arg) : text(txt), child(arg) {}
 
-        void update() override;
+            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+                auto& hoverHint = data.getData<HMUI::HoverHint*>();
 
-    private:
-        const std::string text;
-        ComponentWrapper child;
-    };
+                // First render our child to our parent.
+                auto res = detail::renderSingle<T>(child, ctx);
+                // Now, we know the result is convertible to Transform*, so we can pass that into make hover hint
+                if (!hoverHint)
+                    hoverHint = QuestUI::BeatSaberUI::AddHoverHint(res->get_gameObject(), text);
+
+                return res;
+            }
+
+            [[nodiscard]] HoverHint<T> clone() const {
+                HoverHint hint(*this);
+                hint.hoverHint = nullptr;
+                return this;
+            }
+
+            private:
+            T child;
+        };
+
+        static_assert(renderable<HoverHint<Text>>);
+        static_assert(cloneable<HoverHint<Text>>);
+    }
+    template<class T>
+    auto HoverHint(std::string_view txt, T&& arg) {
+        return detail::HoverHint<T>(txt, std::forward<T>(arg));
+    }
 }

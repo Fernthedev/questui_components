@@ -1,9 +1,7 @@
 #pragma once
 
-#include "shared/Component.hpp"
-
 #include "shared/components/Text.hpp"
-#include "shared/components/layouts/MultiComponentGroup.hpp"
+#include "shared/RootContainer.hpp"
 
 #include <utility>
 #include <vector>
@@ -14,16 +12,32 @@ namespace UnityEngine {
     class Transform;
 }
 
-namespace QuestUI_Components {
-    class TestComponent : public Component {
-    public:
-        explicit TestComponent(std::string_view prefix);
+namespace QUC {
+    static auto TestComponent(std::string_view prefix) {
+        return Container(
+                Text(std::string(prefix) + "Group 1"),
+                Text(std::string(prefix) + "Group 2")
+        );
+    }
 
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
+    // Renders a list of text progressively
+    struct MoreComplexType {
+        // Identifies this component in the tree
+        const Key key;
 
-        // Store as a shared_ptr because parent wil NOT take ownership of this.
-        // However, it will take ownership of us
-        std::shared_ptr<MultiComponentGroup> group;
+        std::string prefix;
+        std::array<Text, 4> texts = {Text(prefix + "text 1"), Text(prefix + "text 2"), Text(prefix + "text 3"), Text(prefix + "text 4")};
+
+        MoreComplexType(std::string_view prefix) : prefix(prefix) {}
+
+        void render(RenderContext& ctx, RenderContextChildData& data) {
+            // get state in the tree
+            auto& timesRendered = data.getData<int>();
+            if (timesRendered >= 0 && timesRendered < 4) {
+                detail::renderSingle(texts[timesRendered], ctx);
+                timesRendered++;
+            }
+        }
     };
+    static_assert(renderable<MoreComplexType>);
 }

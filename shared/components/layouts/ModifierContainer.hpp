@@ -4,46 +4,37 @@
 #include "UnityEngine/RectTransform.hpp"
 #include "UnityEngine/UI/ContentSizeFitter.hpp"
 
-
 #include "shared/RootContainer.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
-#include <utility>
-#include <vector>
+namespace QUC {
+    namespace detail {
+        template<class... TArgs>
+        requires ((renderable<TArgs> && ...))
+        struct ModifierContainer : Container<TArgs...> {
+            ModifierContainer(TArgs... args) : Container<TArgs...>(args...) {}
 
-namespace QuestUI_Components {
-    // TODO: Replace with QuestUI method
-    static UnityEngine::UI::VerticalLayoutGroup *CreateModifierContainer(UnityEngine::Transform *parent) {
-        using namespace QuestUI::BeatSaberUI;
-        using namespace UnityEngine;
-        using namespace UnityEngine::UI;
+            const Key key;
 
-        UnityEngine::UI::VerticalLayoutGroup* group = CreateVerticalLayoutGroup(parent);
+            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+                auto& modifierLayout = data.getData<UnityEngine::UI::VerticalLayoutGroup*>();
+                auto &parent = ctx.parentTransform;
+                if (!modifierLayout) {
+                    // It's actually EASIER for us to destroy and remake the entire tree instead of changing some elements.
+                    modifierLayout = QuestUI::BeatSaberUI::CreateModifierContainer(&parent);
+                }
 
-        group->set_padding(RectOffset::New_ctor(3, 3, 2, 2));
-        group->set_childControlHeight(false);
-        group->set_childForceExpandHeight(false);
-
-        group->get_gameObject()->GetComponent<ContentSizeFitter*>()->set_verticalFit(ContentSizeFitter::FitMode::PreferredSize);
-
-        RectTransform* rectTransform = group->get_rectTransform(); //group->get_transform()->get_parent()->get_gameObject()->GetComponent<RectTransform*>();
-        rectTransform->set_anchoredPosition({0, 3});
-        rectTransform->set_anchorMin(UnityEngine::Vector2(0.5f, 0.5f));
-        rectTransform->set_anchorMax(UnityEngine::Vector2(0.5f, 0.5f));
-        rectTransform->set_sizeDelta(UnityEngine::Vector2(54.0f, 0.0f));
-
-
-        return group;
+                RenderContext& childrenCtx = data.getChildContext([modifierLayout]() {
+                    return modifierLayout->get_transform();
+                });
+                detail::Container<TArgs...>::render(childrenCtx, data);
+                return &childrenCtx.parentTransform;
+            }
+        };
     }
-
-    class ModifierContainer : public BaseContainer {
-    public:
-        explicit ModifierContainer(std::initializer_list<ComponentWrapper> children) : BaseContainer(children) {}
-        explicit ModifierContainer(std::vector<ComponentWrapper> children) : BaseContainer(children) {}
-
-    protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-
-        UnityEngine::UI::VerticalLayoutGroup* verticalLayoutGroup = nullptr;
-    };
+    template<class... TArgs>
+    requires ((renderable<TArgs> && ...))
+    auto ModifierContainer(TArgs&&... args) {
+        return detail::ModifierContainer<TArgs...>(std::forward<TArgs>(args)...);
+    }
 }

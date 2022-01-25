@@ -1,13 +1,11 @@
 #pragma once
 
+#include "shared/context.hpp"
+#include "shared/state.hpp"
+#include "shared/unity/WeakPtrGO.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
+
 #include "UnityEngine/Vector2.hpp"
-#include "UnityEngine/Color.hpp"
-
-#include "shared/Component.hpp"
-
-#include <string>
-#include <vector>
-
 
 namespace UnityEngine {
     class Sprite;
@@ -16,38 +14,49 @@ namespace UnityEngine {
     }
 }
 
+namespace QUC {
+    struct Image {
+        const UnityEngine::Vector2 sizeDelta;
+        const UnityEngine::Vector2 anchoredPosition;
+        HeldData<bool> enabled;
+        HeldData<UnityEngine::Sprite*> sprite;
+        const Key key;
 
-namespace QuestUI_Components {
-    struct MutableImageData {
-        bool enabled = true;
+        Image(UnityEngine::Sprite* spr, UnityEngine::Vector2 sd, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool enabled_ = true)
+            : sizeDelta(sd), anchoredPosition(anch), enabled(enabled_), sprite(spr) {}
 
-        // cannot be null
-        UnityEngine::Sprite* sprite;
-    };
-
-
-    class Image : public Component, public UpdateableComponent<MutableImageData> {
-    public:
-        struct InitialImageData {
-            UnityEngine::Vector2 sizeDelta;
-            UnityEngine::Vector2 anchoredPosition = {0.0f, 0.0f};
-        };
-        explicit Image(UnityEngine::Sprite* sprite, InitialImageData imageData) : initialImageData(imageData) {
-            data.sprite = sprite;
-
-            if (!data.sprite)
-                throw std::runtime_error("Sprite is null! Cannot happen");
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& image = data.getData<HMUI::ImageView*>();
+            if (!image) {
+                image = QuestUI::BeatSaberUI::CreateImage(&ctx.parentTransform, *sprite, anchoredPosition, sizeDelta);
+                assign<true>(image);
+            } else {
+                assign<false>(image);
+            }
+            return image->get_transform();
         }
 
-        CONSTRUCT_AFTER_COMPONENT(Image)
-
     protected:
-        Component* render(UnityEngine::Transform *parentTransform) override;
-        void update() override;
+        template<bool created = false>
+        void assign(HMUI::ImageView* image) {
+            CRASH_UNLESS(image);
 
-        const InitialImageData initialImageData;
+            if (enabled) {
+                image->set_enabled(*enabled);
+                enabled.clear();
+            }
+            if (!*enabled) {
+                // Don't bother setting anything if we aren't enabled.
+                return;
+            }
 
-        // render time
-        UnityEngine::UI::Image* uiImage = nullptr;
+            if constexpr (!created) {
+                if (sprite) {
+                    image->set_sprite(*sprite);
+                    sprite.clear();
+                }
+            }
+        }
     };
+    static_assert(renderable<Image>);
 }
