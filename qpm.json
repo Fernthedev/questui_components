@@ -24,12 +24,16 @@
     {
       "id": "questui",
       "versionRange": "^0.12",
-      "additionalData": {}
+      "additionalData": {
+        "private": true
+      }
     },
     {
       "id": "codegen",
       "versionRange": "^0.19",
-      "additionalData": {}
+      "additionalData": {
+        "private":true
+      }
     },
     {
       "id": "config-utils",
@@ -46,7 +50,9 @@
     {
       "id": "custom-types",
       "versionRange": "^0.15.0",
-      "additionalData": {}
+      "additionalData": {
+        "private": true
+      }
     },
     {
       "id": "modloader",
