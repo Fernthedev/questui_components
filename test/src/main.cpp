@@ -162,7 +162,7 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
 //             Toggles
             ToggleSetting("Toggle false", nullptr, false),
             ToggleSetting("Toggle true", [](ToggleSetting& set, bool val, UnityEngine::Transform*, RenderContext& ctx) {
-                set.text->text =  "Toggle " + std::string(val ? "true" : "false");
+                set.text.text =  "Toggle " + std::string(val ? "true" : "false");
                 set.toggleButton.value = val;
                 set.update(ctx);
             }, true),

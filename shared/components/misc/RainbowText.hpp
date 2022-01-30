@@ -33,9 +33,8 @@ namespace QUC {
 
         if (!text) {
             text = ctx.getChildData(Text::key).getData<TMPro::TextMeshProUGUI *>();
-            text->StartCoroutine(
-                    reinterpret_cast<System::Collections::IEnumerator *>(custom_types::Helpers::CoroutineHelper::New(
-                            rainbowCoroutine(ctx, data))));
+            text->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(
+                            rainbowCoroutine(ctx, data)));
         }
 
         return ret;

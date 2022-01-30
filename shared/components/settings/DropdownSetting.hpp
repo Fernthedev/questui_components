@@ -5,6 +5,7 @@
 #include "BaseSetting.hpp"
 
 #include "HMUI/SimpleTextDropdown.hpp"
+#include "System/Collections/Generic/IReadOnlyList_1.hpp"
 
 #include "shared/context.hpp"
 #include "shared/state.hpp"
@@ -125,10 +126,10 @@ namespace QUC {
                 }
 
                 if (value || values) {
-                    List<Il2CppString*>* list = nullptr;
+                    List<StringW>* list = nullptr;
 
                     if (values)
-                        list = List<Il2CppString*>::New_ctor();
+                        list = List<StringW>::New_ctor();
 
                     int selectedIndex = 0;
                     for (int i = 0; i < values.getData().size(); i++) {
@@ -137,12 +138,12 @@ namespace QUC {
                             selectedIndex = i;
                         }
                         if (list)
-                            list->Add(il2cpp_utils::newcsstr(dropdownValue));
+                            list->Add(dropdownValue);
                     }
 
                     if (list) {
                         dropdown->SetTexts(
-                                reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<Il2CppString *> *>(list));
+                                reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<StringW> *>(list));
                     }
 
                     if (dropdown->selectedIndex != selectedIndex)
