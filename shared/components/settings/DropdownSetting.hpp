@@ -9,7 +9,7 @@
 
 #include "shared/context.hpp"
 #include "shared/state.hpp"
-#include "shared/unity/WeakPtrGO.hpp"
+
 #include "questui/shared/BeatSaberUI.hpp"
 #include "config-utils/shared/config-utils.hpp"
 #include <string>

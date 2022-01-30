@@ -3,7 +3,7 @@
 #include "UnityEngine/Vector2.hpp"
 
 #include "shared/context.hpp"
-#include "shared/unity/WeakPtrGO.hpp"
+
 #include "questui/shared/BeatSaberUI.hpp"
 #include "beatsaber-hook/shared/utils/utils.h"
 
