@@ -183,6 +183,14 @@ namespace QUC {
             }
         }
 
+        template<class... TArgs>
+        requires ((renderable<TArgs> && ...))
+        static constexpr void renderDynamicList(std::span<TArgs...> args, RenderContext& ctx) {
+            for (auto const& child : args) {
+                renderSingle(child, ctx); // render child
+            }
+        }
+
         template<size_t idx = 0, class... TArgs>
         requires ((cloneable<TArgs> && ...))
         std::tuple<TArgs...> cloneTuple(std::tuple<TArgs...> const& args) {

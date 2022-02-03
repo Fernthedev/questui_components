@@ -2,6 +2,7 @@
 
 #include "context.hpp"
 #include <tuple>
+#include <span>
 
 namespace QUC {
     namespace detail {
@@ -26,16 +27,19 @@ namespace QUC {
             }
         };
 
-        template<typename Component, typename InnerList = std::vector<Component>>
-        struct VariableContainer {
-            const InnerList children;
+        template <typename Component, template <typename> typename InnerList = std::vector>
+        struct VariableContainer
+        {
+            const InnerList<Component> children;
 
-            VariableContainer(InnerList const& children) : children(children) {}
+            VariableContainer(InnerList<Component> const& children) : children(children) {}
 
             VariableContainer(std::initializer_list<Component> const children) : children(children) {}
 
+            VariableContainer(std::span<Component> const children) : children(children) {}
+
             void render(RenderContext& ctx, RenderContextChildData& data) {
-                QUC::detail::renderTuple(children, ctx);
+                QUC::detail::renderDynamicList(children, ctx);
             }
         };
     }
