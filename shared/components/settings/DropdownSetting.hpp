@@ -50,14 +50,18 @@ namespace QUC {
 
             auto parent = &ctx.parentTransform;
             if (!dropdown) {
-                auto cbk = [callback = this->callback, parent, &ctx, this](std::string_view val) mutable {
-                    value = val;
+                auto cbk = [callback = this->callback, parent, &ctx, this](StringW val) mutable {
+                    value = static_cast<std::string>(val);
                     value.clear();
 
                     if (callback)
                         callback(*this, value.getData(), parent, ctx);
                 };
-                dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, *text, *value, *values, cbk);
+                std::vector<StringW> nonsense(values.getData().begin(), values.getData().end());
+                dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, *text, *value, nonsense, cbk);
+                text.clear();
+                value.clear();
+                values.clear();
                 assign<true>(settingData);
             } else {
                 assign<false>(settingData);

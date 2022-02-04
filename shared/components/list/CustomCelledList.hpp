@@ -5,7 +5,6 @@
 
 #include "UnityEngine/Vector2.hpp"
 
-#include "questui/shared/CustomTypes/Components/List/CustomCellListWrapper.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
 #include <utility>

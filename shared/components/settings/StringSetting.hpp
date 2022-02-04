@@ -32,8 +32,8 @@ namespace QUC {
             // TODO: Cache this properly
             auto parent = &ctx.parentTransform;
             if (!inputFieldView) {
-                auto cbk = [callback = this->callback, parent, &ctx, this](std::string_view val)mutable {
-                    value = val;
+                auto cbk = [callback = this->callback, parent, &ctx, this](StringW val)mutable {
+                    value = static_cast<std::string>(val);
                     value.clear();
                     if (callback)
                         callback(*this, value.getData(), parent, ctx);

@@ -283,7 +283,7 @@ namespace QUC {
     struct HeldData<std::string> {
         HeldData() = default;
 
-        explicit(false) HeldData(std::string_view d) : data(d) {}
+        explicit(false) HeldData(const std::string_view d) : data(d) {}
 
         template<size_t sz>
         constexpr explicit(false) HeldData(const char (&str)[sz]) : data(str) {}
@@ -307,7 +307,7 @@ namespace QUC {
             modified = false;
         }
 
-        constexpr HeldData<std::string>& operator=(std::string_view other) {
+        constexpr HeldData<std::string>& operator=(const std::string_view other) {
             if (data != other) {
                 modified = true;
                 data = other;
