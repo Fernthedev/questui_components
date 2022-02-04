@@ -1,6 +1,7 @@
 #pragma once
 
 #include "context.hpp"
+#include "components/Mock.hpp"
 #include <tuple>
 #include <span>
 
@@ -27,12 +28,16 @@ namespace QUC {
             }
         };
 
-        template <typename Component, template <typename> typename InnerList = std::vector>
+        static_assert(renderable<Container<MockComp>>);
+
+        template <typename Component, typename InnerList = std::vector<Component>>
+        requires (renderable<Component>)
         struct VariableContainer
         {
-            const InnerList<Component> children;
+            const InnerList children;
+            const Key key;
 
-            VariableContainer(InnerList<Component> const& children) : children(children) {}
+            VariableContainer(InnerList const& children) : children(children) {}
 
             VariableContainer(std::initializer_list<Component> const children) : children(children) {}
 
@@ -42,6 +47,10 @@ namespace QUC {
                 QUC::detail::renderDynamicList(children, ctx);
             }
         };
+
+        static_assert(renderable<VariableContainer<MockComp>>);
+        static_assert(renderable<VariableContainer<MockComp, std::vector<MockComp>>>);
+        static_assert(renderable<VariableContainer<MockComp, std::span<MockComp>>>);
     }
     template<class... TArgs>
     requires ((renderable<TArgs> && ...))
