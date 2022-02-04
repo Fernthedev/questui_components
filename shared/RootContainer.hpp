@@ -44,7 +44,8 @@ namespace QUC {
             VariableContainer(std::span<Component> const children) : children(children) {}
 
             void render(RenderContext& ctx, RenderContextChildData& data) {
-                QUC::detail::renderDynamicList(children, ctx);
+                // BEHOLD! MY BAD PRACTICE UNCONST INATOR
+                QUC::detail::renderDynamicList<Component>(*const_cast<InnerList*>(&children), ctx);
             }
         };
 

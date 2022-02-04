@@ -183,11 +183,11 @@ namespace QUC {
             }
         }
 
-        template<class... TArgs>
-        requires ((renderable<TArgs> && ...))
-        static constexpr void renderDynamicList(std::span<TArgs...> args, RenderContext& ctx) {
-            for (auto const& child : args) {
-                renderSingle(child, ctx); // render child
+        template<typename T>
+        requires (renderable<T>)
+        static constexpr void renderDynamicList(std::span<T> const args, RenderContext& ctx) {
+            for (auto& child : args) {
+                renderSingle<T>(child, ctx); // render child
             }
         }
 
