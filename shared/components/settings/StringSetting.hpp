@@ -88,7 +88,7 @@ namespace QUC {
 
             if constexpr (!created) {
                 if (text) {
-                    auto txt = inputFieldView->placeholderText->GetComponent<TMPro::TextMeshProUGUI *>();
+                    auto txt = inputFieldView->dyn__placeholderText()->GetComponent<TMPro::TextMeshProUGUI *>();
                     CRASH_UNLESS(txt);
                     txt->set_text(il2cpp_utils::newcsstr(*text));
                     text.clear();

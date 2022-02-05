@@ -108,7 +108,7 @@ namespace QUC {
                 return;
 
             auto const& data = *context.childContext;
-            if (data.parentTransform.m_CachedPtr) {
+            if (data.parentTransform.dyn_m_CachedPtr()) {
                 // Destroy old context tree
                 UnityEngine::Object::Destroy(data.parentTransform.get_gameObject());
             }
@@ -127,7 +127,7 @@ namespace QUC {
                 return;
 #pragma clang diagnostic pop
 
-            if (parentTransform.m_CachedPtr) {
+            if (parentTransform.dyn_m_CachedPtr()) {
                 if constexpr (includeParent) {
                     UnityEngine::Object::Destroy(parentTransform.get_gameObject());
                 } else {
@@ -152,7 +152,7 @@ namespace QUC {
 
             auto& o = it->second.childContext;
 
-            if (o && o->parentTransform.m_CachedPtr)
+            if (o && o->parentTransform.dyn_m_CachedPtr())
                 UnityEngine::Object::Destroy(&o->parentTransform);
 
             dataContext.erase(it);

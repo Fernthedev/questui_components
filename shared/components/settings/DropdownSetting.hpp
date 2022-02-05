@@ -104,10 +104,10 @@ namespace QUC {
             }
 
             if constexpr (created) {
-                dropdown->button->set_interactable(*interactable);
+                dropdown->dyn__button()->set_interactable(*interactable);
                 interactable.clear();
             } else if (interactable) {
-                dropdown->button->set_interactable(*interactable);
+                dropdown->dyn__button()->set_interactable(*interactable);
                 interactable.clear();
             }
 
@@ -150,7 +150,7 @@ namespace QUC {
                                 reinterpret_cast<System::Collections::Generic::IReadOnlyList_1<StringW> *>(list));
                     }
 
-                    if (dropdown->selectedIndex != selectedIndex)
+                    if (dropdown->dyn_$selectedIndex$k__BackingField() != selectedIndex)
                         dropdown->SelectCellWithIdx(selectedIndex);
 
                     value.clear();
