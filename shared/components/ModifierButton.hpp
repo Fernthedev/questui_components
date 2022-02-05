@@ -18,27 +18,30 @@ namespace QUC
 {
 
     // TODO: Somehow this causes game buttons to be wide. How to fix?
-    struct ModifierToggle : public ToggleSetting
+    template<renderable ButtonText = Text>
+    struct BasicModifierToggle : public BasicToggleSetting<ButtonText>
     {
     public:
         Image image;
+        using OnCallback = typename BasicToggleSetting<ButtonText>::OnCallback;
+        using ToggleSetting = BasicToggleSetting<ButtonText>;
 
         template <class F = OnCallback>
-        ModifierToggle(Text const &txt, F &&callable, bool currentValue, Image image = Image(nullptr, {0, 0}))
+        BasicModifierToggle(ButtonText const &txt, F &&callable, bool currentValue, Image image = Image(nullptr, {0, 0}))
             : ToggleSetting(txt,
                             callable,
                             currentValue),
               image(std::move(image)) {}
 
         template <class F = OnCallback>
-        ModifierToggle(std::string_view txt, F &&callable, bool currentValue, Image image = Image(nullptr, {0, 0}))
+        BasicModifierToggle(std::string_view txt, F &&callable, bool currentValue, Image image = Image(nullptr, {0, 0}))
             : ToggleSetting(txt,
                             callable,
                             currentValue),
               image(std::move(image)) {}
 
         template <class F = OnCallback>
-        ModifierToggle(Text const &txt, F &&callable, bool currentValue,
+        BasicModifierToggle(ButtonText const &txt, F &&callable, bool currentValue,
                        bool enabled_ = true, bool interact = true,
                        std::optional<UnityEngine::Vector2> anch = std::nullopt, Image image = Image(nullptr, {0, 0}))
             : ToggleSetting(txt,
@@ -50,7 +53,7 @@ namespace QUC
               image(std::move(image)) {}
 
         template <class F = OnCallback>
-        ModifierToggle(std::string_view const &txt, F &&callable, bool currentValue,
+        BasicModifierToggle(std::string_view const &txt, F &&callable, bool currentValue,
                        bool enabled_ = true, bool interact = true,
                        std::optional<UnityEngine::Vector2> anch = std::nullopt, Image image = Image(nullptr, {0, 0}))
             : ToggleSetting(txt,
@@ -63,14 +66,16 @@ namespace QUC
 
         UnityEngine::Transform *render(RenderContext &ctx, RenderContextChildData &data)
         {
-            auto &toggle = ctx.getChildData(ToggleSetting::key).getData<UnityEngine::UI::Toggle *>();
-            auto &toggleText = ctx.getChildData(text.key).getData<TMPro::TextMeshProUGUI *>();
+            auto &toggle = ctx.getChildData(ToggleSetting::key).template getData<UnityEngine::UI::Toggle *>();
+            auto &toggleText = ctx.getChildData(ToggleSetting::text.key).template getData<TMPro::TextMeshProUGUI *>();
             auto &imageView = ctx.getChildData(image.key).getData<HMUI::ImageView *>();
+
+            auto& toggleButton = ToggleSetting::toggleButton;
 
             if (!toggle)
             {
                 auto parent = &ctx.parentTransform;
-                auto const &usableText = *text.text;
+                auto const &usableText = *ToggleSetting::text.text;
 
                 auto cbk = [this, callback = this->callback, parent, &ctx](bool val)
                 {
@@ -79,29 +84,31 @@ namespace QUC
                     if (callback)
                         callback(*this, val, parent, ctx);
                 };
-                if (anchoredPosition)
+                if (ToggleSetting::anchoredPosition)
                 {
                     toggle = QuestUI::BeatSaberUI::CreateModifierButton(parent, usableText, *toggleButton.value,
-                                                                        *image.sprite, cbk, *anchoredPosition);
+                                                                        *image.sprite, cbk, *ToggleSetting::anchoredPosition);
                 }
                 else
                 {
                     toggle = QuestUI::BeatSaberUI::CreateModifierButton(parent, usableText, *toggleButton.value,
                                                                         *image.sprite, cbk);
                 }
-                text.text.clear();
+                ToggleSetting::text.text.clear();
                 image.sprite.clear();
                 toggleButton.value.clear();
 
                 auto toggleTransform = toggle->get_transform();
 
-                imageView = toggleTransform->Find(il2cpp_utils::newcsstr("Icon"))->GetComponent<HMUI::ImageView *>();
-                toggleText = toggleTransform->Find(il2cpp_utils::newcsstr("Name"))->GetComponent<TMPro::TextMeshProUGUI *>();
+                imageView = toggleTransform->Find(il2cpp_utils::newcsstr("Icon"))->template GetComponent<HMUI::ImageView *>();
+                toggleText = toggleTransform->Find(il2cpp_utils::newcsstr("Name"))->template GetComponent<TMPro::TextMeshProUGUI *>();
             }
 
             return ToggleSetting::render(ctx, data);
         }
     };
+
+    using ModifierToggle = BasicModifierToggle<Text>;
 
     static_assert(renderable<ModifierToggle>);
 

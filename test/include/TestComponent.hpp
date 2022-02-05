@@ -20,6 +20,29 @@ namespace QUC {
         );
     }
 
+    struct AlignText {
+        Text text;
+        const Key key;
+
+        HeldData<TMPro::TextAlignmentOptions> alignmentOptions;
+
+        AlignText(Text const &text, TMPro::TextAlignmentOptions opt) : text(text), alignmentOptions(opt) {}
+
+
+
+
+        void render(RenderContext& ctx, RenderContextChildData& data) {
+            auto& textComp = ctx.getChildData(text.key).getData<TMPro::TextMeshProUGUI*>();
+            bool existed = static_cast<bool>(textComp);
+            detail::renderSingle(text, ctx);
+
+            if (!existed || alignmentOptions.isModified()) {
+                textComp->set_alignment(*alignmentOptions);
+                alignmentOptions.clear();
+            }
+        }
+    };
+
     // Renders a list of text progressively
     struct MoreComplexType {
         // Identifies this component in the tree

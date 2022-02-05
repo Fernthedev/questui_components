@@ -5,7 +5,8 @@
 #include "questui/shared/BeatSaberUI.hpp"
 #include "UnityEngine/Vector2.hpp"
 #include "UnityEngine/UI/Button.hpp"
-#include "TMPro/TextMeshProUGUI.hpp"
+
+#include "Text.hpp"
 
 #include <string>
 #include <functional>
@@ -19,7 +20,9 @@ namespace UnityEngine::UI {
 }
 
 namespace QUC {
-    struct Button {
+
+    template <renderable ButtonText = Text>
+    struct BasicButton {
     private:
         struct RenderButtonData {
             UnityEngine::UI::Button* button;
@@ -27,7 +30,7 @@ namespace QUC {
         };
     public:
 
-        HeldData<std::string> text;
+        Text text;
         HeldData<bool> enabled;
         HeldData<bool> interactable;
         HeldData<UnityEngine::UI::Image*> image;
@@ -38,8 +41,13 @@ namespace QUC {
         const Key key;
 
         template<class F>
-        Button(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, std::optional<UnityEngine::Vector2> anch = std::nullopt, std::optional<UnityEngine::Vector2> sz = std::nullopt, std::string buttonTemplate_ = DEFAULT_BUTTONTEMPLATE)
+        BasicButton(ButtonText const& txt, F&& callable, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, std::optional<UnityEngine::Vector2> anch = std::nullopt, std::optional<UnityEngine::Vector2> sz = std::nullopt, std::string buttonTemplate_ = DEFAULT_BUTTONTEMPLATE)
             : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(std::move(buttonTemplate_)), click(callable) {}
+
+        template<class F>
+        BasicButton(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, std::optional<UnityEngine::Vector2> anch = std::nullopt, std::optional<UnityEngine::Vector2> sz = std::nullopt, std::string buttonTemplate_ = DEFAULT_BUTTONTEMPLATE)
+                : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(std::move(buttonTemplate_)), click(callable) {}
+
 
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto& buttonData = data.getData<RenderButtonData>();
@@ -54,18 +62,23 @@ namespace QUC {
 
                 if (anchoredPosition) {
                     if (sizeDelta) {
-                        button = QuestUI::BeatSaberUI::CreateUIButton(parent, *text, buttonTemplate, *anchoredPosition,
+                        button = QuestUI::BeatSaberUI::CreateUIButton(parent, *text.text, buttonTemplate, *anchoredPosition,
                                                                       *sizeDelta, callback);
                     } else {
-                        button = QuestUI::BeatSaberUI::CreateUIButton(parent, *text, buttonTemplate, *anchoredPosition, callback);
+                        button = QuestUI::BeatSaberUI::CreateUIButton(parent, *text.text, buttonTemplate, *anchoredPosition, callback);
                     }
                 } else {
-                    button = QuestUI::BeatSaberUI::CreateUIButton(parent, *text, buttonTemplate, callback);
+                    button = QuestUI::BeatSaberUI::CreateUIButton(parent, *text.text, buttonTemplate, callback);
                 }
 
-                assign<true>(buttonData);
+                text.text.clear();
+
+                auto& buttonText = ctx.getChildDataOrCreate(text.key).getData<TMPro::TextMeshProUGUI*>();
+                buttonText = button->template GetComponentInChildren<TMPro::TextMeshProUGUI *>();
+
+                assign<true>(ctx, buttonData);
             } else {
-                assign<false>(buttonData);
+                assign<false>(ctx, buttonData);
             }
 
             return button->get_transform();
@@ -75,18 +88,18 @@ namespace QUC {
             auto& data = ctx.getChildData(key);
             auto& buttonData = data.getData<RenderButtonData>();
 
-            assign<false>(buttonData);
+            assign<false>(ctx, buttonData);
         }
 
-        [[nodiscard]] Button clone() const {
-            Button clone(*this);
+        [[nodiscard]] BasicButton clone() const {
+            BasicButton clone(*this);
 
             return clone;
         }
 
     protected:
         template<bool created = false>
-        void assign(RenderButtonData& buttonData) {
+        void assign(RenderContext& ctx, RenderButtonData& buttonData) {
             auto& button = buttonData.button;
             auto& buttonText = buttonData.buttonText;
 
@@ -109,13 +122,8 @@ namespace QUC {
             }
 
             if constexpr (!created) {
-                if (text) {
-                    if (!buttonText)
-                        buttonText = button->GetComponentInChildren<TMPro::TextMeshProUGUI *>();
+                detail::renderSingle(text, ctx);
 
-                    buttonText->set_text(il2cpp_utils::newcsstr(*text));
-                    text.clear();
-                }
                 if (image) {
                     button->set_image(*image);
                     image.clear();
@@ -123,8 +131,10 @@ namespace QUC {
             }
         }
     private:
-        std::function<void(Button& button, UnityEngine::Transform* transform, RenderContext& ctx)> click;
+        std::function<void(BasicButton& button, UnityEngine::Transform* transform, RenderContext& ctx)> click;
     };
+    using Button = BasicButton<Text>;
+
     static_assert(renderable<Button>);
     static_assert(cloneable<Button>);
 }

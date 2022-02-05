@@ -41,7 +41,7 @@ namespace QUC {
 
             // The commented code above is identical to this
             auto &cellComp = cellCtx.getData<QuestUICellComponent>();
-            cellComp.button.text = cellData.displayedText;
+            cellComp.button.text.text = cellData.displayedText;
             QUC::detail::renderSingle(cellComp.button, cellCtx.getChildContext([cellTransform] { return cellTransform; }));
         }
     };
@@ -50,7 +50,7 @@ namespace QUC {
         Button button = Button("", nullptr);
 
         void render(CellData const& cellData, RenderContext& cellCtx) {
-            button.text = cellData.displayedText;
+            button.text.text = cellData.displayedText;
             QUC::detail::renderSingle(button, cellCtx);
         }
     };
