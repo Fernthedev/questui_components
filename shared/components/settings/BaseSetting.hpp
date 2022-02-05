@@ -174,11 +174,12 @@ namespace QUC {
         static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callback) {
             return [callback, &configValue](auto& setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
                 configValue.SetValue(val);
-                if (callback) {
-                    return callback(setting, val, t, ctx);
-                } else {
-                    return {};
+
+                if constexpr (std::is_convertible_v<F, bool>) {
+                    if (!callback) return {};
                 }
+
+                return callback(setting, val, t, ctx);
             };
         }
 
