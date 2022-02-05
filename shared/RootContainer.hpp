@@ -2,6 +2,7 @@
 
 #include "context.hpp"
 #include "components/Mock.hpp"
+#include "ROContainer.hpp"
 #include <tuple>
 #include <span>
 
@@ -34,7 +35,7 @@ namespace QUC {
         requires (renderable<Component>)
         struct VariableContainer
         {
-            const InnerList children;
+            ROContainer<InnerList> children; // TODO: Don't allow this to be reassigned
             const Key key;
 
             VariableContainer(InnerList const& children) : children(children) {}
@@ -44,8 +45,7 @@ namespace QUC {
             VariableContainer(std::span<Component> const children) : children(children) {}
 
             void render(RenderContext& ctx, RenderContextChildData& data) {
-                // BEHOLD! MY BAD PRACTICE UNCONST INATOR
-                QUC::detail::renderDynamicList<Component>(*const_cast<InnerList*>(&children), ctx);
+                QUC::detail::renderDynamicList<Component>(children, ctx);
             }
         };
 
