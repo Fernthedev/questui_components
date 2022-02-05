@@ -1,8 +1,8 @@
 #pragma once
 
+#include "shared/components/Text.hpp"
 #include "shared/RootContainer.hpp"
 #include "shared/context.hpp"
-
 
 #include "questui/shared/BeatSaberUI.hpp"
 
