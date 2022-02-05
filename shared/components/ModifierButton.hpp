@@ -1,6 +1,9 @@
 #pragma once
 
 #include "shared/context.hpp"
+#include "settings/ToggleSetting.hpp"
+#include "Image.hpp"
+
 #include "questui/shared/BeatSaberUI.hpp"
 #include "UnityEngine/Vector2.hpp"
 #include "UnityEngine/Transform.hpp"
