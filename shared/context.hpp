@@ -60,8 +60,41 @@ namespace QUC {
             return *this;
         }
 
-        auto& getChildData(ChildContextKey index) {
+        /**
+         * Finds the child data if it exists through children
+         * @param index
+         * @return
+         */
+         template<bool recursive = true>
+        std::optional<std::reference_wrapper<RenderContextChildData>> findChildData(ChildContextKey index) {
+            auto it = dataContext.find(index);
+
+            if (it != dataContext.end()) {
+                return std::make_optional(std::ref(it->second));
+            }
+
+            if constexpr (recursive) {
+                for (auto&[childKey, childContext]: dataContext) {
+                    if (!childContext.childContext) continue;
+
+                    auto opt = childContext.childContext->findChildData<recursive>(index);
+
+                    if (!opt) continue;
+
+                    return opt;
+                }
+            }
+
+            return std::nullopt;
+        }
+
+        auto& getChildDataOrCreate(ChildContextKey index) {
             return dataContext[index];
+        }
+
+        [[deprecated("Bad name")]]
+        auto& getChildData(ChildContextKey index) {
+            return getChildDataOrCreate(index);
         }
 
 #pragma region child Context Clutter

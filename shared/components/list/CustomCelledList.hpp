@@ -25,25 +25,44 @@ namespace QUC {
         t.render(cellData, cellCtx);
     });
 
+    template <typename DataSource, typename CellData = typename DataSource::CustomQUCDescriptorT>
+    struct RecycledTableRenderState {
+        DataSource* dataSource;
+        // TODO: Shared ptr to avoid so many copies?
+        std::vector<CellData> cellDatas;
+        bool cellDatasInited = false;
+    };
+
     template <typename DataSource,typename QCell,
             typename CustomTypeComponentCell = typename DataSource::CustomQUCCustomCellT, // Boiler plate defaults
-            typename CellData = typename DataSource::CustomQUCDescriptorT>
+            typename CellData = typename DataSource::CustomQUCDescriptorT,
+            typename ListType = std::vector<CellData>>
     requires(
             QUC::CustomTypeList::IsValidQUCTableData<DataSource> &&
             // Component data
             QUC::CustomTypeList::IsValidQUCTableCell<CustomTypeComponentCell> &&
             ComponentCellRenderable<QCell, CellData>)
     struct RecycledTable {
+        using RenderState = RecycledTableRenderState<DataSource, CellData>;
+
         const Key key;
-        const std::vector<CellData> cellDatas;
+        const ListType initCellDatas;
         const CustomTypeList::QUCTableInitData initData;
 
-        constexpr RecycledTable(std::vector<CellData> const &cellData, CustomTypeList::QUCTableInitData const &initData) : cellDatas(cellData), initData(initData)  {}
-        constexpr RecycledTable(std::initializer_list<CellData> const &cellData, CustomTypeList::QUCTableInitData const &initData) : cellDatas(cellData), initData(initData) {}
+        constexpr RecycledTable(std::span<CellData> cellData, CustomTypeList::QUCTableInitData const &initData) : initCellDatas(cellData), initData(initData)  {}
+        constexpr RecycledTable(std::initializer_list<CellData> cellData, CustomTypeList::QUCTableInitData const &initData) : initCellDatas(cellData), initData(initData) {}
 
-        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
-            auto& dataSource = data.getData<DataSource*>();
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) const {
+            auto& tableState = data.getData<RenderState>();
+            auto& dataSource = tableState.dataSource;
+            auto& cellDatas = tableState.cellDatas;
+
             if (!dataSource) {
+                if (!tableState.cellDatasInited) {
+                    cellDatas = initCellDatas;
+                    tableState.cellDatasInited = true;
+                }
+
                 typename DataSource::CreateCellCallback buildCell =
                         [&data, &dataSource](typename DataSource::CustomQUCCustomCellT* cell, bool created, typename DataSource::CustomQUCDescriptorT const& descriptor){
                             auto& tableContext = data.template getChildContext([&dataSource]{
@@ -65,8 +84,10 @@ namespace QUC {
                 };
 
                 dataSource = QUC::CustomTypeList::CreateCustomList<DataSource>(&ctx.parentTransform, buildCell, initData);
-                dataSource->descriptors = cellDatas;
+                dataSource->descriptors = reinterpret_cast<std::vector<CellData const>*>(&cellDatas);
                 dataSource->Init(initData);
+            } else {
+                dataSource->descriptors = reinterpret_cast<std::vector<CellData const>*>(&cellDatas);
             }
 
             auto& childContext = data.template getChildContext([dataSource]{
@@ -75,6 +96,16 @@ namespace QUC {
 
 
             return &childContext.parentTransform;
+        }
+
+        std::vector<CellData>& getStatefulVector(RenderContext& ctx) const {
+            auto& data = ctx.getChildDataOrCreate(key);
+            auto& tableState = data.getData<RenderState>();
+            auto& cellDatas = tableState.cellDatas;
+
+            tableState.cellDatasInited = true;
+
+            return cellDatas;
         }
 
     };

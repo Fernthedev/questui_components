@@ -78,7 +78,7 @@ namespace QUC::CustomTypeList {
 
         {t.buildCell} -> IsQUCConvertible<std::function<void(typename T::CustomQUCCustomCellT*, bool, typename T::CustomQUCDescriptorT const& descriptor)>>;
         {t.tableView} -> IsQUCConvertible<QuestUI::TableView*>;
-        {t.descriptors} -> IsQUCConvertible<std::vector<typename T::CustomQUCDescriptorT>>;
+        {t.descriptors} -> IsQUCConvertible<std::vector<typename T::CustomQUCDescriptorT const>*>;
         {t.Init(initData)};
     };
 }
@@ -108,7 +108,7 @@ ___DECLARE_TYPE_WRAPPER_INHERITANCE(namespaze, name, Il2CppTypeEnum::IL2CPP_TYPE
             \
             CreateCellCallback buildCell; \
             \
-            std::vector<CustomQUCDescriptorT> descriptors; \
+            std::vector<CustomQUCDescriptorT const>* descriptors; \
             private:  \
             QUC::CustomTypeList::QUCTableInitData initData; \
 )                                                                                             \
@@ -154,20 +154,22 @@ float namespaze::clazzName::CellSize() { \
 } \
 \
 int namespaze::clazzName::NumberOfCells() {                   \
-    return descriptors.size(); \
+    if (!descriptors) return 0;                               \
+    return descriptors->size(); \
 } \
 \
-HMUI::TableCell * namespaze::clazzName::CellForIdx(HMUI::TableView *tableView, int idx) { \
+HMUI::TableCell * namespaze::clazzName::CellForIdx(HMUI::TableView *tableView, int idx) {\
+    if (!descriptors) return nullptr;                         \
+                                                              \
     if (getCellForIdx) return getCellForIdx(tableView, idx); \
     auto tableCell = reinterpret_cast<CustomQUCCustomCellT *>(tableView->DequeueReusableCellForIdentifier(initData.reuseIdentifier)); \
     if (!tableCell) { \
         tableCell = QUC::CustomTypeList::CreateQUCCell<CustomQUCCustomCellT>(); \
     }                                                         \
     tableCell->set_reuseIdentifier(initData.reuseIdentifier); \
-\
-    auto const &data = descriptors[idx]; \
+                                                              \
+    auto const &data = (*descriptors)[idx]; \
     bool newlyCreated = tableCell->isCreated(); \
-\
     tableCell->Setup(); \
     tableCell->set_interactable(data.interactable);           \
     CRASH_UNLESS(buildCell);                                  \
