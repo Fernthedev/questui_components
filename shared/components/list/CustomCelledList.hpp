@@ -88,6 +88,7 @@ namespace QUC {
                 dataSource->Init(initData);
             } else {
                 dataSource->descriptors = reinterpret_cast<std::vector<CellData const>*>(&cellDatas);
+                dataSource->tableView->ReloadData();
             }
 
             auto& childContext = data.template getChildContext([dataSource]{

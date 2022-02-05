@@ -28,7 +28,7 @@ namespace QUC {
         }
 
         template<typename F = std::function<UnityEngine::Transform*()>>
-        constexpr RenderContextT& getChildContext(F transform) {
+        constexpr RenderContextT& getChildContext(F&& transform) {
             if (!childContext) {
                 return childContext.template emplace(transform());
             }
