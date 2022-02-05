@@ -62,7 +62,7 @@ TODO:
 Recyclable list is a component that wraps around BeatSaber's RecyclableCelledList. 
 To use it, create a struct that extends `QUCDescriptor` to store the data each cell will consume.
 ```cpp
-#include "questui_components/shared/list/CustomTypeTable.hpp"
+#include "questui_components/shared/components/list/CustomTypeTable.hpp"
 
 struct CellData : QUC::CustomTypeList::QUCDescriptor {
     std::string displayedText;
@@ -94,7 +94,7 @@ static_assert(ComponentCellRenderable<CellComponent, CellData>);
 
 Now, the final step for a RecyclableCelledList is to define the custom types in a source file.
 ```cpp
-#include "Table.hpp"
+#include "MyTable.hpp"
 
 // Source
 DEFINE_QUC_CUSTOMLIST_TABLEDATA(QUC, QUCObjectTableData);
