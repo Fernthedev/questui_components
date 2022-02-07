@@ -241,9 +241,9 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
             // Simulate slow UI
             std::this_thread::sleep_for(std::chrono::seconds(2));
 
-            static auto defaultView = DefaultView(tacoImage);
-
             QuestUI::MainThreadScheduler::Schedule([]() {
+                static auto defaultView = DefaultView(tacoImage);
+
                 loaded = true;
                 loadingCtx.destroyTree();
 
@@ -254,7 +254,6 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
                 QUC::detail::renderSingle(defaultView, ctx);
             });
         }).detach();
-
 #pragma endregion
     }
 }
