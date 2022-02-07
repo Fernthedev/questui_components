@@ -13,8 +13,6 @@ namespace QUC {
             static_assert(renderable<GridLayoutGroup<TArgs...>>);
             GridLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
-            const Key key;
-
             UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
                 auto& gridLayoutGroup = data.getData<UnityEngine::UI::GridLayoutGroup*>();
                 auto &parent = ctx.parentTransform;

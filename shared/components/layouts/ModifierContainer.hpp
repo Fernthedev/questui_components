@@ -14,8 +14,6 @@ namespace QUC {
         struct ModifierContainer : Container<TArgs...> {
             ModifierContainer(TArgs... args) : Container<TArgs...>(args...) {}
 
-            const Key key;
-
             UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
                 auto& modifierLayout = data.getData<UnityEngine::UI::VerticalLayoutGroup*>();
                 auto &parent = ctx.parentTransform;

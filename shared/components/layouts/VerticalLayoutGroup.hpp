@@ -8,8 +8,6 @@ namespace QUC {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
         struct VerticalLayoutGroup : Container<TArgs...> {
-            const Key key;
-
             VerticalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
             UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {

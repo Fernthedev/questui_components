@@ -16,8 +16,6 @@ namespace QUC {
     struct ScrollableContainer : detail::Container<TArgs...> {
         ScrollableContainer(TArgs... args) : detail::Container<TArgs...>(args...) {}
 
-        const Key key;
-
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto& scrollContainer = data.getData<UnityEngine::GameObject*>();
             auto &parent = ctx.parentTransform;

@@ -12,8 +12,6 @@ namespace QUC {
         struct HorizontalLayoutGroup : Container<TArgs...> {
             HorizontalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
-            const Key key;
-
             UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
                 auto& horizontalLayout = data.getData<UnityEngine::UI::HorizontalLayoutGroup*>();
                 auto &parent = ctx.parentTransform;
