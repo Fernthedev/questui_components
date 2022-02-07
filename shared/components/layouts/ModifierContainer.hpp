@@ -12,9 +12,9 @@ namespace QUC {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
         struct ModifierContainer : Container<TArgs...> {
-            ModifierContainer(TArgs... args) : Container<TArgs...>(args...) {}
+            constexpr ModifierContainer(TArgs... args) : Container<TArgs...>(args...) {}
 
-            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
                 auto& modifierLayout = data.getData<UnityEngine::UI::VerticalLayoutGroup*>();
                 auto &parent = ctx.parentTransform;
                 if (!modifierLayout) {

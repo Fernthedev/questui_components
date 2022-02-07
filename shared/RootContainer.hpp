@@ -15,16 +15,16 @@ namespace QUC {
         struct Container {
             std::tuple<TArgs...> children;
             const Key key;
-            Container(TArgs... args) : children(args...) {}
-            Container(std::tuple<TArgs...> args) : children(args) {}
+            constexpr Container(TArgs... args) : children(args...) {}
+            constexpr Container(std::tuple<TArgs...> args) : children(args) {}
 
 
-            [[nodiscard]] std::tuple<TArgs...> clone() const {
+            [[nodiscard]] constexpr std::tuple<TArgs...> clone() const {
                 return QUC::detail::cloneTuple(children);
             }
 
 
-            void render(RenderContext& ctx, RenderContextChildData& data) {
+            constexpr void render(RenderContext& ctx, RenderContextChildData& data) {
                 QUC::detail::renderTuple(children, ctx);
             }
         };
@@ -40,11 +40,11 @@ namespace QUC {
 
             VariableContainer(InnerList const& children) : children(children) {}
 
-            VariableContainer(std::initializer_list<Component> const children) : children(children) {}
+            constexpr VariableContainer(std::initializer_list<Component> const children) : children(children) {}
 
-            VariableContainer(std::span<Component> const children) : children(children) {}
+            constexpr VariableContainer(std::span<Component> const children) : children(children) {}
 
-            void render(RenderContext& ctx, RenderContextChildData& data) {
+            constexpr void render(RenderContext& ctx, RenderContextChildData& data) {
                 QUC::detail::renderDynamicList<Component>(children, ctx);
             }
         };

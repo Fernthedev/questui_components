@@ -52,7 +52,7 @@ namespace QUC {
         constexpr RecycledTable(std::span<CellData> cellData, CustomTypeList::QUCTableInitData const &initData) : initCellDatas(cellData), initData(initData)  {}
         constexpr RecycledTable(std::initializer_list<CellData> cellData, CustomTypeList::QUCTableInitData const &initData) : initCellDatas(cellData), initData(initData) {}
 
-        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) const {
+        constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) const {
             auto& tableState = data.getData<RenderState>();
             auto& dataSource = tableState.dataSource;
             auto& cellDatas = tableState.cellDatas;

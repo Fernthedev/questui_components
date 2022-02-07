@@ -10,7 +10,7 @@ namespace QUC {
         struct VerticalLayoutGroup : Container<TArgs...> {
             VerticalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
-            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
                 auto& viewLayout = data.getData<UnityEngine::UI::VerticalLayoutGroup*>();
                 auto &parent = ctx.parentTransform;
                 if (!viewLayout) {

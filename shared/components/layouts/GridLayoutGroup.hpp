@@ -11,9 +11,9 @@ namespace QUC {
         requires ((renderable<TArgs> && ...))
         struct GridLayoutGroup : Container<TArgs...> {
             static_assert(renderable<GridLayoutGroup<TArgs...>>);
-            GridLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
+            constexpr GridLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
-            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
                 auto& gridLayoutGroup = data.getData<UnityEngine::UI::GridLayoutGroup*>();
                 auto &parent = ctx.parentTransform;
                 if (!gridLayoutGroup) {
@@ -21,7 +21,7 @@ namespace QUC {
                     gridLayoutGroup = QuestUI::BeatSaberUI::CreateGridLayoutGroup(&parent);
                 }
 
-                RenderContext& childrenCtx = ctx.getChildContext<UnityEngine::UI::GridLayoutGroup>(key, [gridLayoutGroup]() {
+                RenderContext& childrenCtx = ctx.getChildData([gridLayoutGroup]() {
                     return gridLayoutGroup->get_transform();
                 });
                 detail::Container<TArgs...>::render(childrenCtx, data);

@@ -14,9 +14,9 @@ namespace QUC {
     template<class... TArgs>
     requires ((renderable<TArgs> && ...))
     struct ScrollableContainer : detail::Container<TArgs...> {
-        ScrollableContainer(TArgs... args) : detail::Container<TArgs...>(args...) {}
+        constexpr ScrollableContainer(TArgs... args) : detail::Container<TArgs...>(args...) {}
 
-        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+        constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto& scrollContainer = data.getData<UnityEngine::GameObject*>();
             auto &parent = ctx.parentTransform;
             if (!scrollContainer) {

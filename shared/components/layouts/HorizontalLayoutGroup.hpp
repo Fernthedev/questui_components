@@ -10,9 +10,9 @@ namespace QUC {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
         struct HorizontalLayoutGroup : Container<TArgs...> {
-            HorizontalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
+            constexpr HorizontalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
-            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
                 auto& horizontalLayout = data.getData<UnityEngine::UI::HorizontalLayoutGroup*>();
                 auto &parent = ctx.parentTransform;
                 if (!horizontalLayout) {
