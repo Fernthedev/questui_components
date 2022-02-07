@@ -74,7 +74,8 @@ namespace QUC {
                 toggleText = nameText->template GetComponent<TMPro::TextMeshProUGUI *>();
 
                 // if text was not created
-                text.text.clear();
+                text.text.markCleanForRender(ctx);
+
                 // first render
                 assign<true>(toggle, ctx);
             } else {

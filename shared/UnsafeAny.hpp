@@ -3,32 +3,51 @@
 #include <malloc.h>
 #include <utility>
 
+#include <system_error>
+#include <exception>
+
 namespace QUC {
     struct UnsafeAny {
-        UnsafeAny() = default;
-        UnsafeAny(UnsafeAny const&) = delete;
+        constexpr UnsafeAny() = default;
+        constexpr UnsafeAny(UnsafeAny const&) = delete;
 
         template<typename T, typename... TArgs>
-        T& make_any(TArgs&&... args) {
+        [[nodiscard]] constexpr T& make_any(TArgs&&... args) {
             if (dtor != nullptr) {
                 dtor(data);
             }
             free(data);
             data = new T(std::forward<TArgs>(args)...);
             dtor = &destroy_data<T>;
+            ptrSize = sizeof(T);
             return get_any<T>();
         }
 
         template<typename T>
-        T& get_any() {
+        constexpr void validatePtrSize() const {
+            if (ptrSize != sizeof(T))
+                throw std::runtime_error("Ptr size does not match T size!");
+        }
+
+        template<typename T>
+        [[nodiscard]] constexpr T& get_any() {
+            validatePtrSize<T>();
+
             return *static_cast<T*>(data);
         }
 
-        bool has_value() {
+        template<typename T>
+        [[nodiscard]] constexpr T const& get_any() const {
+            validatePtrSize<T>();
+
+            return *static_cast<T const*>(data);
+        }
+
+        [[nodiscard]] constexpr bool has_value() const {
             return data != nullptr;
         }
 
-        ~UnsafeAny() {
+        constexpr ~UnsafeAny() {
             if (dtor != nullptr)
                 dtor(data);
             free(data);
@@ -37,10 +56,11 @@ namespace QUC {
     private:
 
         template<typename T>
-        static void destroy_data(void* ptr) {
+        constexpr static void destroy_data(void* ptr) {
             delete reinterpret_cast<T*>(ptr);
         }
 
+        size_t ptrSize = -1;
         void* data = nullptr;
         void(*dtor)(void*) = nullptr;
     };

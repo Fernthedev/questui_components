@@ -71,7 +71,7 @@ namespace QUC {
                     button = QuestUI::BeatSaberUI::CreateUIButton(parent, *text.text, buttonTemplate, callback);
                 }
 
-                text.text.clear();
+                text.text.markCleanForRender(ctx);
 
                 auto& buttonText = ctx.getChildDataOrCreate(text.key).getData<TMPro::TextMeshProUGUI*>();
                 buttonText = button->template GetComponentInChildren<TMPro::TextMeshProUGUI *>();

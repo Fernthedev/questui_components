@@ -23,7 +23,7 @@ namespace QUC {
 namespace std {
     template<>
     struct hash<QUC::Key> {
-        std::size_t operator()(const QUC::Key& obj) const noexcept {
+        constexpr std::size_t operator()(const QUC::Key& obj) const noexcept {
             std::hash<uint64_t> hash;
             return hash(obj.seed);
         }

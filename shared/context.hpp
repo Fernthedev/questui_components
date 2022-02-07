@@ -20,10 +20,19 @@ namespace QUC {
         std::optional<RenderContextT> childContext;
 
         template<typename T>
-        T& getData() {
+        [[nodiscard]] constexpr T& getData() {
             if (!childData.has_value()) {
                 return childData.make_any<T>();
             }
+            return childData.get_any<T>();
+        }
+
+        [[nodiscard]] constexpr bool hasData() const {
+            return childData.has_value();
+        }
+
+        template<typename T>
+        [[nodiscard]] constexpr T const& getData() const {
             return childData.get_any<T>();
         }
 
@@ -66,7 +75,7 @@ namespace QUC {
          * @return
          */
          template<bool recursive = true>
-        std::optional<std::reference_wrapper<RenderContextChildData>> findChildData(ChildContextKey index) {
+         std::optional<std::reference_wrapper<RenderContextChildData>> findChildData(ChildContextKey index) {
             auto it = dataContext.find(index);
 
             if (it != dataContext.end()) {
@@ -74,7 +83,30 @@ namespace QUC {
             }
 
             if constexpr (recursive) {
-                for (auto&[childKey, childContext]: dataContext) {
+                for (auto& [childKey, childContext]: dataContext) {
+                    if (!childContext.childContext) continue;
+
+                    auto opt = childContext.childContext->findChildData<recursive>(index);
+
+                    if (!opt) continue;
+
+                    return opt;
+                }
+            }
+
+            return std::nullopt;
+        }
+
+        template<bool recursive = true>
+        [[nodiscard]] std::optional<std::reference_wrapper<const RenderContextChildData>> findChildData(ChildContextKey index) const {
+            auto it = dataContext.find(index);
+
+            if (it != dataContext.end()) {
+                return std::make_optional(std::cref(it->second));
+            }
+
+            if constexpr (recursive) {
+                for (auto& [childKey, childContext]: dataContext) {
                     if (!childContext.childContext) continue;
 
                     auto opt = childContext.childContext->findChildData<recursive>(index);
@@ -92,7 +124,8 @@ namespace QUC {
             return dataContext[index];
         }
 
-        [[deprecated("Bad name")]]
+        // TODO: Uncomment
+//        [[deprecated("Bad name")]]
         auto& getChildData(ChildContextKey index) {
             return getChildDataOrCreate(index);
         }
