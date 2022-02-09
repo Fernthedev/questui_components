@@ -60,7 +60,7 @@ namespace QUC {
         }
 
         template<typename A>
-        constexpr void emplace(const A other) {
+        constexpr void emplace(A const& other) {
             if (data != other) {
                 modified = true;
                 data = other;
@@ -405,19 +405,19 @@ namespace QUC {
         RenderHeldData(U const& d) : HeldData<T>(d) {}
 
         constexpr RenderHeldData<T>& operator=(const T& other) {
-            ParentType::template emplace<T>(other);
+            emplace<T>(other);
             return *this;
         }
 
         template<class U>
         constexpr RenderHeldData<T>& operator=(const U& other) {
-            ParentType::template emplace<U>(other);
+            emplace<U>(other);
             return *this;
         }
 
         template<class U>
         constexpr RenderHeldData<T>& operator=(const HeldData<U>& other) {
-            ParentType::template emplace<U>(other.getData());
+            emplace<U>(other.getData());
             return *this;
         }
 
@@ -433,13 +433,18 @@ namespace QUC {
             return *this;
         }
 
+        template<typename A>
+        constexpr void emplace(A const& other) {
+            ParentType::data = other;
+        }
+
         /**
          *
          * @param ctx
          * @return true if does not exist in RenderCtx or is different
          */
          template<bool trueIfExist = true>
-        [[nodiscard]] bool isRenderDiffModified(RenderContext const& ctx) const {
+         [[nodiscard]] bool isRenderDiffModified(RenderContext const& ctx) const {
             auto found = ctx.findChildData<false>(key);
             if (!found.has_value()) return trueIfExist;
 
@@ -451,7 +456,7 @@ namespace QUC {
             return renderData != hash(HeldData<T>::data);
         }
 
-        void markCleanForRender(RenderContext& ctx) const {
+        constexpr void markCleanForRender(RenderContext& ctx) const {
             std::hash<T> hash;
 
             ctx.getChildDataOrCreate(key).getData<size_t>() = hash(HeldData<T>::data);

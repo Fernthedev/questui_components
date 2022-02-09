@@ -8,6 +8,8 @@ namespace QUC {
         Key() : seed(std::chrono::duration_cast< std::chrono::nanoseconds >(std::chrono::high_resolution_clock::now().time_since_epoch()).count())
         {}
 
+        constexpr Key(Key const&) = default;
+
         bool operator==(const Key &rhs) const = default;
 
     private:
