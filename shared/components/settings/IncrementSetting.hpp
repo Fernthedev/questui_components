@@ -18,15 +18,15 @@ namespace QUC {
     public:
 
         using OnCallback = std::function<void(IncrementSetting&, float, UnityEngine::Transform*, RenderContext& ctx)>;
-        HeldData<std::string> text;
+        RenderHeldData<std::string> text;
         OnCallback callback;
-        HeldData<bool> enabled;
-        HeldData<bool> interactable;
-        HeldData<float> value;
-        HeldData<int> decimals;
-        HeldData<float> increment;
-        HeldData<std::optional<float>> min;
-        HeldData<std::optional<float>> max;
+        RenderHeldData<bool> enabled;
+        RenderHeldData<bool> interactable;
+        RenderHeldData<float> value;
+        RenderHeldData<int> decimals;
+        RenderHeldData<float> increment;
+        RenderHeldData<std::optional<float>> min;
+        RenderHeldData<std::optional<float>> max;
         const UnityEngine::Vector2 anchoredPosition;
         const Key key;
 
@@ -43,7 +43,7 @@ namespace QUC {
                 auto cbk = std::function<void(float)>(
                         [callback = this->callback, parent, &ctx, this](float val) mutable {
                             value = val;
-                            value.clear();
+                            value.markCleanForRender(ctx);
 
                             if (callback)
                                 callback(*this, val, parent, ctx);
@@ -62,20 +62,27 @@ namespace QUC {
                         anchoredPosition,
                         cbk);
 
-                assign<true>(settingData);
+                text.markCleanForRender(ctx);
+                decimals.markCleanForRender(ctx);
+                increment.markCleanForRender(ctx);
+                value.markCleanForRender(ctx);
+                min.markCleanForRender(ctx);
+                max.markCleanForRender(ctx);
+
+                assign<true>(ctx, settingData);
             } else {
-                assign<false>(settingData);
+                assign<false>(ctx, settingData);
             }
 
 
             return setting->get_transform();
         }
 
-        [[nodiscard]] float getValue() const {
+        [[nodiscard]] constexpr float getValue() const noexcept {
             return *value;
         }
 
-        void setValue(float val) {
+        constexpr void setValue(float val) noexcept {
             value = val;
         }
 
@@ -83,19 +90,21 @@ namespace QUC {
             auto& data = ctx.getChildData(key);
             auto& inputFieldView = data.getData<RenderIncrementSetting>();
 
-            assign<false>(inputFieldView);
+            assign<false>(ctx, inputFieldView);
         }
 
     protected:
         template<bool created = false>
-        void assign(RenderIncrementSetting& renderIncrementSetting) {
+        void assign(RenderContext& parentCtx, RenderIncrementSetting& renderIncrementSetting) {
             auto setting = renderIncrementSetting.setting;
             auto& textSetting = renderIncrementSetting.textSetting;
+
+            RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([renderIncrementSetting]{ return renderIncrementSetting.setting->get_transform() ;});
+
             CRASH_UNLESS(setting);
 
-            if (enabled) {
+            if (enabled.readAndClear(ctx)) {
                 setting->set_enabled(*enabled);
-                enabled.clear();
             }
 
             if (!*enabled) {
@@ -107,36 +116,30 @@ namespace QUC {
 
             if constexpr(!created) {
 
-                if (text) {
+                if (text.readAndClear(ctx)) {
                     if (!textSetting)
                         textSetting = setting->GetComponentInChildren<TMPro::TextMeshProUGUI *>();
 
                     CRASH_UNLESS(textSetting);
                     textSetting->set_text(il2cpp_utils::newcsstr(*text));
-                    text.clear();
                 }
-                if (decimals) {
+                if (decimals.readAndClear(ctx)) {
                     setting->Decimals = *decimals;
-                    decimals.clear();
                 }
-                if (increment) {
+                if (increment.readAndClear(ctx)) {
                     setting->Increment = *increment;
-                    increment.clear();
                 }
-                if (max) {
+                if (max.readAndClear(ctx)) {
                     setting->MaxValue = max.getData().value_or(0);
                     setting->HasMax = static_cast<bool>(max.getData());
-                    max.clear();
                 }
-                if (min) {
+                if (min.readAndClear(ctx)) {
                     setting->MinValue = min.getData().value_or(0);
                     setting->HasMin = static_cast<bool>(min.getData());
-                    min.clear();
                 }
 
-                if (value) {
+                if (value.readAndClear(ctx)) {
                     setting->CurrentValue = *value;
-                    value.clear();
                 }
             }
         }

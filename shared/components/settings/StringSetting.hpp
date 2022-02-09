@@ -13,11 +13,11 @@
 namespace QUC {
     struct StringSetting {
         using OnCallback = std::function<void(StringSetting&, std::string const&, UnityEngine::Transform*, RenderContext& ctx)>;
-        HeldData<std::string> text;
+        RenderHeldData<std::string> text;
         OnCallback callback;
-        HeldData<bool> enabled;
-        HeldData<bool> interactable;
-        HeldData<std::string> value;
+        RenderHeldData<bool> enabled;
+        RenderHeldData<bool> interactable;
+        RenderHeldData<std::string> value;
         const UnityEngine::Vector2 anchoredPosition;
         const UnityEngine::Vector3 keyboardPositionOffset;
 
@@ -34,16 +34,19 @@ namespace QUC {
             if (!inputFieldView) {
                 auto cbk = [callback = this->callback, parent, &ctx, this](StringW val)mutable {
                     value = static_cast<std::string>(val);
-                    value.clear();
+                    value.markCleanForRender(ctx);
                     if (callback)
                         callback(*this, value.getData(), parent, ctx);
                 };
                 inputFieldView = QuestUI::BeatSaberUI::CreateStringSetting(parent, *text, *value, anchoredPosition,
                                                                            keyboardPositionOffset,
                                                                            cbk);
-                assign<true>(inputFieldView);
+                text.markCleanForRender(ctx);
+                value.markCleanForRender(ctx);
+
+                assign<true>(ctx, inputFieldView);
             } else {
-                assign<false>(inputFieldView);
+                assign<false>(ctx, inputFieldView);
             }
 
             return inputFieldView->get_transform();
@@ -53,7 +56,7 @@ namespace QUC {
             return *value;
         }
 
-        void setValue(std::string_view val) {
+        void setValue(std::string_view val) noexcept {
             value = val;
         }
 
@@ -61,16 +64,18 @@ namespace QUC {
             auto& data = ctx.getChildData(key);
             auto& inputFieldView = data.getData<HMUI::InputFieldView*>();
 
-            assign<false>(inputFieldView);
+            assign<false>(ctx, inputFieldView);
         }
 
     private:
         template<bool created>
-        void assign(HMUI::InputFieldView* inputFieldView) {
+        void assign(RenderContext& parentCtx, HMUI::InputFieldView* inputFieldView) {
             CRASH_UNLESS(inputFieldView);
-            if (enabled) {
+
+            RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([inputFieldView]{ return inputFieldView->get_transform() ;});
+
+            if (enabled.readAndClear(ctx)) {
                 inputFieldView->set_enabled(*enabled);
-                enabled.clear();
             }
 
             if (!*enabled) {
@@ -80,21 +85,22 @@ namespace QUC {
 
             if constexpr (created) {
                 inputFieldView->set_interactable(*interactable);
-                interactable.clear();
-            } else if (interactable) {
-                inputFieldView->set_interactable(*interactable);
-                interactable.clear();
+                interactable.markCleanForRender(ctx);
             }
 
             if constexpr (!created) {
-                if (text) {
+                if (interactable.readAndClear(ctx)) {
+                    inputFieldView->set_interactable(*interactable);
+                }
+
+                if (text.readAndClear(ctx)) {
+                    // TODO: cache this
                     auto txt = inputFieldView->dyn__placeholderText()->GetComponent<TMPro::TextMeshProUGUI *>();
                     CRASH_UNLESS(txt);
                     txt->set_text(il2cpp_utils::newcsstr(*text));
-                    text.clear();
                 }
 
-                if (value) {
+                if (value.readAndClear(ctx)) {
                     inputFieldView->SetText(il2cpp_utils::newcsstr(*value));
                 }
             }

@@ -31,9 +31,9 @@ namespace QUC {
     public:
 
         Text text;
-        HeldData<bool> enabled;
-        HeldData<bool> interactable;
-        HeldData<UnityEngine::UI::Image*> image;
+        RenderHeldData<bool> enabled;
+        RenderHeldData<bool> interactable;
+        RenderHeldData<UnityEngine::UI::Image*> image;
         const std::optional<UnityEngine::Vector2> anchoredPosition;
         const std::optional<UnityEngine::Vector2> sizeDelta;
         const std::string buttonTemplate;
@@ -99,14 +99,15 @@ namespace QUC {
 
     protected:
         template<bool created = false>
-        void assign(RenderContext& ctx, RenderButtonData& buttonData) {
+        void assign(RenderContext& parentCtx, RenderButtonData& buttonData) {
             auto& button = buttonData.button;
             auto& buttonText = buttonData.buttonText;
 
+            RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([buttonData]{ return buttonData.button->get_transform() ;});
+
             CRASH_UNLESS(button);
-            if (enabled) {
+            if (enabled.readAndClear(ctx)) {
                 button->set_enabled(*enabled);
-                enabled.clear();
             }
             if (!*enabled) {
                 // Don't bother setting anything if we aren't enabled.
@@ -115,18 +116,18 @@ namespace QUC {
 
             if constexpr (created) {
                 button->set_interactable(*interactable);
-                interactable.clear();
-            } else if (interactable) {
-                button->set_interactable(*interactable);
-                interactable.clear();
+                interactable.markCleanForRender(ctx);
             }
 
             if constexpr (!created) {
-                detail::renderSingle(text, ctx);
+                detail::renderSingle(text, parentCtx);
 
-                if (image) {
+                if (image.readAndClear(ctx)) {
                     button->set_image(*image);
-                    image.clear();
+                }
+
+                if (interactable.readAndClear(ctx)) {
+                    button->set_interactable(*interactable);
                 }
             }
         }

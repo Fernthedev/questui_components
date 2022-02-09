@@ -137,8 +137,8 @@ namespace QUC {
             if (fontSize.readAndClear(ctx)) {
                 textComp->set_fontSize(*fontSize);
             }
-            if (color.readAndClear(ctx) && *color) {
-                textComp->set_color(**color);
+            if (color.readAndClear(ctx) && color.getData().has_value()) {
+                textComp->set_color(*color.getData());
             }
         }
 

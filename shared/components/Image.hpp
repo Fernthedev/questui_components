@@ -18,8 +18,8 @@ namespace QUC {
     struct Image {
         const UnityEngine::Vector2 sizeDelta;
         const UnityEngine::Vector2 anchoredPosition;
-        HeldData<bool> enabled;
-        HeldData<UnityEngine::Sprite*> sprite;
+        RenderHeldData<bool> enabled;
+        RenderHeldData<UnityEngine::Sprite*> sprite;
         const Key key;
 
         Image(UnityEngine::Sprite* spr, UnityEngine::Vector2 sd, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool enabled_ = true)
@@ -29,21 +29,22 @@ namespace QUC {
             auto& image = data.getData<HMUI::ImageView*>();
             if (!image) {
                 image = QuestUI::BeatSaberUI::CreateImage(&ctx.parentTransform, *sprite, anchoredPosition, sizeDelta);
-                assign<true>(image);
+                assign<true>(ctx, image);
             } else {
-                assign<false>(image);
+                assign<false>(ctx, image);
             }
             return image->get_transform();
         }
 
     protected:
         template<bool created = false>
-        void assign(HMUI::ImageView* image) {
+        void assign(RenderContext& parentCtx, HMUI::ImageView* image) {
             CRASH_UNLESS(image);
 
-            if (enabled) {
+            RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([image]{ return image->get_transform() ;});
+
+            if (enabled.readAndClear(ctx)) {
                 image->set_enabled(*enabled);
-                enabled.clear();
             }
             if (!*enabled) {
                 // Don't bother setting anything if we aren't enabled.
@@ -51,9 +52,8 @@ namespace QUC {
             }
 
             if constexpr (!created) {
-                if (sprite) {
+                if (sprite.readAndClear(ctx)) {
                     image->set_sprite(*sprite);
-                    sprite.clear();
                 }
             }
         }

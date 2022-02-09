@@ -28,11 +28,11 @@ namespace QUC {
 
 //        static_assert(renderable<DropdownSetting>);
         using OnCallback = std::function<void(DropdownSetting&, std::string const&, UnityEngine::Transform *, RenderContext& ctx)>;
-        HeldData<std::string> text;
+        RenderHeldData<std::string> text;
         OnCallback callback;
-        HeldData<bool> enabled;
-        HeldData<bool> interactable;
-        HeldData<std::string> value;
+        RenderHeldData<bool> enabled;
+        RenderHeldData<bool> interactable;
+        RenderHeldData<std::string> value;
         HeldData<Container> values;
 
         const Key key;
@@ -52,19 +52,19 @@ namespace QUC {
             if (!dropdown) {
                 auto cbk = [callback = this->callback, parent, &ctx, this](StringW val) mutable {
                     value = static_cast<std::string>(val);
-                    value.clear();
+                    value.markCleanForRender(ctx);
 
                     if (callback)
                         callback(*this, value.getData(), parent, ctx);
                 };
                 std::vector<StringW> nonsense(values.getData().begin(), values.getData().end());
                 dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, *text, *value, nonsense, cbk);
-                text.clear();
-                value.clear();
+                text.markCleanForRender(ctx);
+                value.markCleanForRender(ctx);
                 values.clear();
-                assign<true>(settingData);
+                assign<true>(ctx, settingData);
             } else {
-                assign<false>(settingData);
+                assign<false>(ctx, settingData);
             }
 
 
@@ -83,19 +83,20 @@ namespace QUC {
             auto& data = ctx.getChildData(key);
             auto& renderDropdownData = data.getData<RenderDropdownData>();
 
-            assign<false>(renderDropdownData);
+            assign<false>(ctx, renderDropdownData);
         }
 
     protected:
         template<bool created>
-        void assign(RenderDropdownData& renderDropdownData) {
+        void assign(RenderContext& parentCtx, RenderDropdownData& renderDropdownData) {
             auto& dropdown = renderDropdownData.dropdown;
             auto& uiText = renderDropdownData.uiText;
             CRASH_UNLESS(dropdown);
 
-            if (enabled) {
+            RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([&renderDropdownData]{ return renderDropdownData.dropdown->get_transform() ;});
+
+            if (enabled.readAndClear(ctx)) {
                 dropdown->set_enabled(*enabled);
-                enabled.clear();
             }
 
             if (!*enabled) {
@@ -105,14 +106,15 @@ namespace QUC {
 
             if constexpr (created) {
                 dropdown->dyn__button()->set_interactable(*interactable);
-                interactable.clear();
-            } else if (interactable) {
-                dropdown->dyn__button()->set_interactable(*interactable);
-                interactable.clear();
+                interactable.markCleanForRender(ctx);
             }
 
             if constexpr (!created) {
-                if (text) {
+                if (interactable.readAndClear(ctx)) {
+                    dropdown->dyn__button()->set_interactable(*interactable);
+                }
+
+                if (text.readAndClear(ctx)) {
                     if (!uiText) {
                         // From QuestUI
                         static auto labelName = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("Label");
@@ -126,10 +128,9 @@ namespace QUC {
                     }
 
                     uiText->set_text(il2cpp_utils::newcsstr(*text));
-                    text.clear();
                 }
 
-                if (value || values) {
+                if (value.readAndClear(ctx) || values) {
                     List<StringW>* list = nullptr;
 
                     if (values)
@@ -137,7 +138,7 @@ namespace QUC {
 
                     int selectedIndex = 0;
                     for (int i = 0; i < values.getData().size(); i++) {
-                        std::string const &dropdownValue = values.getData()[i];
+                        std::string_view dropdownValue = values.getData()[i];
                         if (value.getData() == dropdownValue) {
                             selectedIndex = i;
                         }
@@ -153,7 +154,6 @@ namespace QUC {
                     if (dropdown->dyn_$selectedIndex$k__BackingField() != selectedIndex)
                         dropdown->SelectCellWithIdx(selectedIndex);
 
-                    value.clear();
                     values.clear();
                 }
             }
@@ -268,10 +268,10 @@ template<> struct ::QUC::EnumStrValues<EnumName> {                      \
 
         const Key key;
 
-        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+        constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             SettingType::setValue(getValue());
             auto& hoverHint = data.getData<HMUI::HoverHint*>();
-            Key parentKey = SettingType::key;
+            Key const& parentKey = SettingType::key;
             auto res = SettingType::render(ctx, ctx.getChildData(parentKey));
 
             if (!configValue.GetHoverHint().empty() && !hoverHint) {
@@ -281,7 +281,7 @@ template<> struct ::QUC::EnumStrValues<EnumName> {                      \
             return res;
         };
 
-        std::string_view getValue() {
+        inline std::string_view getValue() {
             return getValue(configValue);
         }
 
@@ -301,7 +301,7 @@ template<> struct ::QUC::EnumStrValues<EnumName> {                      \
             }
         };
 
-        void setValue(const std::string &val) {
+        inline void setValue(const std::string &val) {
             return setValue(val, configValue);
         }
 

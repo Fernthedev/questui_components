@@ -26,17 +26,17 @@ namespace QUC {
 
         // initialized at render
         ToggleText text;
-        HeldData<bool> enabled;
-        HeldData<bool> value;
-        HeldData<bool> interactable;
+        RenderHeldData<bool> enabled;
+        RenderHeldData<bool> value;
+        RenderHeldData<bool> interactable;
         const std::optional<UnityEngine::Vector2> anchoredPosition;
         const Key key;
 
-        [[nodiscard]] bool getValue() const {
+        [[nodiscard]] constexpr bool getValue() const {
             return *value;
         }
 
-        void setValue(bool val) {
+        constexpr void setValue(bool val) noexcept {
             value = val;
         }
 
@@ -58,7 +58,7 @@ namespace QUC {
 
                 auto cbk = [this, callback = this->callback, parent, &ctx](bool val) {
                     value = val;
-                    value.clear();
+                    value.markCleanForRender(ctx);
                     if (callback)
                         callback(*this, val, parent, ctx);
                 };
@@ -95,33 +95,35 @@ namespace QUC {
 
     protected:
         template<bool created = false>
-        void assign(UnityEngine::UI::Toggle* toggle, RenderContext& ctx) {
+        void assign(UnityEngine::UI::Toggle* toggle, RenderContext& parentCtx) {
             CRASH_UNLESS(toggle);
-            if (enabled) {
+
+            RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([toggle]{ return toggle->get_transform() ;});
+
+            if (enabled.readAndClear(ctx)) {
                 toggle->set_enabled(*enabled);
-                enabled.clear();
             }
 
-            if (!*enabled) {
+            if (!enabled.getData()) {
                 // Don't bother setting anything if we aren't enabled.
                 return;
             }
 
             if constexpr (created) {
                 toggle->set_interactable(*interactable);
-                interactable.clear();
-            } else if (interactable) {
-                toggle->set_interactable(*interactable);
-                interactable.clear();
+                interactable.markCleanForRender(ctx);
             }
 
             if constexpr (!created) {
-                // Only set these properties if we did NOT JUST create the text.
-                detail::renderSingle(text, ctx);
+                if (interactable.readAndClear(ctx)) {
+                    toggle->set_interactable(*interactable);
+                }
 
-                if (value) {
+                // Only set these properties if we did NOT JUST create the text.
+                detail::renderSingle(text, parentCtx);
+
+                if (value.readAndClear(ctx)) {
                     toggle->set_isOn(*value);
-                    value.clear();
                 }
             }
         }
