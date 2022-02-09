@@ -69,6 +69,10 @@ namespace QUC {
                                 return dataSource->get_transform();
                             });
 
+                    // Each cell in the table has a key (at least in the QUC sense)
+                    // We use the key to uniquely identify it and get the data rendered on that cell
+                    // We then call the QUC Component (or the QuestUI static method) and update the cell's data
+                    // with the descriptor
                     auto& cellData = tableContext.getChildData(cell->key);
                     if constexpr(requires(QCell) {QCell::render;}) {
                         QCell::render(cell->get_transform(), descriptor, tableContext, cellData);
@@ -76,6 +80,9 @@ namespace QUC {
                         // construct a QCell and give it more QUC-like data
                         auto cellTransform = cell->get_transform();
 
+                        // Get the QUC component cell stored in RenderCtx
+                        // This works because a QUC Cell stores the components such as Button and
+                        // their keys are unique and stored in the cellContext
                         QCell& qCell = cellData.template getData<QCell>();
                         auto& cellContext = cellData.template getChildContext([cellTransform]{return cellTransform;});
 
