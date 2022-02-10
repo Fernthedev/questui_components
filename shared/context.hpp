@@ -97,6 +97,25 @@ namespace QUC {
             return std::nullopt;
         }
 
+        template<bool recursive = false>
+        bool hasChild(ChildContextKey index) {
+            if (dataContext.contains(index)) return true;
+
+            if constexpr (recursive) {
+                for (auto const& [childKey, childContext] : dataContext) {
+                    if (!childContext.childContext) continue;
+
+                    auto contains = childContext.childContext->template hasChild<recursive>(index);
+
+                    if (!contains) continue;
+
+                    return contains;
+                }
+            }
+
+            return false;
+        }
+
         template<bool recursive = true>
         [[nodiscard]] std::optional<std::reference_wrapper<const RenderContextChildData>> findChildData(ChildContextKey index) const {
             auto it = dataContext.find(index);
