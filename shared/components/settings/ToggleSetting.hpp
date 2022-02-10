@@ -99,7 +99,7 @@ namespace QUC {
             return toggle->get_transform();
         }
 
-        void update(RenderContext& ctx) {
+        constexpr void update(RenderContext& ctx) {
             auto& data = ctx.getChildData(key);
             auto& toggle = data.getData<UnityEngine::UI::Toggle*>();
 
@@ -108,7 +108,7 @@ namespace QUC {
 
     protected:
         template<bool created = false>
-        void assign(UnityEngine::UI::Toggle* toggle, RenderContext& parentCtx) {
+        constexpr void assign(UnityEngine::UI::Toggle* toggle, RenderContext& parentCtx) {
             CRASH_UNLESS(toggle);
 
             RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([toggle]{ return toggle->get_transform() ;});

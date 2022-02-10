@@ -101,7 +101,7 @@ namespace QUC {
             value = val;
         }
 
-        void update(RenderContext& ctx) {
+        constexpr void update(RenderContext& ctx) const {
             auto& data = ctx.getChildData(key);
             auto& inputFieldView = data.getData<RenderIncrementSetting>();
 
@@ -110,7 +110,7 @@ namespace QUC {
 
     protected:
         template<bool created = false>
-        void assign(RenderContext& parentCtx, RenderIncrementSetting& renderIncrementSetting) {
+        constexpr void assign(RenderContext& parentCtx, RenderIncrementSetting& renderIncrementSetting) const {
             auto setting = renderIncrementSetting.setting;
             auto& textSetting = renderIncrementSetting.textSetting;
 

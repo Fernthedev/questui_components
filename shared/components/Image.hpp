@@ -25,7 +25,7 @@ namespace QUC {
         Image(UnityEngine::Sprite* spr, UnityEngine::Vector2 sd, UnityEngine::Vector2 anch = {0.0f, 0.0f}, bool enabled_ = true)
             : sizeDelta(sd), anchoredPosition(anch), enabled(enabled_), sprite(spr) {}
 
-        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+        constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) const {
             auto& image = data.getData<HMUI::ImageView*>();
             if (!image) {
                 image = QuestUI::BeatSaberUI::CreateImage(&ctx.parentTransform, *sprite, anchoredPosition, sizeDelta);
@@ -38,7 +38,7 @@ namespace QUC {
 
     protected:
         template<bool created = false>
-        void assign(RenderContext& parentCtx, HMUI::ImageView* image) {
+        void assign(RenderContext& parentCtx, HMUI::ImageView* image) const {
             CRASH_UNLESS(image);
 
             RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([image]{ return image->get_transform() ;});

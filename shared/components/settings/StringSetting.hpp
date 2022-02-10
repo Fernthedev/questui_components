@@ -65,15 +65,15 @@ namespace QUC {
             return inputFieldView->get_transform();
         }
 
-        [[nodiscard]] std::string const& getValue() const {
+        [[nodiscard]] constexpr std::string const& getValue() const {
             return *value;
         }
 
-        void setValue(std::string_view val) noexcept {
+        constexpr void setValue(std::string_view val) noexcept {
             value = val;
         }
 
-        void update(RenderContext& ctx) {
+        constexpr void update(RenderContext& ctx) const {
             auto& data = ctx.getChildData(key);
             auto& inputFieldView = data.getData<HMUI::InputFieldView*>();
 
@@ -82,7 +82,7 @@ namespace QUC {
 
     private:
         template<bool created>
-        void assign(RenderContext& parentCtx, HMUI::InputFieldView* inputFieldView) {
+        constexpr void assign(RenderContext& parentCtx, HMUI::InputFieldView* inputFieldView) const {
             CRASH_UNLESS(inputFieldView);
 
             RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([inputFieldView]{ return inputFieldView->get_transform() ;});

@@ -86,15 +86,15 @@ namespace QUC {
             return dropdown->get_transform();
         }
 
-        [[nodiscard]] std::string const& getValue() const {
+        [[nodiscard]] constexpr std::string const& getValue() const {
             return *value;
         }
 
-        void setValue(std::string_view val) {
+        constexpr void setValue(std::string_view val) {
             value = val;
         }
 
-        void update(RenderContext& ctx) {
+        constexpr void update(RenderContext& ctx) {
             auto& data = ctx.getChildData(key);
             auto& renderDropdownData = data.getData<RenderDropdownData>();
 
@@ -102,8 +102,10 @@ namespace QUC {
         }
 
     protected:
+        inline static ConstString labelName{"Label"};
+
         template<bool created>
-        void assign(RenderContext& parentCtx, RenderDropdownData& renderDropdownData) {
+        constexpr void assign(RenderContext& parentCtx, RenderDropdownData& renderDropdownData) {
             auto& dropdown = renderDropdownData.dropdown;
             auto& uiText = renderDropdownData.uiText;
             CRASH_UNLESS(dropdown);
@@ -132,7 +134,6 @@ namespace QUC {
                 if (text.readAndClear(ctx)) {
                     if (!uiText) {
                         // From QuestUI
-                        static auto labelName = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("Label");
                         auto labelTransform = dropdown->get_transform()->get_parent()->Find(labelName);
                         if (labelTransform) {
                             UnityEngine::GameObject *labelObject = labelTransform->get_gameObject();

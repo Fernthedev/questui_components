@@ -30,16 +30,17 @@ namespace QUC {
 
         HMUI::ModalView* modalViewPtr;
 
+        template<typename F = ModalCallback const&>
         ModalWrapper(const std::optional<UnityEngine::Vector2> &sizeDelta = std::nullopt,
                      const std::optional<UnityEngine::Vector2> &anchoredPosition = std::nullopt,
-                     bool dismissOnBlockerClicked = true, ModalCallback callback = {}) : sizeDelta(sizeDelta),
+                     bool dismissOnBlockerClicked = true, F&& callback = {}) : sizeDelta(sizeDelta),
                                                                                   anchoredPosition(anchoredPosition),
                                                                                   dismissOnBlockerClicked(
                                                                                           dismissOnBlockerClicked),
-                                                                                  callback(std::move(callback))
+                                                                                  callback(callback)
                                                                                   {}
 
-        void dismiss() const {
+        constexpr void dismiss() const {
             auto innerModal = modalViewPtr;
 
             if (!innerModal)
@@ -48,7 +49,7 @@ namespace QUC {
             innerModal->Hide(true, nullptr);
         }
 
-        void show() const {
+        constexpr void show() const {
             auto innerModal = modalViewPtr;
 
             if (!innerModal)
@@ -72,11 +73,11 @@ namespace QUC {
         Modal(ModalPtrWrapper ptr, TArgs... children)
                 : modalViewPtr(std::move(ptr)), detail::Container<TArgs...>(children...) {}
 
-        UnityEngine::Transform *render(RenderContext &ctx, RenderContextChildData &data) {
+        constexpr UnityEngine::Transform *render(RenderContext &ctx, RenderContextChildData &data) {
             auto &innerModal = data.getData<HMUI::ModalView *>();
             // if inner modal is already created, skip recreating and forward render calls
             if (!innerModal) {
-                std::function<void(HMUI::ModalView *)> cbk([modalViewPtr = this->modalViewPtr](HMUI::ModalView *arg) {
+                auto cbk([modalViewPtr = this->modalViewPtr](HMUI::ModalView *arg) {
                     auto callback = modalViewPtr->callback;
                     if (callback)
                         callback(modalViewPtr.get(), arg);
@@ -119,11 +120,11 @@ namespace QUC {
             return m;
         }
 
-        void dismiss() const {
+        constexpr void dismiss() const {
             modalViewPtr->dismiss();
         }
 
-        void show() const {
+        constexpr void show() const {
             modalViewPtr->show();
         }
 
