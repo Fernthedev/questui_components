@@ -25,20 +25,24 @@ namespace QUC {
 
     float speed = 1.0f;
 
-    constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
-        auto ret = Text::render(ctx, ctx.getChildData(Text::key));
+    constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) const {
+        auto& childData = ctx.getChildData(Text::key);
+        auto const& text = childData.getData<TMPro::TextMeshProUGUI *>();
 
-        auto& text = ctx.getChildData(Text::key).getData<TMPro::TextMeshProUGUI *>();
+        bool textWasBuilt = static_cast<bool>(text);
 
-        text->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(
-                        rainbowCoroutine(ctx, data, *this, text)));
+        auto ret = Text::render(ctx, childData);
 
+        if (!textWasBuilt) {
+            text->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(
+                    rainbowCoroutine(ctx, data, *this, text)));
+        }
 
         return ret;
     }
 
     protected:
-        static custom_types::Helpers::Coroutine rainbowCoroutine(RenderContext& ctx, RenderContextChildData& data, RainbowText rainbowText, TMPro::TextMeshProUGUI*& text) {
+        static custom_types::Helpers::Coroutine rainbowCoroutine(RenderContext& ctx, RenderContextChildData& data, RainbowText rainbowText, TMPro::TextMeshProUGUI* const& text) {
             co_yield nullptr;
 
             auto& childData = ctx.getChildData(rainbowText.key);
