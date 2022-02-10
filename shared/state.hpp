@@ -396,13 +396,13 @@ namespace QUC {
 
         using ParentType = HeldData<T>;
 
-        RenderHeldData() = default;
-        RenderHeldData(RenderHeldData<T> const& d) = default;
-        RenderHeldData(ParentType const& d) : ParentType(d) {}
-        RenderHeldData(T const& d) : ParentType(d) {}
+        constexpr RenderHeldData() = default;
+        constexpr RenderHeldData(RenderHeldData<T> const& d) = default;
+        constexpr RenderHeldData(ParentType const& d) : ParentType(d) {}
+        constexpr RenderHeldData(T const& d) : ParentType(d) {}
 
         template<class U>
-        RenderHeldData(U const& d) : HeldData<T>(d) {}
+        constexpr RenderHeldData(U const& d) : HeldData<T>(d) {}
 
         constexpr RenderHeldData<T>& operator=(const T& other) {
             emplace<T>(other);
@@ -462,7 +462,7 @@ namespace QUC {
             ctx.getChildDataOrCreate(key).getData<size_t>() = hash(HeldData<T>::data);
         }
 
-        [[nodiscard]] bool readAndClear(RenderContext& ctx) const {
+        [[nodiscard]] constexpr bool readAndClear(RenderContext& ctx) const {
             bool modified = isRenderDiffModified(ctx);
             if (modified) {
                 markCleanForRender(ctx);

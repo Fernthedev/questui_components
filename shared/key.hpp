@@ -12,6 +12,9 @@ namespace QUC {
 
         bool operator==(const Key &rhs) const = default;
 
+    protected:
+        constexpr Key(uint64_t seed) : seed(seed) {}
+
     private:
         uint64_t seed;
         friend class std::hash<QUC::Key>;
