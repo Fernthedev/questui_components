@@ -18,7 +18,7 @@ namespace QUC
 {
 
     // TODO: Somehow this causes game buttons to be wide. How to fix?
-    template<renderable ButtonText = Text>
+    template<renderable ButtonText = Text, bool copySelfOnCallback = true>
     struct BasicModifierToggle : public BasicToggleSetting<ButtonText>
     {
     public:
@@ -28,41 +28,41 @@ namespace QUC
 
         template <class F = OnCallback>
         BasicModifierToggle(ButtonText const &txt, F &&callable, bool currentValue, Image image = Image(nullptr, {0, 0}))
-            : ToggleSetting(txt,
-                            callable,
-                            currentValue),
-              image(std::move(image)) {}
+                : ToggleSetting(txt,
+                                callable,
+                                currentValue),
+                  image(std::move(image)) {}
 
         template <class F = OnCallback>
         BasicModifierToggle(std::string_view txt, F &&callable, bool currentValue, Image image = Image(nullptr, {0, 0}))
-            : ToggleSetting(txt,
-                            callable,
-                            currentValue),
-              image(std::move(image)) {}
+                : ToggleSetting(txt,
+                                callable,
+                                currentValue),
+                  image(std::move(image)) {}
 
         template <class F = OnCallback>
         BasicModifierToggle(ButtonText const &txt, F &&callable, bool currentValue,
-                       bool enabled_ = true, bool interact = true,
-                       std::optional<UnityEngine::Vector2> anch = std::nullopt, Image image = Image(nullptr, {0, 0}))
-            : ToggleSetting(txt,
-                            callable,
-                            currentValue,
-                            enabled_,
-                            interact,
-                            anch),
-              image(std::move(image)) {}
+                            bool enabled_ = true, bool interact = true,
+                            std::optional<UnityEngine::Vector2> anch = std::nullopt, Image image = Image(nullptr, {0, 0}))
+                : ToggleSetting(txt,
+                                callable,
+                                currentValue,
+                                enabled_,
+                                interact,
+                                anch),
+                  image(std::move(image)) {}
 
         template <class F = OnCallback>
         BasicModifierToggle(std::string_view const &txt, F &&callable, bool currentValue,
-                       bool enabled_ = true, bool interact = true,
-                       std::optional<UnityEngine::Vector2> anch = std::nullopt, Image image = Image(nullptr, {0, 0}))
-            : ToggleSetting(txt,
-                            callable,
-                            currentValue,
-                            enabled_,
-                            interact,
-                            anch),
-              image(std::move(image)) {}
+                            bool enabled_ = true, bool interact = true,
+                            std::optional<UnityEngine::Vector2> anch = std::nullopt, Image image = Image(nullptr, {0, 0}))
+                : ToggleSetting(txt,
+                                callable,
+                                currentValue,
+                                enabled_,
+                                interact,
+                                anch),
+                  image(std::move(image)) {}
 
         UnityEngine::Transform *render(RenderContext &ctx, RenderContextChildData &data)
         {
@@ -70,33 +70,44 @@ namespace QUC
             auto &toggleText = ctx.getChildData(ToggleSetting::text.key).template getData<TMPro::TextMeshProUGUI *>();
             auto &imageView = ctx.getChildData(image.key).getData<HMUI::ImageView *>();
 
-            auto& toggleButton = ToggleSetting::toggleButton;
-
             if (!toggle)
             {
                 auto parent = &ctx.parentTransform;
                 auto const &usableText = *ToggleSetting::text.text;
 
-                auto cbk = [this, callback = this->callback, parent, &ctx](bool val)
-                {
-                    toggleButton.value = val;
-                    toggleButton.value.clear();
-                    if (callback)
-                        callback(*this, val, parent, ctx);
-                };
+                std::function<void(bool)> cbk;
+
+                if constexpr (copySelfOnCallback) {
+                    auto c = *this;
+
+                    cbk = [c, callback = this->callback, parent, &ctx](bool val) mutable {
+                        c.value = val;
+                        c.value.markCleanForRender(ctx);
+                        if (callback)
+                            callback(c, val, parent, ctx);
+                    };
+                } else {
+                    cbk = [this, callback = this->callback, parent, &ctx](bool val) {
+                        ToggleSetting::value = val;
+                        ToggleSetting::value.markCleanForRender(ctx);
+                        if (callback)
+                            callback(*this, val, parent, ctx);
+                    };
+                }
                 if (ToggleSetting::anchoredPosition)
                 {
-                    toggle = QuestUI::BeatSaberUI::CreateModifierButton(parent, usableText, *toggleButton.value,
+                    toggle = QuestUI::BeatSaberUI::CreateModifierButton(parent, usableText, *ToggleSetting::value,
                                                                         *image.sprite, cbk, *ToggleSetting::anchoredPosition);
                 }
                 else
                 {
-                    toggle = QuestUI::BeatSaberUI::CreateModifierButton(parent, usableText, *toggleButton.value,
+                    toggle = QuestUI::BeatSaberUI::CreateModifierButton(parent, usableText, *ToggleSetting::value,
                                                                         *image.sprite, cbk);
                 }
-                ToggleSetting::text.text.clear();
-                image.sprite.clear();
-                toggleButton.value.clear();
+                ToggleSetting::text.text.markCleanForRender(ctx);
+                ToggleSetting::value.markCleanForRender(ctx);
+                image.sprite.markCleanForRender(ctx);
+
 
                 auto toggleTransform = toggle->get_transform();
 

@@ -21,7 +21,7 @@ namespace UnityEngine::UI {
 
 namespace QUC {
 
-    template <renderable ButtonText = Text>
+    template <renderable ButtonText = Text, bool copySelfOnCallback = true>
     struct BasicButton {
     private:
         struct RenderButtonData {
@@ -55,10 +55,20 @@ namespace QUC {
 
             auto& button = buttonData.button;
             if (!button) {
-                std::function<void()> callback = [this, callback = this->click, parent, &ctx]()mutable{
-                    if (click)
-                        click(*this, parent, ctx);
-                };
+                std::function<void()> callback;
+
+                if constexpr (copySelfOnCallback) {
+                    auto c = *this;
+                    callback = [cbk = this->click, parent, &ctx, c]()mutable {
+                        if (cbk)
+                            cbk(c, parent, ctx);
+                    };
+                } else {
+                    callback = [cbk = this->click, parent, &ctx, this]() {
+                        if (cbk)
+                            cbk(*this, parent, ctx);
+                    };
+                }
 
                 if (anchoredPosition) {
                     if (sizeDelta) {
@@ -84,7 +94,7 @@ namespace QUC {
             return button->get_transform();
         }
 
-        void update(RenderContext& ctx) {
+        constexpr void update(RenderContext& ctx) {
             auto& data = ctx.getChildData(key);
             auto& buttonData = data.getData<RenderButtonData>();
 
@@ -99,7 +109,7 @@ namespace QUC {
 
     protected:
         template<bool created = false>
-        void assign(RenderContext& parentCtx, RenderButtonData& buttonData) {
+        constexpr void assign(RenderContext& parentCtx, RenderButtonData& buttonData) {
             auto& button = buttonData.button;
             auto& buttonText = buttonData.buttonText;
 
