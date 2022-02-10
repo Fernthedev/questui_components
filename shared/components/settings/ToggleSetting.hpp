@@ -27,13 +27,15 @@ namespace QUC {
         // initialized at render
         ToggleText text;
         RenderHeldData<bool> enabled;
-        RenderHeldData<bool> value;
+        // not a held data because it's relatively cheap and because
+        // funny bugs happened with syncing multiple toggles referring to the same config value
+        bool value;
         RenderHeldData<bool> interactable;
         const std::optional<UnityEngine::Vector2> anchoredPosition;
         const Key key;
 
         [[nodiscard]] constexpr bool getValue() const {
-            return *value;
+            return value;
         }
 
         constexpr void setValue(bool val) noexcept {
@@ -61,23 +63,21 @@ namespace QUC {
                     auto c = *this;
                     onToggle = [c, callback = this->callback, parent, &ctx](bool val) mutable {
                         c.value = val;
-                        c.value.markCleanForRender(ctx);
                         if (callback)
                             callback(c, val, parent, ctx);
                     };
                 } else {
                     onToggle = [this, callback = this->callback, parent, &ctx](bool val) {
                         value = val;
-                        value.markCleanForRender(ctx);
                         if (callback)
                             callback(*this, val, parent, ctx);
                     };
                 }
 
                 if (anchoredPosition) {
-                    toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, *value, *anchoredPosition, onToggle);
+                    toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, value, *anchoredPosition, onToggle);
                 } else {
-                    toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, *value, onToggle);
+                    toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, value, onToggle);
                 }
 
                 auto nameTextTransform = CRASH_UNLESS(toggle->get_transform()->get_parent()->Find(il2cpp_utils::newcsstr("NameText")));
@@ -87,7 +87,6 @@ namespace QUC {
 
                 // if text was not created
                 text.text.markCleanForRender(ctx);
-                value.markCleanForRender(ctx);
 
                 // first render
                 assign<true>(toggle, ctx);
@@ -135,9 +134,9 @@ namespace QUC {
                 // Only set these properties if we did NOT JUST create the text.
                 detail::renderSingle(text, parentCtx);
 
-                if (value.readAndClear(ctx)) {
-                    toggle->set_isOn(*value);
-                }
+                // Always set because it's not too expensive anyways
+                // whatever
+                toggle->set_isOn(value);
             }
         }
     };

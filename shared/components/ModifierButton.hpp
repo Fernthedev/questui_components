@@ -82,37 +82,43 @@ namespace QUC
 
                     cbk = [c, callback = this->callback, parent, &ctx](bool val) mutable {
                         c.value = val;
-                        c.value.markCleanForRender(ctx);
                         if (callback)
                             callback(c, val, parent, ctx);
                     };
                 } else {
                     cbk = [this, callback = this->callback, parent, &ctx](bool val) {
                         ToggleSetting::value = val;
-                        ToggleSetting::value.markCleanForRender(ctx);
                         if (callback)
                             callback(*this, val, parent, ctx);
                     };
                 }
                 if (ToggleSetting::anchoredPosition)
                 {
-                    toggle = QuestUI::BeatSaberUI::CreateModifierButton(parent, usableText, *ToggleSetting::value,
+                    toggle = QuestUI::BeatSaberUI::CreateModifierButton(parent, usableText, ToggleSetting::value,
                                                                         *image.sprite, cbk, *ToggleSetting::anchoredPosition);
                 }
                 else
                 {
-                    toggle = QuestUI::BeatSaberUI::CreateModifierButton(parent, usableText, *ToggleSetting::value,
+                    toggle = QuestUI::BeatSaberUI::CreateModifierButton(parent, usableText, ToggleSetting::value,
                                                                         *image.sprite, cbk);
                 }
-                ToggleSetting::text.text.markCleanForRender(ctx);
-                ToggleSetting::value.markCleanForRender(ctx);
-                image.sprite.markCleanForRender(ctx);
-
 
                 auto toggleTransform = toggle->get_transform();
 
                 imageView = toggleTransform->Find(il2cpp_utils::newcsstr("Icon"))->template GetComponent<HMUI::ImageView *>();
                 toggleText = toggleTransform->Find(il2cpp_utils::newcsstr("Name"))->template GetComponent<TMPro::TextMeshProUGUI *>();
+
+                ToggleSetting::text.text.markCleanForRender(ctx);
+
+                ToggleSetting::text.fontSize = toggleText->get_fontSize();
+                ToggleSetting::text.fontSize.markCleanForRender(ctx);
+
+                ToggleSetting::text.italic.markCleanForRender(ctx);
+
+                ToggleSetting::text.color = toggleText->get_color();
+                ToggleSetting::text.color.markCleanForRender(ctx);
+
+                image.sprite.markCleanForRender(ctx);
             }
 
             return ToggleSetting::render(ctx, data);
