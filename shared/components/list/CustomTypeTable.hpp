@@ -120,7 +120,7 @@ static_assert(QUC::CustomTypeList::IsValidQUCTableData<namespaze::name>);
 DECLARE_CLASS_CODEGEN(namespaze, name, HMUI::TableCell,      \
       void Setup();                                          \
       bool isCreated();                                      \
-      const Key key;                                         \
+      const QUC::Key key;                                         \
       DECLARE_DEFAULT_CTOR();                                \
       DECLARE_SIMPLE_DTOR();                                 \
 private: \
