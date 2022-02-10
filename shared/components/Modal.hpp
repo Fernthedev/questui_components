@@ -76,7 +76,8 @@ namespace QUC {
             auto &innerModal = data.getData<HMUI::ModalView *>();
             // if inner modal is already created, skip recreating and forward render calls
             if (!innerModal) {
-                std::function<void(HMUI::ModalView *)> cbk([callback = modalViewPtr->callback, this](HMUI::ModalView *arg) {
+                std::function<void(HMUI::ModalView *)> cbk([modalViewPtr = this->modalViewPtr](HMUI::ModalView *arg) {
+                    auto callback = modalViewPtr->callback;
                     if (callback)
                         callback(modalViewPtr.get(), arg);
                 });

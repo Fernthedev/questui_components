@@ -18,7 +18,7 @@
 
 namespace QUC {
 
-    template<renderable ToggleText = Text>
+    template<renderable ToggleText = Text, bool copySelfOnCallback = true>
     struct BasicToggleSetting {
         using OnCallback = std::function<void(BasicToggleSetting&, bool, UnityEngine::Transform*, RenderContext& ctx)>;
         const OnCallback callback;
@@ -55,17 +55,29 @@ namespace QUC {
             auto parent = &ctx.parentTransform;
             if (!toggle) {
                 auto const &usableText = *text.text;
+                std::function<void(bool)> onToggle;
 
-                auto cbk = [this, callback = this->callback, parent, &ctx](bool val) {
-                    value = val;
-                    value.markCleanForRender(ctx);
-                    if (callback)
-                        callback(*this, val, parent, ctx);
-                };
-                if (anchoredPosition) {
-                    toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, *value, *anchoredPosition, cbk);
+                if constexpr (copySelfOnCallback) {
+                    auto c = *this;
+                    onToggle = [c, callback = this->callback, parent, &ctx](bool val) mutable {
+                        c.value = val;
+                        c.value.markCleanForRender(ctx);
+                        if (callback)
+                            callback(c, val, parent, ctx);
+                    };
                 } else {
-                    toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, *value, cbk);
+                    onToggle = [this, callback = this->callback, parent, &ctx](bool val) {
+                        value = val;
+                        value.markCleanForRender(ctx);
+                        if (callback)
+                            callback(*this, val, parent, ctx);
+                    };
+                }
+
+                if (anchoredPosition) {
+                    toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, *value, *anchoredPosition, onToggle);
+                } else {
+                    toggle = QuestUI::BeatSaberUI::CreateToggle(parent, usableText, *value, onToggle);
                 }
 
                 auto nameTextTransform = CRASH_UNLESS(toggle->get_transform()->get_parent()->Find(il2cpp_utils::newcsstr("NameText")));
@@ -75,6 +87,7 @@ namespace QUC {
 
                 // if text was not created
                 text.text.markCleanForRender(ctx);
+                value.markCleanForRender(ctx);
 
                 // first render
                 assign<true>(toggle, ctx);

@@ -11,8 +11,9 @@
 #include <string>
 
 namespace QUC {
-    struct StringSetting {
-        using OnCallback = std::function<void(StringSetting&, std::string const&, UnityEngine::Transform*, RenderContext& ctx)>;
+    template<bool copySelfOnCallback = true>
+    struct BasicStringSetting {
+        using OnCallback = std::function<void(BasicStringSetting&, std::string const&, UnityEngine::Transform*, RenderContext& ctx)>;
         RenderHeldData<std::string> text;
         OnCallback callback;
         RenderHeldData<bool> enabled;
@@ -24,7 +25,7 @@ namespace QUC {
         const Key key;
 
         template<class F>
-        constexpr StringSetting(std::string_view txt, F&& callable, std::string_view currentValue = "", bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {}, UnityEngine::Vector3 offt = {})
+        constexpr BasicStringSetting(std::string_view txt, F&& callable, std::string_view currentValue = "", bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {}, UnityEngine::Vector3 offt = {})
             : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), anchoredPosition(anch), keyboardPositionOffset(offt) {}
 
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
@@ -32,15 +33,27 @@ namespace QUC {
             // TODO: Cache this properly
             auto parent = &ctx.parentTransform;
             if (!inputFieldView) {
-                auto cbk = [callback = this->callback, parent, &ctx, this](StringW val)mutable {
-                    value = static_cast<std::string>(val);
-                    value.markCleanForRender(ctx);
-                    if (callback)
-                        callback(*this, value.getData(), parent, ctx);
-                };
+                std::function<void(StringW)> onValueChange;
+
+                if constexpr (copySelfOnCallback) {
+                    auto c = *this;
+                    onValueChange = [callback = this->callback, parent, &ctx, c](StringW val)mutable {
+                        c.value = static_cast<std::string>(val);
+                        c.value.markCleanForRender(ctx);
+                        if (callback)
+                            callback(c, c.value.getData(), parent, ctx);
+                    };
+                } else {
+                    onValueChange = [callback = this->callback, parent, &ctx, this](StringW val) {
+                        value = static_cast<std::string>(val);
+                        value.markCleanForRender(ctx);
+                        if (callback)
+                            callback(*this, value.getData(), parent, ctx);
+                    };
+                }
                 inputFieldView = QuestUI::BeatSaberUI::CreateStringSetting(parent, *text, *value, anchoredPosition,
                                                                            keyboardPositionOffset,
-                                                                           cbk);
+                                                                           onValueChange);
                 text.markCleanForRender(ctx);
                 value.markCleanForRender(ctx);
 
@@ -106,6 +119,10 @@ namespace QUC {
             }
         }
     };
+
+    // C++ why
+    using StringSetting = BasicStringSetting<true>;
+
     static_assert(renderable<StringSetting>);
     static_assert(IsConfigType<StringSetting, std::string>);
 

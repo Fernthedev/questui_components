@@ -9,7 +9,8 @@
 #include <string>
 
 namespace QUC {
-    struct IncrementSetting {
+    template<bool copySelfOnCallback = true>
+    struct BasicIncrementSetting {
     private:
         struct RenderIncrementSetting {
             QuestUI::IncrementSetting* setting;
@@ -17,7 +18,7 @@ namespace QUC {
         };
     public:
 
-        using OnCallback = std::function<void(IncrementSetting&, float, UnityEngine::Transform*, RenderContext& ctx)>;
+        using OnCallback = std::function<void(BasicIncrementSetting&, float, UnityEngine::Transform*, RenderContext& ctx)>;
         RenderHeldData<std::string> text;
         OnCallback callback;
         RenderHeldData<bool> enabled;
@@ -31,7 +32,7 @@ namespace QUC {
         const Key key;
 
         template<class F>
-        IncrementSetting(std::string_view txt, F&& callable, float currentValue = 0.0f, int decimals_ = 1, float increment = 1.0f, std::optional<float> min_ = std::nullopt, std::optional<float> max_ = std::nullopt,  bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {})
+        constexpr BasicIncrementSetting(std::string_view txt, F&& callable, float currentValue = 0.0f, int decimals_ = 1, float increment = 1.0f, std::optional<float> min_ = std::nullopt, std::optional<float> max_ = std::nullopt,  bool enabled_ = true, bool interact = true, UnityEngine::Vector2 anch = {})
             : text(txt), callback(callable), enabled(enabled_), interactable(interact), value(currentValue), increment(increment), decimals(decimals_), min(min_), max(max_), anchoredPosition(anch) {}
 
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
@@ -40,14 +41,28 @@ namespace QUC {
 
             auto parent = &ctx.parentTransform;
             if (!setting) {
-                auto cbk = std::function<void(float)>(
-                        [callback = this->callback, parent, &ctx, this](float val) mutable {
-                            value = val;
-                            value.markCleanForRender(ctx);
+                std::function<void(float)> onValueChange;
 
-                            if (callback)
-                                callback(*this, val, parent, ctx);
-                        });
+                if constexpr (copySelfOnCallback) {
+                    auto c = *this;
+                    onValueChange = std::function<void(float)>(
+                            [callback = this->callback, parent, &ctx, c](float val) mutable {
+                                c.value = val;
+                                c.value.markCleanForRender(ctx);
+
+                                if (callback)
+                                    callback(c, val, parent, ctx);
+                            });
+                } else {
+                    onValueChange = std::function<void(float)>(
+                            [callback = this->callback, parent, &ctx, this](float val) mutable {
+                                value = val;
+                                value.markCleanForRender(ctx);
+
+                                if (callback)
+                                    callback(*this, val, parent, ctx);
+                            });
+                }
 
                 setting = QuestUI::BeatSaberUI::CreateIncrementSetting(
                         parent,
@@ -60,7 +75,7 @@ namespace QUC {
                         min.getData().value_or(0.0f),
                         max.getData().value_or(0.0f),
                         anchoredPosition,
-                        cbk);
+                        onValueChange);
 
                 text.markCleanForRender(ctx);
                 decimals.markCleanForRender(ctx);
@@ -118,7 +133,7 @@ namespace QUC {
 
                 if (text.readAndClear(ctx)) {
                     if (!textSetting)
-                        textSetting = setting->GetComponentInChildren<TMPro::TextMeshProUGUI *>();
+                        textSetting = setting->template GetComponentInChildren<TMPro::TextMeshProUGUI *>();
 
                     CRASH_UNLESS(textSetting);
                     textSetting->set_text(il2cpp_utils::newcsstr(*text));
@@ -145,6 +160,8 @@ namespace QUC {
         }
 
     };
+
+    using IncrementSetting = BasicIncrementSetting<true>;
 
 #if defined(AddConfigValue) || __has_include("config-utils/shared/config-utils.hpp")
     using ConfigUtilsIncrementSetting = ConfigUtilsSetting<float, IncrementSetting>;

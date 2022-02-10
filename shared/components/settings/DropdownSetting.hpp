@@ -17,7 +17,7 @@
 
 namespace QUC {
 
-    template<size_t sz, typename Container = std::array<std::string, sz>>
+    template<size_t sz, typename Container = std::array<std::string, sz>, bool copySelfOnCallback = true>
     struct DropdownSetting {
     protected:
         struct RenderDropdownData {
@@ -50,15 +50,30 @@ namespace QUC {
 
             auto parent = &ctx.parentTransform;
             if (!dropdown) {
-                auto cbk = [callback = this->callback, parent, &ctx, this](StringW val) mutable {
-                    value = static_cast<std::string>(val);
-                    value.markCleanForRender(ctx);
+                std::function<void(StringW)> onValueChange;
 
-                    if (callback)
-                        callback(*this, value.getData(), parent, ctx);
-                };
+                if constexpr (copySelfOnCallback) {
+                    DropdownSetting c = *this;
+                    onValueChange = [callback = this->callback, parent, &ctx, c](StringW val) mutable {
+                        c.value = static_cast<std::string>(val);
+                        c.value.markCleanForRender(ctx);
+
+                        if (callback)
+                            callback(c, c.value.getData(), parent, ctx);
+                    };
+                } else {
+                    onValueChange = [callback = this->callback, parent, &ctx, this](StringW val) {
+                        value = static_cast<std::string>(val);
+                        value.markCleanForRender(ctx);
+
+                        if (callback)
+                            callback(*this, value.getData(), parent, ctx);
+                    };
+                }
+
+
                 std::vector<StringW> nonsense(values.getData().begin(), values.getData().end());
-                dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, *text, *value, nonsense, cbk);
+                dropdown = QuestUI::BeatSaberUI::CreateDropdown(parent, *text, *value, nonsense, onValueChange);
                 text.markCleanForRender(ctx);
                 value.markCleanForRender(ctx);
                 values.clear();
@@ -241,9 +256,9 @@ template<> struct ::QUC::EnumStrValues<EnumName> {                      \
 
 
     // c++ inheritance is a pain
-    template<typename EnumType, size_t sz, typename EnumConfigValue = int, bool CrashOnBoundsExit = false>
+    template<typename EnumType, size_t sz, typename EnumConfigValue = int, bool CrashOnBoundsExit = false, bool copySelfOnCallback = true>
     requires(std::is_enum_v<EnumType>)
-    struct ConfigUtilsEnumDropdownSetting : public DropdownSetting<sz, std::vector<std::string>> {
+    struct ConfigUtilsEnumDropdownSetting : public DropdownSetting<sz, std::vector<std::string>, copySelfOnCallback> {
         using SettingType = DropdownSetting<sz, std::vector<std::string>>;
 
         static_assert(&EnumToStr<EnumType>::get, "Please create a type specialization for EnumToStr");

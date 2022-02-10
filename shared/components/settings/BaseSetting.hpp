@@ -27,78 +27,6 @@ namespace TMPro {
 }
 
 namespace QUC {
-//    template<typename ValueType, typename SettingType>
-//    class BaseSetting {
-//    public:
-//        // Mutable variables
-//        HeldData<std::string> text;
-//        HeldData<bool> enabled = true;
-//        HeldData<bool> interactable = true;
-//
-//        using OnCallback = std::function<void(SettingType*, ValueType, UnityEngine::Transform*)>;
-//        using CallbackWrapper = std::function<void(ValueType)>;
-//
-//        constexpr BaseSetting(std::string_view text, OnCallback callback = nullptr, bool enabled = true, bool interactable = true) : text(text),
-//                enabled(enabled),
-//                interactable(interactable)
-//                {}
-//
-//    void resetChange() {
-//
-//    }
-//
-//
-//    protected:
-//        CallbackWrapper constructWrapperCallback(UnityEngine::Transform *parentTransform) {
-//            if (callback) {
-//                return [this, parentTransform](ValueType val) {
-//                    this->setValue(val);
-//                    this->resetChange();
-//                    // better way of doing this than reinterpret cast to child?
-//                    callback(reinterpret_cast<SettingType*>(this), val, parentTransform);
-//                };
-//            } else {
-//                return [this](ValueType val) {
-//                    this->setValue(val);
-//                    this->resetChange();
-//                };
-//            }
-//        }
-//
-//        void update() {
-//            if (uiText && text) {
-//                uiText->set_text(il2cpp_utils::newcsstr(*text));
-//                text.clear();
-//            }
-//        }
-//
-//
-//        // render time
-//        WeakPtrGO<TMPro::TextMeshProUGUI> uiText;
-//
-//        // constructor time
-//        const OnCallback callback;
-//    };
-//
-//    template<typename ValueType, typename SettingType>
-//    class SimpleBaseSetting : public BaseSetting<ValueType, SettingType> {
-//        HeldData<ValueType> value;
-//
-//
-//        // Override if needed. For example: config-utils
-//        ValueType getValue() {
-//            return this->value;
-//        }
-//
-//        // This is always called on set, whether your callback is nullptr or not.
-//        ValueType setValue(ValueType val) {
-//            return value = val;
-//        }
-//
-//        void resetChange() {
-//            value.clear();
-//        }
-//    };
 
     template<typename T, typename Value>
     concept IsConfigType = requires(T const t) {
@@ -172,7 +100,7 @@ namespace QUC {
 
         template<typename F = typename SettingType::OnCallback const&>
         static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callback) {
-            return [callback, &configValue](auto& setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
+            return [callback, &configValue](auto setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
                 configValue.SetValue(val);
 
                 if constexpr (std::is_convertible_v<F, bool>) {
@@ -184,7 +112,7 @@ namespace QUC {
         }
 
         static typename SettingType::OnCallback buildCallback(ConfigUtils::ConfigValue<ConfigValueType>& configValue) {
-            return [&configValue](auto& setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
+            return [&configValue](auto setting, ValueType const& val, UnityEngine::Transform* t, RenderContext& ctx) -> typename SettingType::OnCallback::result_type {
                 configValue.SetValue(val);
                 return {};
             };
