@@ -72,7 +72,8 @@ namespace QUC {
         const Key key;
 
 
-        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+        constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            // Update the component to read the config value
             SettingType::setValue(getValue());
             auto& hoverHint = data.getData<HMUI::HoverHint*>();
             Key parentKey = SettingType::key;
