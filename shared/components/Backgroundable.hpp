@@ -28,7 +28,7 @@ namespace QUC {
         float alpha = 0.5f;
         RenderHeldData<std::optional<Sombrero::FastColor>> color;
 
-        Backgroundable(std::string_view bkgType, bool replace, T&& child_, float alpha = 0.5f, std::optional<Sombrero::FastColor> color = std::nullopt)
+        constexpr Backgroundable(std::string_view bkgType, bool replace, T child_, float alpha = 0.5f, std::optional<Sombrero::FastColor> color = std::nullopt)
                 : backgroundType(bkgType), replaceExisting(replace), child(child_), alpha(alpha), color(color) {}
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto res = detail::renderSingle(child, ctx);
