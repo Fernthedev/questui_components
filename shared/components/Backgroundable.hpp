@@ -32,7 +32,7 @@ namespace QUC {
                 : backgroundType(bkgType), replaceExisting(replace), child(child_), alpha(alpha), color(color) {}
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto res = detail::renderSingle(child, ctx);
-            auto backgroundable = data.getData<QuestUI::Backgroundable*>();
+            auto& backgroundable = data.getData<QuestUI::Backgroundable*>();
 
             if (!backgroundable) {
                 auto go = res->get_gameObject();
