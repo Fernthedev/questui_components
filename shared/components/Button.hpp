@@ -41,11 +41,11 @@ namespace QUC {
         const Key key;
 
         template<class F>
-        BasicButton(ButtonText const& txt, F&& callable, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, std::optional<UnityEngine::Vector2> anch = std::nullopt, std::optional<UnityEngine::Vector2> sz = std::nullopt, std::string buttonTemplate_ = DEFAULT_BUTTONTEMPLATE)
-            : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(std::move(buttonTemplate_)), click(callable) {}
+        BasicButton(ButtonText const& txt, F&& callable, std::string_view buttonTemplate_ = DEFAULT_BUTTONTEMPLATE, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, std::optional<UnityEngine::Vector2> anch = std::nullopt, std::optional<UnityEngine::Vector2> sz = std::nullopt)
+                : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(std::move(buttonTemplate_)), click(callable) {}
 
         template<class F>
-        BasicButton(std::string_view txt, F&& callable, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, std::optional<UnityEngine::Vector2> anch = std::nullopt, std::optional<UnityEngine::Vector2> sz = std::nullopt, std::string buttonTemplate_ = DEFAULT_BUTTONTEMPLATE)
+        BasicButton(std::string_view txt, F&& callable, std::string_view buttonTemplate_ = DEFAULT_BUTTONTEMPLATE, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, std::optional<UnityEngine::Vector2> anch = std::nullopt, std::optional<UnityEngine::Vector2> sz = std::nullopt)
                 : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(std::move(buttonTemplate_)), click(callable) {}
 
 
