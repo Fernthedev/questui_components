@@ -12,39 +12,45 @@
 #include "UnityEngine/UI/ContentSizeFitter.hpp"
 #include "UnityEngine/RectTransform.hpp"
 
+#include "sombrero/shared/FastColor.hpp"
+
+#include "../state.hpp"
+
 namespace QUC {
-    namespace detail {
-        template<class T>
-        requires (renderable_return<T, UnityEngine::Transform*>)
-        struct Backgroundable {
-            const std::string backgroundType;
-            const bool replaceExisting;
-            T child;
-            const Key key;
 
-            Backgroundable(std::string_view bkgType, bool replace, T&& child_)
-                    : backgroundType(bkgType), replaceExisting(replace), child(child_) {}
-            UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
-                auto res = detail::renderSingle(child, ctx);
-                auto backgroundable = data.getData<QuestUI::Backgroundable*>();
+    template<class T>
+    requires (renderable_return<T, UnityEngine::Transform*>)
+    struct Backgroundable {
+        const std::string backgroundType;
+        const bool replaceExisting;
+        T child;
+        const Key key;
+        float alpha = 0.5f;
+        RenderHeldData<std::optional<Sombrero::FastColor>> color;
 
-                if (!backgroundable) {
-                    auto go = res->get_gameObject();
-                    backgroundable = go->template AddComponent<QuestUI::Backgroundable*>();
-                }
+        Backgroundable(std::string_view bkgType, bool replace, T&& child_, float alpha = 0.5f, std::optional<Sombrero::FastColor> color = std::nullopt)
+                : backgroundType(bkgType), replaceExisting(replace), child(child_), alpha(alpha), color(color) {}
+        UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            auto res = detail::renderSingle(child, ctx);
+            auto backgroundable = data.getData<QuestUI::Backgroundable*>();
 
-                backgroundable->ApplyBackground(il2cpp_utils::newcsstr(backgroundType));
-
-                return res;
+            if (!backgroundable) {
+                auto go = res->get_gameObject();
+                backgroundable = go->template AddComponent<QuestUI::Backgroundable*>();
             }
 
+            backgroundable->ApplyBackgroundWithAlpha(il2cpp_utils::newcsstr(backgroundType), alpha);
 
-        };
-    }
-    template<class T>
-    auto Backgroundable(std::string_view bkgType, bool replace, T&& child) {
-        return detail::Backgroundable<T>(bkgType, replace, std::forward<T>(child));
-    }
+            if (color.readAndClear(ctx) && color.getData()) {
+                backgroundable->background->set_color(*color.getData());
+            }
+
+            return res;
+        }
+
+
+    };
+
 
     namespace detail {
         template<class... TArgs>
