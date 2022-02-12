@@ -7,6 +7,8 @@
 #include <type_traits>
 #include <optional>
 
+#include "key.hpp"
+
 namespace QUC {
 
     template<class T>
@@ -462,8 +464,9 @@ namespace QUC {
             ctx.getChildDataOrCreate(key).getData<size_t>() = hash(HeldData<T>::data);
         }
 
+        template<bool trueIfExist = true>
         [[nodiscard]] constexpr bool readAndClear(RenderContext& ctx) const {
-            bool modified = isRenderDiffModified(ctx);
+            bool modified = isRenderDiffModified<trueIfExist>(ctx);
             if (modified) {
                 markCleanForRender(ctx);
             }
