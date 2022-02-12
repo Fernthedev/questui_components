@@ -17,8 +17,8 @@ namespace QUC {
 //        template<typename... TArgs>
 //        constexpr RefComp(TArgs&&... args) : child(std::forward<TArgs>(args)...) {}
 
-        constexpr void render(RenderContext& ctx, RenderContextChildData& data) {
-            QUC::detail::renderSingle(child, ctx);
+        constexpr auto render(RenderContext& ctx, RenderContextChildData& data) {
+            return QUC::detail::renderSingle(child, ctx);
         }
 
     };
