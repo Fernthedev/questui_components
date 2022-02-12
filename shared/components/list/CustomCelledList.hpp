@@ -13,6 +13,11 @@
 
 namespace QUC {
 
+    template<typename HMUICell, typename CellData, typename CellComp>
+    concept HMUICellQUC = requires(HMUICell cell, CellData const& cellData, CellComp& cellComp, RenderContext& ctx) {
+        cell.render(cellData, ctx, cellComp);
+    };
+
     template<typename T, typename CellData>
     concept ComponentCellRenderable = requires(T t) {
         std::is_trivially_default_constructible_v<T>;
@@ -46,7 +51,7 @@ namespace QUC {
         using RenderState = RecycledTableRenderState<DataSource, CellData>;
 
         const Key key;
-        const ListType initCellDatas;
+        ListType initCellDatas;
         const CustomTypeList::QUCTableInitData initData;
 
         constexpr RecycledTable(std::span<CellData> cellData, CustomTypeList::QUCTableInitData const &initData) : initCellDatas(cellData), initData(initData)  {}
@@ -87,6 +92,10 @@ namespace QUC {
                         auto& cellContext = cellData.template getChildContext([cellTransform]{return cellTransform;});
 
                         qCell.render(descriptor, cellContext);
+
+                        if constexpr(HMUICellQUC<typename DataSource::CustomQUCCustomCellT, typename DataSource::CustomQUCDescriptorT, QCell>) {
+                            cell->render(descriptor, cellContext, qCell);
+                        }
                     }
                 };
 

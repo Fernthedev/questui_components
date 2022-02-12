@@ -41,8 +41,8 @@ namespace QUC::CustomTypeList {
 
         constexpr QUCTableInitData() = default;
 
-        constexpr QUCTableInitData(StringW const &reuseIdentifier, float cellSize) : reuseIdentifier(
-                reuseIdentifier), cellSize(cellSize) {}
+        constexpr QUCTableInitData(StringW const &reuseIdentifier, float cellSize, UnityEngine::Vector2 sd = {0,0}) : reuseIdentifier(
+                reuseIdentifier), cellSize(cellSize), sizeDelta(sd) {}
     };
 
     template<typename T>
@@ -87,7 +87,7 @@ namespace QUC::CustomTypeList {
     DECLARE_OVERRIDE_METHOD(retval, method, il2cpp_utils::il2cpp_type_check::MetadataGetter<mptr>::get(), __VA_ARGS__)
 
 
-#define DECLARE_QUC_TABLE_DATA(namespaze, name, CustomQUCDescriptor, CustomCell, __VA_ARGS__) \
+#define DECLARE_QUC_TABLE_DATA(namespaze, name, CustomQUCDescriptor, CustomCell, ...) \
 ___DECLARE_TYPE_WRAPPER_INHERITANCE(namespaze, name, Il2CppTypeEnum::IL2CPP_TYPE_CLASS, UnityEngine::MonoBehaviour, #namespaze, {classof(HMUI::TableView::IDataSource*)}, 0, nullptr, \
             DECLARE_DEFAULT_CTOR();                                                             \
             \
@@ -110,19 +110,21 @@ ___DECLARE_TYPE_WRAPPER_INHERITANCE(namespaze, name, Il2CppTypeEnum::IL2CPP_TYPE
             \
             std::vector<CustomQUCDescriptorT const>* descriptors; \
             private:  \
-            QUC::CustomTypeList::QUCTableInitData initData; \
+            QUC::CustomTypeList::QUCTableInitData initData;                           \
+            __VA_ARGS__                                                                          \
 )                                                                                             \
 static_assert(QUC::CustomTypeList::IsValidQUCTableData<namespaze::name>);
 
 // TODO: Should descriptors be allowed to be modified at runtime?
 
-#define DECLARE_QUC_TABLE_CELL(namespaze, name, __VA_ARGS__) \
+#define DECLARE_QUC_TABLE_CELL(namespaze, name, ...) \
 DECLARE_CLASS_CODEGEN(namespaze, name, HMUI::TableCell,      \
       void Setup();                                          \
       bool isCreated();                                      \
       const QUC::Key key;                                         \
       DECLARE_DEFAULT_CTOR();                                \
       DECLARE_SIMPLE_DTOR();                                 \
+      __VA_ARGS__                                                       \
 private: \
 bool created = false; \
 )                                                            \
