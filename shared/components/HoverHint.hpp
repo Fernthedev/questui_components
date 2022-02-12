@@ -39,7 +39,7 @@ namespace QUC {
             }
 
             private:
-            T child;
+            std::remove_reference_t<T> child;
         };
 
         static_assert(renderable<HoverHint<Text>>);

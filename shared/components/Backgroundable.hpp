@@ -23,7 +23,7 @@ namespace QUC {
     struct Backgroundable {
         const std::string backgroundType;
         const bool replaceExisting;
-        T child;
+        std::remove_reference_t<T> child;
         const Key key;
         float alpha = 0.5f;
         RenderHeldData<std::optional<Sombrero::FastColor>> color;

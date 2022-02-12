@@ -13,7 +13,7 @@ namespace QUC {
         requires ((renderable<TArgs> && ...))
 //        requires ((!std::is_reference_v<TArgs> && ...) && ((renderable<TArgs> && ...)))
         struct Container {
-            std::tuple<TArgs...> children;
+            std::tuple<std::remove_reference_t<TArgs>...> children;
             const Key key;
             constexpr Container(TArgs... args) : children(args...) {}
             constexpr Container(std::tuple<TArgs...> args) : children(args) {}

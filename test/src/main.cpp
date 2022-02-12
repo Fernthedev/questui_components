@@ -4,6 +4,7 @@
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 
+#include "shared/reference_comp.hpp"
 #include "shared/components/Text.hpp"
 #include "shared/components/ScrollableContainer.hpp"
 #include "shared/components/HoverHint.hpp"
@@ -55,8 +56,8 @@ auto HandleLoadingView(QUC::RenderContext& ctx, bool& loaded) {
     const std::string templateLoadingText = "Loading";
 
     static Text text(templateLoadingText);
-    static auto view = ScrollableContainer<Text&>(
-            text
+    static auto view = ScrollableContainer(
+            detail::refComp(text)
     );
 
     auto transform = QUC::detail::renderSingle(view, ctx);
@@ -134,7 +135,7 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
 
     return ScrollableContainer(
             HoverHint("hint", Text("hi!")),
-            Text(pinkCuteText),
+            pinkCuteText,
 
             Modal(modal),
             Button("More info!", [modal](Button& button, UnityEngine::Transform* transform, RenderContext& ctx)mutable{
@@ -155,7 +156,7 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
             // Image is loaded on main thread
             HorizontalLayoutGroup(
                 VerticalLayoutGroup(
-                    TacoImage(tacoImage)
+                    tacoImage
                 )
             ),
 

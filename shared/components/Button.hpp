@@ -42,11 +42,11 @@ namespace QUC {
 
         template<class F>
         BasicButton(ButtonText const& txt, F&& callable, std::string_view buttonTemplate_ = DEFAULT_BUTTONTEMPLATE, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, std::optional<UnityEngine::Vector2> anch = std::nullopt, std::optional<UnityEngine::Vector2> sz = std::nullopt)
-                : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(std::move(buttonTemplate_)), click(callable) {}
+                : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(buttonTemplate_), click(callable) {}
 
         template<class F>
         BasicButton(std::string_view txt, F&& callable, std::string_view buttonTemplate_ = DEFAULT_BUTTONTEMPLATE, bool enabled_ = true, bool interact = true, UnityEngine::UI::Image* img = nullptr, std::optional<UnityEngine::Vector2> anch = std::nullopt, std::optional<UnityEngine::Vector2> sz = std::nullopt)
-                : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(std::move(buttonTemplate_)), click(callable) {}
+                : text(txt), enabled(enabled_), interactable(interact), image(img), anchoredPosition(anch), sizeDelta(sz), buttonTemplate(buttonTemplate_), click(callable) {}
 
 
         UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
