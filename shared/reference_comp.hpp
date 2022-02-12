@@ -12,7 +12,7 @@ namespace QUC {
         T& child;
         const Key key;
 
-        constexpr RefComp(T& a) : child(a) {}
+        constexpr RefComp(T& a) : child(a), key(a.key) {}
 
 //        template<typename... TArgs>
 //        constexpr RefComp(TArgs&&... args) : child(std::forward<TArgs>(args)...) {}
