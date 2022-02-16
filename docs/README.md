@@ -66,30 +66,33 @@ To use it, create a struct that extends `QUCDescriptor` to store the data each c
 
 struct CellData : QUC::CustomTypeList::QUCDescriptor {
     std::string displayedText;
+    
     CellData(std::string_view displayedText) : displayedText(displayedText) {}
 };
 
 // Header
 // Creates a custom type for cell and table that will consume CellData and build the cells
-DECLARE_QUC_TABLE_CELL(QUC, QUCObjectTableCell,)
-DECLARE_QUC_TABLE_DATA(QUC, QUCObjectTableData, CellData, QUCObjectTableCell,);
+DECLARE_QUC_TABLE_CELL(QUC, QUCObjectTableCell, )
+DECLARE_QUC_TABLE_DATA(QUC, QUCObjectTableData, CellData, QUCObjectTableCell, );
 ```
 
 After you have created your `QUCDescriptor` struct and declared the custom-types, you'll need to create a QUC component that will render the data. These components will be recycled with data being provided by QUC.
 This is an example rendering a button with strings and reusing existing components.
 ```cpp
-#include "questui_components/shared/list/CustomCelledList.hpp"
+#include "questui_components/shared/components/list/CustomCelledList.hpp"
+#include "questui_components/shared/components/Button.hpp"
 
 struct CellComponent {
-    Button button = Button("", nullptr);
+    QUC::Button button = QUC::Button("", nullptr);
 
     void render(CellData const& cellData, RenderContext& cellCtx) {
-        button.text = cellData.displayedText;
+        button.text.text = cellData.displayedText;
         QUC::detail::renderSingle(button, cellCtx);
     }
 };
+
 // Ensures the component can be rendered by QUC
-static_assert(ComponentCellRenderable<CellComponent, CellData>);
+static_assert(QUC::ComponentCellRenderable<CellComponent, CellData>);
 ```
 
 Now, the final step for a RecyclableCelledList is to define the custom types in a source file.
@@ -111,7 +114,7 @@ tableInitData.sizeDelta = {60, 70};
 
 std::vector<CellData> cellDatas({CellData("data"), CellData("thing"),{"magic"}, {"school"}, {"bus"}, {"tacos"}, {"are"}, {"cool"}, {"why"}, {"do"}, {"I"}, {"do"}, {"this"}});
 
-RecycledTable<CustomTypeTable, QUCCellComponent>(
+RecycledTable<QUCObjectTableData, CellComponent>(
     cellDatas,
     tableInitData
 );
