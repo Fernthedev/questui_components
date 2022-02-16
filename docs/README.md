@@ -85,7 +85,7 @@ This is an example rendering a button with strings and reusing existing componen
 struct CellComponent {
     QUC::Button button = QUC::Button("", nullptr);
 
-    void render(CellData const& cellData, RenderContext& cellCtx) {
+    void render(CellData const& cellData, QUC::RenderContext& cellCtx) {
         button.text.text = cellData.displayedText;
         QUC::detail::renderSingle(button, cellCtx);
     }
