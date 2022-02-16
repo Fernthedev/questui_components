@@ -54,7 +54,7 @@ namespace QUC {
         ListType initCellDatas;
         const CustomTypeList::QUCTableInitData initData;
 
-        constexpr RecycledTable(std::span<CellData> const cellData, CustomTypeList::QUCTableInitData const &initData) : initCellDatas(cellData), initData(initData)  {}
+        constexpr RecycledTable(std::span<CellData> const cellData, CustomTypeList::QUCTableInitData const &initData) : initCellDatas(cellData.begin(), cellData.end()), initData(initData)  {}
         constexpr RecycledTable(std::initializer_list<CellData> cellData, CustomTypeList::QUCTableInitData const &initData) : initCellDatas(cellData), initData(initData) {}
 
         constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) const {
