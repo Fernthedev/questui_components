@@ -204,7 +204,7 @@ auto DefaultView(QUC::TacoImage& tacoImage) {
             }),
 
             RecycledTable<QUCObjectTableData, CellComponent>(
-                    {CellData("data"), CellData("thing"),{"magic"}, {"school"}, {"bus"}, {"tacos"}, {"are"}, {"cool"}, {"why"}, {"do"}, {"I"}, {"do"}, {"this"}},
+                    {CellData("data"), CellData("thing"), {"magic"}, {"school"}, {"bus"}, {"tacos"}, {"are"}, {"cool"}, {"why"}, {"do"}, {"I"}, {"do"}, {"this"}},
                     tableInitData
             )
 

@@ -112,7 +112,7 @@ To use the RecycledTable
 QUC::CustomTypeList::QUCTableInitData tableInitData;
 tableInitData.sizeDelta = {60, 70};
 
-std::vector<CellData> cellDatas({CellData("data"), CellData("thing"),{"magic"}, {"school"}, {"bus"}, {"tacos"}, {"are"}, {"cool"}, {"why"}, {"do"}, {"I"}, {"do"}, {"this"}});
+std::vector<CellData> cellDatas({CellData("data"), CellData("thing"), {"magic"}, {"school"}, {"bus"}, {"tacos"}, {"are"}, {"cool"}, {"why"}, {"do"}, {"I"}, {"do"}, {"this"}});
 
 RecycledTable<QUCObjectTableData, CellComponent>(
     cellDatas,
