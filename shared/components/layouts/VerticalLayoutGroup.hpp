@@ -2,15 +2,16 @@
 
 #include "shared/RootContainer.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
+#include "CommonLayout.hpp"
 
 namespace QUC {
     namespace detail {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
-        struct VerticalLayoutGroup : Container<TArgs...> {
+        struct VerticalLayoutGroup : public Container<TArgs...>, public ModifyLayout {
             VerticalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
-            constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            constexpr UnityEngine::RectTransform* render(RenderContext& ctx, RenderContextChildData& data) {
                 auto& viewLayout = data.getData<UnityEngine::UI::VerticalLayoutGroup*>();
                 auto &parent = ctx.parentTransform;
                 if (!viewLayout) {
@@ -19,10 +20,11 @@ namespace QUC {
                 }
 
                 RenderContext& childrenCtx = data.getChildContext([viewLayout] {
-                    return viewLayout->get_transform();
+                    return viewLayout->get_rectTransform();
                 });
+                ModifyLayout::assignLayout(ctx, viewLayout);
                 detail::Container<TArgs...>::render(childrenCtx, data);
-                return &childrenCtx.parentTransform;
+                return static_cast<UnityEngine::RectTransform *>(&childrenCtx.parentTransform);
             }
         };
     }

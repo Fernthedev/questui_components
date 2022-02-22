@@ -4,16 +4,17 @@
 #include "shared/RootContainer.hpp"
 #include "UnityEngine/UI/GridLayoutGroup.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
+#include "CommonLayout.hpp"
 
 namespace QUC {
     namespace detail {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
-        struct GridLayoutGroup : Container<TArgs...> {
+        struct GridLayoutGroup : public Container<TArgs...>, public ModifyLayout {
             static_assert(renderable<GridLayoutGroup<TArgs...>>);
             constexpr GridLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
-            constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            constexpr UnityEngine::RectTransform* render(RenderContext& ctx, RenderContextChildData& data) {
                 auto& gridLayoutGroup = data.getData<UnityEngine::UI::GridLayoutGroup*>();
                 auto &parent = ctx.parentTransform;
                 if (!gridLayoutGroup) {
@@ -22,10 +23,11 @@ namespace QUC {
                 }
 
                 RenderContext& childrenCtx = ctx.getChildData([gridLayoutGroup]() {
-                    return gridLayoutGroup->get_transform();
+                    return gridLayoutGroup->get_rectTransform();
                 });
+                ModifyLayout::assignLayout(ctx, gridLayoutGroup);
                 detail::Container<TArgs...>::render(childrenCtx, data);
-                return &childrenCtx.parentTransform;
+                return static_cast<UnityEngine::RectTransform *>(&childrenCtx.parentTransform);
             }
         };
     }

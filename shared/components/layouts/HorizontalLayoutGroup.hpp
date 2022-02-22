@@ -5,14 +5,16 @@
 #include "UnityEngine/UI/HorizontalLayoutGroup.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 
+#include "CommonLayout.hpp"
+
 namespace QUC {
     namespace detail {
         template<class... TArgs>
         requires ((renderable<TArgs> && ...))
-        struct HorizontalLayoutGroup : Container<TArgs...> {
+        struct HorizontalLayoutGroup : public Container<TArgs...>, public ModifyLayout {
             constexpr HorizontalLayoutGroup(TArgs... args) : Container<TArgs...>(args...) {}
 
-            constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
+            constexpr UnityEngine::RectTransform* render(RenderContext& ctx, RenderContextChildData& data) {
                 auto& horizontalLayout = data.getData<UnityEngine::UI::HorizontalLayoutGroup*>();
                 auto &parent = ctx.parentTransform;
                 if (!horizontalLayout) {
@@ -21,10 +23,11 @@ namespace QUC {
                 }
 
                 RenderContext& childrenCtx = data.getChildContext([horizontalLayout]() {
-                    return horizontalLayout->get_transform();
+                    return horizontalLayout->get_rectTransform();
                 });
+                ModifyLayout::assignLayout(ctx, horizontalLayout);
                 detail::Container<TArgs...>::render(childrenCtx, data);
-                return &childrenCtx.parentTransform;
+                return static_cast<UnityEngine::RectTransform *>(&childrenCtx.parentTransform);
             }
         };
     }
