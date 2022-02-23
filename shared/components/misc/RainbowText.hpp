@@ -25,7 +25,7 @@ namespace QUC {
 
     float speed = 1.0f;
 
-    constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) const {
+    constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
         auto& childData = ctx.getChildData(Text::key);
         auto const& text = childData.getData<TMPro::TextMeshProUGUI *>();
 
