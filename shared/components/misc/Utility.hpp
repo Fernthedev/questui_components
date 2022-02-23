@@ -46,6 +46,62 @@ namespace QUC {
         }
     };
 
+    template<class... TArgs>
+    requires ((QUC::renderable<TArgs> && ...))
+    struct DebugLogTree : public QUC::detail::Container<TArgs...> {
+
+        Logger& logger;
+
+        constexpr DebugLogTree(Logger& logger, TArgs... args) : logger(logger), QUC::detail::Container<TArgs...>(args...) {}
+        constexpr DebugLogTree(Logger& logger, std::tuple<TArgs...> args) : logger(logger), QUC::detail::Container<TArgs...>(args) {}
+
+        void log(UnityEngine::Transform* ctx, int subIndex = 1) {
+            std::string indent(subIndex * 4, ' ');
+            logger.debug("%s %s", indent.c_str(), static_cast<std::string>(ctx->get_name()).c_str());
+
+            int childCount = ctx->GetChildCount();
+            for (int i = 0; i < childCount; ++i) {
+                auto child = ctx->GetChild(i);
+
+                log(child, subIndex);
+            }
+        }
+
+//  template<size_t idx = 0, class... TTArgs>
+//        requires ((renderable<TTArgs> && ...))
+//        static void renderAndLogTuple(std::tuple<TTArgs...>& args, RenderContext& ctx, Logger& logger, int subIndex = 1) {
+//            if constexpr (idx < sizeof...(TArgs)) {
+//                auto& child = std::get<idx>(args);
+//
+//                auto ret = renderSingle(child, ctx); // render child
+//
+//                if constexpr (requires(decltype(ret) ret) {ret->get_name();}) {
+//                    if (ret) {
+//                        std::string indent(' ', subIndex * 4);
+//
+//                        logger.debug("%s %s", indent.c_str(), static_cast<std::string>(ret->get_name()).c_str());
+//                    }
+//                } else {
+//                    std::optional<std::reference_wrapper<RenderContextChildData>> const& childData = ctx.findChildData(child.key);
+//
+//                    if (childData) {
+//                        childData->get().
+//                    }
+//                }
+//
+//                renderTuple<idx + 1>(args, ctx);
+//            }
+//        }
+
+        constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            QUC::detail::Container<TArgs...>::render(ctx, data);
+
+            log(ctx);
+
+            return &ctx.parentTransform;
+        }
+    };
+
     template<typename T>
     struct FunctionalComponent {
         const QUC::Key key;
