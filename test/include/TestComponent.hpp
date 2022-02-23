@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shared/components/layouts/VerticalLayoutGroup.hpp"
 #include "shared/components/Text.hpp"
 #include "shared/RootContainer.hpp"
 
@@ -7,6 +8,8 @@
 #include <vector>
 #include <string>
 
+#include "UnityEngine/TextAnchor.hpp"
+#include "components/misc/Utility.hpp"
 
 namespace UnityEngine {
     class Transform;
@@ -42,6 +45,23 @@ namespace QUC {
             }
         }
     };
+
+    static auto functionComponentTest1(RenderContext& ctx, RenderContextChildData& data) {
+        auto& increment = data.getData<QuestUI::IncrementSetting*>();
+        if (!increment) {
+            increment = QuestUI::BeatSaberUI::CreateIncrementSetting(&ctx.parentTransform, "text", 0, 2, 4, nullptr);
+        }
+
+        return increment;
+    }
+
+    static auto functionComponentTest2() {
+        FunctionalComponent([](RenderContext& ctx, RenderContextChildData& data){ // NOLINT(bugprone-unused-raii)
+            return functionComponentTest1(ctx, data);
+        });
+
+        return FunctionalComponent(functionComponentTest1);
+    }
 
     // Renders a list of text progressively
     struct MoreComplexType {

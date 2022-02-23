@@ -46,4 +46,42 @@ namespace QUC {
         }
     };
 
+    template<typename T>
+    struct FunctionalComponent {
+        const QUC::Key key;
+        std::function<T(QUC::RenderContext& ctx, QUC::RenderContextChildData& data )> buildComp;
+
+        template<typename F>
+        FunctionalComponent(F&& func) : buildComp(func) {}
+
+        constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) const {
+            return buildComp(ctx, data);
+        }
+
+    };
+
+    // Template deduction guide that makes life great again
+    // it
+    template<typename F>
+    FunctionalComponent(F&& f) -> FunctionalComponent<typename decltype(std::function(f))::result_type>;
+
+//    // function_ptr_t courtesy of DaNike
+//    template<typename TRet, typename ...TArgs>
+//// A generic function pointer, which can be called with and set to a `getRealOffset` call
+//    using function_ptr_t = TRet(*)(TArgs...);
+//
+//    template<typename C, typename TRet, typename ...TArgs>
+//    using function_ptr_t_member = TRet(C::*)(TArgs...);
+//
+//    template<typename T>
+//    FunctionalComponent(std::function<T(QUC::RenderContext& ctx, QUC::RenderContextChildData& data)> func) -> FunctionalComponent<typename decltype(func)::result_type>;
+//
+
+//
+//    template<typename T>
+//    FunctionalComponent(function_ptr_t<T, QUC::RenderContext&, QUC::RenderContextChildData&> func) -> FunctionalComponent<T>;
+//
+//
+//    template<typename C, typename T>
+//    FunctionalComponent(function_ptr_t_member<C, T, QUC::RenderContext&, QUC::RenderContextChildData&> func) -> FunctionalComponent<T>;
 }
