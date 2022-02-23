@@ -33,12 +33,16 @@ namespace QUC {
         Sombrero::FastVector2 anchoredPosition;
         Sombrero::FastVector2 sizeDelta;
 
+        QUC::HeldData<std::optional<TMPro::TextAlignmentOptions>> alignmentOptions;
+        QUC::HeldData<std::optional<TMPro::TextOverflowModes>> overflowMode;
+        QUC::HeldData<std::optional<bool>> wordWrapping;
+
         const Key key;
 
         Text(std::string_view t = "", bool enabled_ = true, std::optional<Sombrero::FastColor> c = std::nullopt, float fontSize_ = 4, bool italic_ = true, UnityEngine::Vector2 anch = {0.0f, 0.0f}, UnityEngine::Vector2 sd = {60.0f, 10.0f})
             : text(t), enabled(enabled_), color(c), fontSize(fontSize_), italic(italic_), anchoredPosition(anch), sizeDelta(sd) {}
 
-        constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) const {
+        constexpr UnityEngine::Transform* render(RenderContext& ctx, RenderContextChildData& data) {
             auto& textComp = data.getData<TMPro::TextMeshProUGUI*>();
             auto& parent = ctx.parentTransform;
             // Recreating our own is not very bueno... ASSUMING we can avoid it, which we should be able to.
@@ -91,7 +95,7 @@ namespace QUC {
 
     protected:
         template<bool created = false>
-        void assign(RenderContext& parentCtx, TMPro::TextMeshProUGUI* textComp) const {
+        void assign(RenderContext& parentCtx, TMPro::TextMeshProUGUI* textComp) {
             CRASH_UNLESS(textComp);
 
             RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([textComp]{ return textComp->get_transform() ;});
@@ -104,6 +108,26 @@ namespace QUC {
                 return;
             }
 
+            if (created || alignmentOptions.isModified()) {
+                if (*alignmentOptions) {
+                    textComp->set_alignment(*alignmentOptions.getData());
+                }
+                alignmentOptions.clear();
+            }
+
+            if (created || overflowMode.isModified()) {
+                if (*overflowMode) {
+                    textComp->set_overflowMode(*overflowMode.getData());
+                }
+                overflowMode.clear();
+            }
+
+            if (created || wordWrapping.isModified()) {
+                if (*wordWrapping) {
+                    textComp->set_enableWordWrapping(*wordWrapping.getData());
+                }
+                wordWrapping.clear();
+            }
 
             if constexpr (created) {
                 text.markCleanForRender(ctx);
