@@ -55,6 +55,7 @@ namespace QUC {
         return increment;
     }
 
+    // Gives me react vibes
     static auto functionComponentTest2() {
         FunctionalComponent([](RenderContext& ctx, RenderContextChildData& data){ // NOLINT(bugprone-unused-raii)
             return functionComponentTest1(ctx, data);
