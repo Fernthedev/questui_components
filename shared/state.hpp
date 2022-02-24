@@ -8,6 +8,7 @@
 #include <optional>
 
 #include "key.hpp"
+#include "context.hpp"
 
 namespace QUC {
 
@@ -392,6 +393,15 @@ namespace QUC {
 //        return hash(t);
 //    }
 
+    enum struct DiffModifyCheck {
+        // True if the tree contains the key and is different
+        TRUE_WHEN_FOUND,
+        // true if the tree does not contain the tree or contains the key and is different.
+        TRUE_WHEN_NOT_FOUND,
+        // true if the tree does not contain the tree and was assigned a value or contains the key and is different
+        TRUE_WHEN_FOUND_OR_ASSIGNED
+    };
+
     template<class T>
     struct RenderHeldData : public HeldData<T> {
         const Key key;
@@ -400,11 +410,17 @@ namespace QUC {
 
         constexpr RenderHeldData() = default;
         constexpr RenderHeldData(RenderHeldData<T> const& d) = default;
-        constexpr RenderHeldData(ParentType const& d) : ParentType(d) {}
-        constexpr RenderHeldData(T const& d) : ParentType(d) {}
+        constexpr RenderHeldData(ParentType const& d) : ParentType(d) {
+            ParentType::modified = true;
+        }
+        constexpr RenderHeldData(T const& d) : ParentType(d) {
+            ParentType::modified = true;
+        }
 
         template<class U>
-        constexpr RenderHeldData(U const& d) : HeldData<T>(d) {}
+        constexpr RenderHeldData(U const& d) : HeldData<T>(d) {
+            ParentType::modified = true;
+        }
 
         constexpr RenderHeldData<T>& operator=(const T& other) {
             emplace<T>(other);
@@ -438,6 +454,7 @@ namespace QUC {
         template<typename A>
         constexpr void emplace(A const& other) {
             ParentType::data = other;
+            ParentType::modified = true;
         }
 
         /**
@@ -445,10 +462,15 @@ namespace QUC {
          * @param ctx
          * @return true if does not exist in RenderCtx or is different
          */
-         template<bool trueIfExist = true>
-         [[nodiscard]] bool isRenderDiffModified(RenderContext const& ctx) const {
+        template<DiffModifyCheck modifyCheck = DiffModifyCheck::TRUE_WHEN_NOT_FOUND>
+        [[nodiscard]] bool isRenderDiffModified(RenderContext const& ctx) const {
             auto found = ctx.findChildData<false>(key);
-            if (!found.has_value()) return trueIfExist;
+            if (!found.has_value()) {
+                if (modifyCheck == DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED) {
+                    return isModified();
+                }
+                return modifyCheck == DiffModifyCheck::TRUE_WHEN_NOT_FOUND;
+            }
 
             if (!found->get().hasData()) return true;
 
@@ -464,24 +486,23 @@ namespace QUC {
             ctx.getChildDataOrCreate(key).getData<size_t>() = hash(HeldData<T>::data);
         }
 
-        template<bool trueIfExist = true>
+        template<DiffModifyCheck modifyCheck = DiffModifyCheck::TRUE_WHEN_NOT_FOUND>
         [[nodiscard]] constexpr bool readAndClear(RenderContext& ctx) const {
-            bool modified = isRenderDiffModified<trueIfExist>(ctx);
+            bool modified = isRenderDiffModified<modifyCheck>(ctx);
             if (modified) {
                 markCleanForRender(ctx);
             }
             return modified;
         }
 
+        [[nodiscard]] constexpr bool isModified() const noexcept {
+            return ParentType::isModified();
+        }
 
     private:
         [[deprecated("isModified is not intended for RenderHeldData")]]
         explicit(false) constexpr operator bool() const noexcept {return ParentType::operator bool();}
 
-        [[deprecated("isModified is not intended for RenderHeldData")]]
-        [[nodiscard]] constexpr bool isModified() const noexcept {
-            return ParentType::isModified();
-        }
 
         [[deprecated("Clear is not intended for RenderHeldData")]]
         constexpr void clear() noexcept {

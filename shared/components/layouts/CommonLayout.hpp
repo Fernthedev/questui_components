@@ -28,27 +28,27 @@ namespace QUC {
                 childAlignment.clear();
             }
 
-            if (childControlHeight.readAndClear<false>(ctx)) {
+            if (childControlHeight.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 viewLayout->set_childControlHeight(childControlHeight.getData());
             }
 
-            if (childControlWidth.readAndClear<false>(ctx)) {
+            if (childControlWidth.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 viewLayout->set_childControlWidth(childControlWidth.getData());
             }
 
-            if (childForceExpandHeight.readAndClear<false>(ctx)) {
+            if (childForceExpandHeight.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 viewLayout->set_childForceExpandHeight(childForceExpandHeight.getData());
             }
 
-            if (childForceExpandWidth.readAndClear<false>(ctx)) {
+            if (childForceExpandWidth.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 viewLayout->set_childForceExpandWidth(childForceExpandWidth.getData());
             }
 
-            if (childScaleWidth.readAndClear<false>(ctx)) {
+            if (childScaleWidth.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 viewLayout->set_childScaleWidth(childScaleWidth.getData());
             }
 
-            if (spacing.readAndClear<false>(ctx)) {
+            if (spacing.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 viewLayout->set_spacing(spacing.getData());
             }
 
@@ -86,19 +86,19 @@ namespace QUC {
                 }
             }
 
-            if (preferredWidth.readAndClear<false>(ctx)) {
+            if (preferredWidth.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 layoutElement->set_preferredWidth(preferredWidth.getData());
             }
 
-            if (preferredHeight.readAndClear<false>(ctx)) {
+            if (preferredHeight.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 layoutElement->set_preferredHeight(preferredHeight.getData());
             }
 
-            if (minHeight.readAndClear<false>(ctx)) {
+            if (minHeight.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 layoutElement->set_minHeight(minHeight.getData());
             }
 
-            if (minWidth.readAndClear<false>(ctx)) {
+            if (minWidth.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 layoutElement->set_minWidth(minWidth.getData());
             }
 
