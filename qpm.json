@@ -8,7 +8,12 @@
     "url": "https://github.com/Fernthedev/questui_components",
     "additionalData": {
       "overrideSoName": "libquestui_components.so",
-      "headersOnly": true
+      "headersOnly": true,
+      "compileOptions": {
+        "systemIncludes": [
+          ""
+        ]
+      }
     }
   },
   "dependencies": [
