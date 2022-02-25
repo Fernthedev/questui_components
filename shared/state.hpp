@@ -16,6 +16,9 @@ namespace QUC {
     struct HeldData;
 
     template<class T>
+    struct BaseHeldData;
+
+    template<class T>
     /// @brief A concept for updatable components.
     /// @tparam T The type to check.
     concept HeldDataCheck = requires (T const t) {
@@ -33,21 +36,31 @@ namespace QUC {
     };
 
     template<class T>
-    struct HeldData {
-        HeldData() = default;
+    struct BaseHeldData {
+        constexpr BaseHeldData() = default;
+        constexpr ~BaseHeldData() = default;
 
-        constexpr HeldData(T const& data) : data(data) {}
+        constexpr BaseHeldData(BaseHeldData<T> const&) = default;
+        constexpr BaseHeldData(BaseHeldData<T>&&) = default;
+        constexpr BaseHeldData(T const& data) : data(data) {}
 
         template<class U>
-        requires (std::is_convertible_v<U, T>)
-        constexpr explicit(false) HeldData(const HeldData<U>& other) : modified(other.modified), data(other.data) {}
+        requires (std::is_convertible_v<U, T> || std::is_constructible_v<T, U>)
+        constexpr explicit(false) BaseHeldData(const BaseHeldData<U>& other) : modified(other.modified), data(other.data) {}
 
         template<class Q>
-        requires (std::is_convertible_v<Q, T>)
-        constexpr explicit(false) HeldData(Q&& arg) : data(arg) {}
+        requires (std::is_convertible_v<Q, T> || std::is_constructible_v<T, Q>)
+        constexpr explicit(false) BaseHeldData(Q&& arg) : data(std::forward<Q>(arg)) {}
 
-        constexpr explicit(false) operator T () const noexcept {return data;}
-        constexpr explicit(false) operator T const&() const noexcept {return data;}
+        template<typename... TArgs>
+        requires (std::is_constructible_v<T, TArgs...>)
+        constexpr explicit(false) BaseHeldData(TArgs&&... arg) : data(std::forward<TArgs>(arg)...) {}
+
+        constexpr explicit(false) operator T () const noexcept requires(!std::is_same_v<T, bool>) {return data;}
+
+        constexpr explicit(false) operator T const&() const noexcept requires(!std::is_same_v<T, bool>) {return data;}
+
+
         explicit(false) constexpr operator bool() const noexcept {return modified;}
 
         [[nodiscard]] constexpr bool isModified() const noexcept {
@@ -71,31 +84,31 @@ namespace QUC {
         }
 
         template<typename A>
-        constexpr void emplace(HeldData<A> const& other) {
+        constexpr void emplace(BaseHeldData<A> const& other) {
             if (data != other.getData()) {
                 modified = true;
                 data = other.getData();
             }
         }
 
-        constexpr HeldData<T>& operator=(const T& other) {
+        constexpr BaseHeldData<T>& operator=(const T& other) {
             emplace<T>(other);
             return *this;
         }
 
-        constexpr HeldData<T>& operator=(const HeldData<T>& other) {
+        constexpr BaseHeldData<T>& operator=(const BaseHeldData<T>& other) {
             emplace(other);
             return *this;
         }
         template<class U>
         requires (std::is_convertible_v<U, T>)
-        constexpr HeldData<T>& operator=(const HeldData<U>& other) {
+        constexpr BaseHeldData<T>& operator=(const BaseHeldData<U>& other) {
             emplace(other);
             return *this;
         }
         template<class U>
         requires (std::is_convertible_v<U, T>)
-        constexpr HeldData<T>& operator=(const U& other) {
+        constexpr BaseHeldData<T>& operator=(const U& other) {
             emplace<U>(other);
             return *this;
         }
@@ -112,59 +125,66 @@ namespace QUC {
         bool modified = false;
         T data;
     };
+
+    template<class T>
+    struct HeldData : public BaseHeldData<T> {
+        using ParentType = BaseHeldData<T>;
+
+        constexpr HeldData() = default;
+        constexpr ~HeldData() = default;
+
+        constexpr HeldData(HeldData const&) = default;
+        constexpr HeldData(HeldData&&) noexcept = default;
+        constexpr HeldData(T const& data) : ParentType(data) {}
+
+        template<class U>
+        constexpr explicit(false) HeldData(const BaseHeldData<U>& other) : ParentType(other) {}
+
+        template<class Q>
+        constexpr explicit(false) HeldData(Q&& arg) : ParentType(std::forward<Q>(arg)) {}
+
+        template<typename... TArgs>
+        constexpr explicit(false) HeldData(TArgs&&... arg) : ParentType(std::forward<TArgs>(arg)...) {}
+
+        constexpr HeldData& operator=(HeldData const& other) {
+            ParentType::template emplace<T>(other);
+            return *this;
+        };
+    };
     static_assert(HeldDataCheck<HeldData<int>>);
 
     template<class T>
-    struct HeldData<std::optional<T>> {
-        HeldData() = default;
+    struct HeldData<std::optional<T>> : public BaseHeldData<std::optional<T>> {
+        using ParentType = BaseHeldData<std::optional<T>>;
 
-        constexpr HeldData(T const& data) : data(data) {}
-        constexpr HeldData(std::optional<T> const& data) : data(data) {}
+        constexpr HeldData() = default;
+        constexpr ~HeldData() = default;
+        constexpr HeldData(HeldData const&) = default;
+        constexpr HeldData(HeldData&&) = default;
+
+        constexpr HeldData(T const& data) : ParentType(data) {}
+        constexpr HeldData(std::optional<T> const& data) : HeldData(data) {}
 
         template<class U>
-        requires (std::is_convertible_v<U, T>)
-        constexpr explicit(false) HeldData(const std::optional<U>& other) : data(data) {}
-
+        constexpr explicit(false) HeldData(const HeldData<U>& other) : HeldData(other) {}
 
         template<class U>
-        requires (std::is_convertible_v<U, T>)
-        constexpr explicit(false) HeldData(const HeldData<U>& other) : modified(other.modified), data(other.data) {}
+        constexpr explicit(false) HeldData(const std::optional<U>& other) : HeldData(other) {}
+
+        template<class U>
+        constexpr explicit(false) HeldData(const BaseHeldData<U>& other) : ParentType(other) {}
 
         template<class Q>
-        requires (std::is_convertible_v<Q, T>)
-        constexpr explicit(false) HeldData(Q&& arg) : data(arg) {}
+        constexpr explicit(false) HeldData(Q&& arg) : ParentType(std::forward<Q>(arg)) {}
 
-        constexpr explicit(false) operator std::optional<T> () const noexcept {return data;}
-        constexpr explicit(false) operator std::optional<T> const&() const noexcept {return data;}
-        explicit(false) constexpr operator bool() const noexcept {return modified;}
+        template<typename... TArgs>
+        constexpr explicit(false) HeldData(TArgs&&... arg) : ParentType(std::forward<TArgs>(arg)...) {}
+        //
 
-        [[nodiscard]] constexpr bool isModified() const noexcept {
-            return modified;
-        }
-
-        [[nodiscard]] constexpr std::optional<T> const& getData() const noexcept {
-            return data;
-        }
-
-        constexpr void clear() noexcept {
-            modified = false;
-        }
-
-        template<typename A>
-        constexpr void emplace(const A other) {
-            if (data != other) {
-                modified = true;
-                data = other;
-            }
-        }
-
-        template<typename A>
-        constexpr void emplace(HeldData<A> const& other) {
-            if (data != other.getData()) {
-                modified = true;
-                data = other.getData();
-            }
-        }
+        constexpr HeldData& operator=(HeldData const& other) {
+            ParentType::template emplace<T>(other);
+            return *this;
+        };
 
         constexpr HeldData<std::optional<T>>& operator=(const T& other) {
             emplace(other);
@@ -172,16 +192,6 @@ namespace QUC {
         }
 
         constexpr HeldData<std::optional<T>>& operator=(const HeldData<T>& other) {
-            emplace(other);
-            return *this;
-        }
-
-        constexpr HeldData<std::optional<T>>& operator=(const std::optional<T>& other) {
-            emplace(other);
-            return *this;
-        }
-
-        constexpr HeldData<std::optional<T>>& operator=(const HeldData<std::optional<T>>& other) {
             emplace(other);
             return *this;
         }
@@ -195,179 +205,82 @@ namespace QUC {
 
         template<class U>
         requires (std::is_convertible_v<U, T>)
-        constexpr HeldData<std::optional<T>>& operator=(const std::optional<U>& other) {
-            emplace(other);
-            return *this;
-        }
-
-        template<class U>
-        requires (std::is_convertible_v<U, T>)
         constexpr HeldData<std::optional<T>>& operator=(const U& other) {
             emplace<U>(other);
             return *this;
         }
-
-        template<class U>
-        requires (std::is_convertible_v<U, T>)
-        constexpr HeldData<std::optional<T>>& operator=(const HeldData<std::optional<U>>& other) {
-            emplace(other);
-            return *this;
-        }
-
-
-        constexpr std::optional<T> const& operator ->() const noexcept {
-            return data;
-        }
-
-        constexpr std::optional<T> const& operator *() const noexcept  {
-            return data;
-        }
-
-    protected:
-        bool modified = false;
-        std::optional<T> data;
     };
     static_assert(HeldDataCheck<HeldData<std::optional<int>>>);
     static_assert(HeldDataCheck<HeldData<std::optional<bool>>>);
 
     template<>
-    struct HeldData<bool> {
-        HeldData() = default;
+    struct HeldData<bool> : public BaseHeldData<bool> {
+        using ParentType = BaseHeldData<bool>;
 
-        constexpr HeldData(bool data) : data(data) {};
+        constexpr HeldData() = default;
+        constexpr ~HeldData() = default;
 
-        constexpr explicit(false) operator bool () const noexcept {return modified;}
+        constexpr HeldData(HeldData const&) = default;
+        constexpr HeldData(HeldData&&) = default;
+        constexpr HeldData(bool data) : ParentType(data) {};
 
-        [[nodiscard]] constexpr bool isModified() const noexcept {
-            return modified;
-        }
+        template<class U>
+        constexpr explicit(false) HeldData(const BaseHeldData<U>& other) : ParentType(other) {}
 
-        [[nodiscard]] constexpr bool const& getData() const noexcept {
-            return data;
-        }
+        template<class Q>
+        constexpr explicit(false) HeldData(Q&& arg) : ParentType(std::forward<Q>(arg)) {}
 
-        constexpr void clear() noexcept {
-            modified = false;
-        }
-
-        template<typename A>
-        constexpr void emplace(const A other) {
-            if (data != other) {
-                modified = true;
-                data = other;
-            }
-        }
-
-        template<typename A>
-        constexpr void emplace(HeldData<A> const& other) {
-            if (data != other.getData()) {
-                modified = true;
-                data = other.getData();
-            }
-        }
-
-        constexpr HeldData<bool>& operator=(const HeldData<bool>& other) {
-            emplace(other.data);
-            return *this;
-        }
+        template<typename... TArgs>
+        constexpr explicit(false) HeldData(TArgs&&... arg) : ParentType(std::forward<TArgs>(arg)...) {}
 
         constexpr HeldData<bool>& operator=(bool other) {
             emplace(other);
             return *this;
         }
 
-        constexpr bool const& operator *() const noexcept {
-            return data;
-        }
-
-        constexpr bool const& operator ->() const noexcept {
-            return data;
-        }
-
-    protected:
-        bool modified = false;
-        bool data;
+        constexpr HeldData& operator=(HeldData const& other) {
+            ParentType::template emplace<bool>(other);
+            return *this;
+        };
     };
     static_assert(HeldDataCheck<HeldData<bool>>);
 
     template<>
-    struct HeldData<std::string> {
-        HeldData() = default;
+    struct HeldData<std::string> : public BaseHeldData<std::string> {
+        using ParentType = BaseHeldData<std::string>;
 
-        explicit(false) HeldData(const std::string_view d) : data(d) {}
+        constexpr HeldData() = default;
+        ~HeldData() = default;
+
+        HeldData(HeldData const&) = default;
+        HeldData(HeldData&&) = default;
+
+
+        constexpr HeldData(std::string const& data) : ParentType(data) {}
+        explicit(false) HeldData(const std::string_view d) : BaseHeldData(d) {}
 
         template<size_t sz>
-        constexpr explicit(false) HeldData(const char (&str)[sz]) : data(str) {}
+        constexpr explicit(false) HeldData(const char (&str)[sz]) : BaseHeldData(str) {}
 
+        ///
         template<class U>
-        requires (std::is_convertible_v<U, std::string>)
-        constexpr explicit(false) HeldData(const HeldData<U>& other) : modified(other.modified), data(other.data) {}
+        constexpr explicit(false) HeldData(const BaseHeldData<U>& other) : ParentType(other) {}
 
-        explicit(false) operator std::string const& () const {return data;}
-        explicit(false) constexpr operator bool() const noexcept {return modified;}
+        template<class Q>
+        constexpr explicit(false) HeldData(Q&& arg) : ParentType(std::forward<Q>(arg)) {}
 
-        [[nodiscard]] constexpr bool isModified() const noexcept {
-            return modified;
-        }
-
-        [[nodiscard]] constexpr std::string const& getData() const noexcept {
-            return data;
-        }
-
-        constexpr void clear() noexcept {
-            modified = false;
-        }
-
-        template<typename A>
-        constexpr void emplace(const A other) {
-            if (data != other) {
-                modified = true;
-                data = other;
-            }
-        }
-
-        template<typename A>
-        constexpr void emplace(HeldData<A> const& other) {
-            if (data != other.getData()) {
-                modified = true;
-                data = other.getData();
-            }
-        }
+        template<typename... TArgs>
+        constexpr explicit(false) HeldData(TArgs&&... arg) : ParentType(std::forward<TArgs>(arg)...) {}
 
         constexpr HeldData<std::string>& operator=(const std::string_view other) {
             emplace(other);
             return *this;
         }
 
-        constexpr HeldData<std::string>& operator=(const HeldData<std::string>& other) {
-            emplace(other);
+        constexpr HeldData& operator=(HeldData const& other) {
+            ParentType::template emplace<std::string>(other);
             return *this;
-        }
-        template<class U>
-        requires (std::is_convertible_v<U, std::string>)
-        constexpr HeldData<std::string>& operator=(const HeldData<U>& other) {
-            emplace(other);
-            return *this;
-        }
-
-        template<class U>
-        requires (std::is_convertible_v<U, std::string>)
-        constexpr HeldData<std::string>& operator=(const U& other) {
-            emplace<U>(other);
-            return *this;
-        }
-
-        constexpr std::string const& operator ->() const noexcept {
-            return data;
-        }
-
-        constexpr std::string const& operator *() const noexcept {
-            return data;
-        }
-
-    protected:
-        bool modified = false;
-        std::string data;
+        };
     };
     static_assert(HeldDataCheck<HeldData<std::string>>);
 
@@ -409,7 +322,10 @@ namespace QUC {
         using ParentType = HeldData<T>;
 
         constexpr RenderHeldData() = default;
+        constexpr ~RenderHeldData() = default;
         constexpr RenderHeldData(RenderHeldData<T> const& d) = default;
+        constexpr RenderHeldData(RenderHeldData<T>&& d) = default;
+
         constexpr RenderHeldData(ParentType const& d) : ParentType(d) {
             ParentType::modified = true;
         }
@@ -417,10 +333,35 @@ namespace QUC {
             ParentType::modified = true;
         }
 
-        template<class U>
-        constexpr RenderHeldData(U const& d) : HeldData<T>(d) {
+        constexpr RenderHeldData(T&& d) : ParentType(d) {
             ParentType::modified = true;
         }
+
+        template<class U>
+        constexpr RenderHeldData(U const& d) : ParentType(d) {
+            ParentType::modified = true;
+        }
+
+        template<class U>
+        constexpr RenderHeldData(RenderHeldData<U> const& d) : ParentType(d) {
+            ParentType::modified = true;
+        }
+
+        template<class U>
+        constexpr RenderHeldData(HeldData<U> const& d) : ParentType(d) {
+            ParentType::modified = true;
+        }
+
+        template<class U>
+        constexpr RenderHeldData(U&& d) : ParentType(d) {
+            ParentType::modified = true;
+        }
+
+        template<typename... TArgs>
+        constexpr RenderHeldData(TArgs&&... args) : ParentType(std::forward<TArgs>(args)...) {
+            ParentType::modified = true;
+        }
+
 
         constexpr RenderHeldData<T>& operator=(const T& other) {
             emplace<T>(other);
@@ -435,12 +376,6 @@ namespace QUC {
 
         template<class U>
         constexpr RenderHeldData<T>& operator=(const HeldData<U>& other) {
-            emplace<U>(other.getData());
-            return *this;
-        }
-
-        template<class U>
-        constexpr RenderHeldData<T>& operator=(const RenderHeldData<U>& other) {
             emplace<U>(other.getData());
             return *this;
         }
@@ -467,7 +402,7 @@ namespace QUC {
             auto found = ctx.findChildData<false>(key);
             if (!found.has_value()) {
                 if (modifyCheck == DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED) {
-                    return isModified();
+                    return ParentType::isModified();
                 }
                 return modifyCheck == DiffModifyCheck::TRUE_WHEN_NOT_FOUND;
             }
@@ -495,6 +430,7 @@ namespace QUC {
             return modified;
         }
 
+        [[deprecated("isModified is not intended for RenderHeldData")]]
         [[nodiscard]] constexpr bool isModified() const noexcept {
             return ParentType::isModified();
         }
