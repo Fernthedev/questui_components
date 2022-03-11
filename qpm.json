@@ -4,11 +4,11 @@
   "info": {
     "name": "QuestUI Components",
     "id": "questui_components",
-    "version": "0.0.1",
+    "version": "2.5.0",
     "url": "https://github.com/Fernthedev/questui_components",
     "additionalData": {
-      "overrideSoName": "libquestui_components.so",
       "headersOnly": true,
+      "overrideSoName": "libquestui_components.so",
       "compileOptions": {
         "systemIncludes": [
           ""
@@ -37,7 +37,7 @@
       "id": "codegen",
       "versionRange": "^0.21",
       "additionalData": {
-        "private":true
+        "private": true
       }
     },
     {
