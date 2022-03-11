@@ -43,6 +43,8 @@ namespace QUC {
     requires(IsConfigType<SettingType, ValueType>)
     class ConfigUtilsSetting : public SettingType {
     public:
+        const QUC::Key key;
+
         template<typename F, typename... TArgs>
         constexpr explicit ConfigUtilsSetting(ConfigUtils::ConfigValue<ConfigValueType>& configValue, F&& callable, TArgs&&... args) :
                 ConfigUtilsSetting(configValue.GetValue(), configValue, std::forward<F>(callable), std::forward<TArgs>(args)...) {}
