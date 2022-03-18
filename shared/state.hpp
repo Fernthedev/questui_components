@@ -273,7 +273,7 @@ namespace QUC {
         constexpr explicit(false) HeldData(TArgs&&... arg) : ParentType(std::forward<TArgs>(arg)...) {}
 
         constexpr HeldData<std::string>& operator=(const std::string_view other) {
-            emplace(other);
+            ParentType::template emplace(other);
             return *this;
         }
 
