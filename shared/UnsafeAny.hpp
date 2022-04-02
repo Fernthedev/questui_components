@@ -19,14 +19,13 @@ namespace QUC {
             free(data);
             data = new T(std::forward<TArgs>(args)...);
             dtor = &destroy_data<T>;
-            ptrSize = sizeof(T);
+            ptrSize = getTHash<T>();
             return get_any<T>();
         }
 
         template<typename T>
-        constexpr void validatePtrSize() const {
-            if (ptrSize != sizeof(T))
-                throw std::runtime_error("Ptr size does not match T size!");
+        static constexpr auto getTHash() {
+            return typeid(T).hash_code();
         }
 
         template<typename T>
@@ -45,6 +44,17 @@ namespace QUC {
 
         [[nodiscard]] constexpr bool has_value() const {
             return data != nullptr;
+        }
+
+        template<typename T>
+        constexpr void validatePtrSize() const {
+            if (!isType<T>())
+                throw std::runtime_error("Ptr size does not match T size!");
+        }
+
+        template<typename T>
+        [[nodiscard]] constexpr bool isType() const {
+            return ptrSize != -1 && ptrSize == getTHash<T>();
         }
 
         constexpr ~UnsafeAny() {

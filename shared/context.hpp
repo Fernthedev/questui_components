@@ -17,13 +17,27 @@ namespace QUC {
     template<typename RenderContextT = RenderContext>
     struct RenderContextChildDataT {
         UnsafeAny childData;
-        std::optional<RenderContextT> childContext;
+        RenderContextT childContext;
+
+        RenderContextChildDataT(RenderContextT childContext) : childContext(std::move(childContext)) {}
+
+        constexpr void destroy() {
+            childData = UnsafeAny();
+            if (&childContext.parentTransform != nullptr && childContext.parentTransform.dyn_m_CachedPtr()) {
+                UnityEngine::Object::Destroy(childContext.parentTransform.get_gameObject());
+            }
+        }
 
         template<typename T>
         [[nodiscard]] constexpr T& getData() {
+            if (!childData.isType<T>()) {
+                destroy();
+            }
+
             if (!childData.has_value()) {
                 return childData.make_any<T>();
             }
+
             return childData.get_any<T>();
         }
 
@@ -36,21 +50,17 @@ namespace QUC {
             return childData.get_any<T>();
         }
 
-        template<typename F = std::function<UnityEngine::Transform*()>>
-        constexpr RenderContextT& getChildContext(F&& transform) {
-            if (!childContext) {
-                return childContext.template emplace(transform());
-            }
-
-            return *childContext;
+        constexpr RenderContextT& getChildContext() {
+            return childContext;
         }
     };
 
     using RenderContextChildData = RenderContextChildDataT<RenderContext>;
 
     struct RenderContext {
-        using ChildContextKey = Key; // 64 bit number
+        using ChildContextKey = size_t; // 64 bit number
         using ChildData = Il2CppObject*;
+        using ChildTransform = UnityEngine::Transform*;
 
         /// @brief The parent transform to render on to.
         UnityEngine::Transform& parentTransform;
@@ -84,9 +94,7 @@ namespace QUC {
 
             if constexpr (recursive) {
                 for (auto& [childKey, childContext]: dataContext) {
-                    if (!childContext.childContext) continue;
-
-                    auto opt = childContext.childContext->findChildData<recursive>(index);
+                    auto opt = childContext.childContext.findChildData<recursive>(index);
 
                     if (!opt) continue;
 
@@ -103,9 +111,7 @@ namespace QUC {
 
             if constexpr (recursive) {
                 for (auto const& [childKey, childContext] : dataContext) {
-                    if (!childContext.childContext) continue;
-
-                    auto contains = childContext.childContext->template hasChild<recursive>(index);
+                    auto contains = childContext.childContext.template hasChild<recursive>(index);
 
                     if (!contains) continue;
 
@@ -126,9 +132,7 @@ namespace QUC {
 
             if constexpr (recursive) {
                 for (auto& [childKey, childContext]: dataContext) {
-                    if (!childContext.childContext) continue;
-
-                    auto opt = childContext.childContext->findChildData<recursive>(index);
+                    auto opt = childContext.childContext.findChildData<recursive>(index);
 
                     if (!opt) continue;
 
@@ -156,15 +160,7 @@ namespace QUC {
 
             auto& context = contextIt->second;
 
-            if (!context.childContext)
-                return;
-
-            auto const& data = *context.childContext;
-            if (data.parentTransform.dyn_m_CachedPtr()) {
-                // Destroy old context tree
-                UnityEngine::Object::Destroy(data.parentTransform.get_gameObject());
-            }
-
+            context.destroy();
 
             dataContext.erase(contextIt);
         }
@@ -202,10 +198,9 @@ namespace QUC {
             auto it = dataContext.find(key);
             if (it == dataContext.end()) return;
 
-            auto& o = it->second.childContext;
+            auto& o = it->second;
 
-            if (o && o->parentTransform.dyn_m_CachedPtr())
-                UnityEngine::Object::Destroy(&o->parentTransform);
+            o.destroy();
 
             dataContext.erase(it);
         }
@@ -251,11 +246,20 @@ namespace QUC {
     };
 
     namespace detail {
-        template<class T>
+        template<class T, size_t ix>
         requires (renderable<T>)
         static constexpr auto renderSingle(T& child, RenderContext& ctx) {
-            auto& childData = ctx.getChildData(child.key);
-            return child.render(ctx, childData);
+            auto& childData = ctx.getChildData(ix);
+            auto ret = child.render(ctx, childData);
+
+            if constexpr (std::is_convertible_v<decltype(ret), RenderContext::ChildTransform>) {
+                if (childData.childContext.parentTransform != ret) {
+                    childData.destroy();
+                    childData.childContext.parentTransform = {ret};
+                }
+            }
+
+            return ret;
         }
 
         template<size_t idx = 0, class... TArgs>
@@ -263,7 +267,7 @@ namespace QUC {
         static constexpr void renderTuple(std::tuple<TArgs...>& args, RenderContext& ctx) {
             if constexpr (idx < sizeof...(TArgs)) {
                 auto& child = std::get<idx>(args);
-                renderSingle(child, ctx); // render child
+                renderSingle<decltype(child), idx>(child, ctx); // render child
                 renderTuple<idx + 1>(args, ctx);
             }
         }
@@ -271,8 +275,10 @@ namespace QUC {
         template<typename T>
         requires (renderable<T>)
         static constexpr void renderDynamicList(std::span<T> const args, RenderContext& ctx) {
+            int i = 0;
             for (auto& child : args) {
-                renderSingle<T>(child, ctx); // render child
+                renderSingle<T ,i>(child, ctx); // render child
+                i++;
             }
         }
 
