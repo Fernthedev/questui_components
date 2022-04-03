@@ -211,23 +211,43 @@ namespace QUC {
         std::unordered_map<ChildContextKey, RenderContextChildData> dataContext;
     };
 
-    // Allows both copies and references
-    template<class T>
-    /// @brief A concept for renderable components.
-    /// @tparam T The type to check.
-    concept renderable = requires (T t, RenderContext& c, RenderContextChildData& data) {
-        t.render(c, data);
-    } && requires(T const t) {
-        {t.key} -> keyed;
-    };
-
     template<class T, class U>
     concept pointer_type_match = std::is_pointer_v<T> && std::is_convertible_v<T, U>;
 
     template<class T, class U>
-    concept renderable_return = requires (T t, RenderContext c, RenderContextChildData& data) {
+    concept renderable_return = requires (T t, RenderContext& c, RenderContextChildData& data) {
         {t.render(c, data)} -> pointer_type_match<U>;
     };
+
+    namespace detail {
+        template<class T, class U>
+        concept not_same_as = !std::is_same_v<T, U>;
+
+        template<class T>
+        concept renderable_tree_stub = requires(T const t) {
+            {t.render()} -> not_same_as<void>;
+        };
+    }
+
+    // Allows both copies and references
+    template<class T>
+    /// @brief A concept for renderable components.
+    /// @tparam T The type to check.
+    concept renderable_unity = renderable_return<T, UnityEngine::Transform*> && requires(T const t) {
+        {t.key} -> keyed;
+    };
+
+    // Allows both copies and references
+    /// @brief A concept for renderable components.
+    /// @tparam T The type to check.
+    template<class T>
+    concept renderable_tree = requires (T const t) {
+        {t.render()} -> detail::renderable_tree_stub;
+    };
+
+    template<class T>
+    concept renderable = renderable_tree<T> || renderable_unity<T>;
+
 
     template<class T>
     /// @brief A concept for updatable components.
@@ -249,17 +269,22 @@ namespace QUC {
         template<class T, size_t ix>
         requires (renderable<T>)
         static constexpr auto renderSingle(T& child, RenderContext& ctx) {
-            auto& childData = ctx.getChildData(ix);
-            auto ret = child.render(ctx, childData);
+            if constexpr(renderable_tree<T>) {
+                auto ret = child.render();
 
-            if constexpr (std::is_convertible_v<decltype(ret), RenderContext::ChildTransform>) {
+                // I think we should use the same ix and ctx? think? I've honestly no clue
+                return renderSingle<decltype(ret), ix>(ret, ctx);
+            }else if constexpr (renderable_unity<T>) {
+                auto& childData = ctx.getChildData(ix);
+                auto ret = child.render(ctx, childData);
+
                 if (childData.childContext.parentTransform != ret) {
                     childData.destroy();
                     childData.childContext.parentTransform = {ret};
                 }
-            }
 
-            return ret;
+                return ret;
+            }
         }
 
         template<size_t idx = 0, class... TArgs>

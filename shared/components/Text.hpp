@@ -48,12 +48,12 @@ namespace QUC {
             // Recreating our own is not very bueno... ASSUMING we can avoid it, which we should be able to.
             if (textComp) {
                 // Rewrite our existing text instance instead of making a new one
-                assign(ctx, textComp);
+                assign(data, textComp);
             } else {
                 textComp = QuestUI::BeatSaberUI::CreateText(&parent, text.getData(), *italic, anchoredPosition,
                                                             sizeDelta);
 
-                assign<true>(ctx, textComp);
+                assign<true>(data, textComp);
             }
             return textComp->get_transform();
         }
@@ -74,7 +74,7 @@ namespace QUC {
             color = textComp->get_color();
         }
 
-        void copyFrom(TMPro::TextMeshProUGUI* textComp, RenderContext& ctx) {
+        void copyFrom(TMPro::TextMeshProUGUI* textComp, RenderContext& ctx, int index = 0) {
             CRASH_UNLESS(textComp);
 
             auto rectTransform = textComp->get_rectTransform();
@@ -90,15 +90,15 @@ namespace QUC {
             color = textComp->get_color();
 
             // avoid creating another text later
-            ctx.getChildData(key).getData<TMPro::TextMeshProUGUI*>() = textComp;
+            ctx.getChildData(index).getData<TMPro::TextMeshProUGUI*>() = textComp;
         }
 
     protected:
         template<bool created = false>
-        void assign(RenderContext& parentCtx, TMPro::TextMeshProUGUI* textComp) {
+        void assign(RenderContextChildData& data, TMPro::TextMeshProUGUI* textComp) {
             CRASH_UNLESS(textComp);
 
-            RenderContext& ctx = parentCtx.getChildDataOrCreate(key).getChildContext([textComp]{ return textComp->get_transform() ;});
+            RenderContext& ctx = data.childContext;
 
             if (enabled.readAndClear(ctx)) {
                 textComp->set_enabled(*enabled);
