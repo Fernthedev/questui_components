@@ -28,14 +28,14 @@
     },
     {
       "id": "questui",
-      "versionRange": "^0.13.0",
+      "versionRange": "*",
       "additionalData": {
         "private": true
       }
     },
     {
       "id": "codegen",
-      "versionRange": "^0.21",
+      "versionRange": "*",
       "additionalData": {
         "private":true
       }
