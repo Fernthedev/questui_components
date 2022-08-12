@@ -122,13 +122,13 @@ namespace QUC {
             }
 
             if constexpr (created) {
-                dropdown->dyn__button()->set_interactable(*interactable);
+                dropdown->button->set_interactable(*interactable);
                 interactable.markCleanForRender(ctx);
             }
 
             if constexpr (!created) {
                 if (interactable.readAndClear(ctx)) {
-                    dropdown->dyn__button()->set_interactable(*interactable);
+                    dropdown->button->set_interactable(*interactable);
                 }
 
                 if (text.readAndClear(ctx)) {
