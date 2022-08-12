@@ -25,7 +25,7 @@ namespace QUC {
         {t.isModified()} noexcept -> std::same_as<bool>;
         {t.getData()} noexcept;// -> std::convertible_to<T>;
         {*t} noexcept; //-> std::same_as<T const&>;
-        {t.operator ->} noexcept; // -> std::convertible_to<T const&>;
+        {t.operator ->()} noexcept; // -> std::convertible_to<T const&>;
         {(bool) t};
 
         std::is_default_constructible_v<T>;
