@@ -187,26 +187,26 @@ namespace QUC {
         };
 
         constexpr HeldData<std::optional<T>>& operator=(const T& other) {
-            emplace(other);
+            ParentType::emplace(other);
             return *this;
         }
 
         constexpr HeldData<std::optional<T>>& operator=(const HeldData<T>& other) {
-            emplace(other);
+            ParentType::emplace(other);
             return *this;
         }
 
         template<class U>
         requires (std::is_convertible_v<U, T>)
         constexpr HeldData<std::optional<T>>& operator=(const HeldData<U>& other) {
-            emplace(other);
+            ParentType::emplace(other);
             return *this;
         }
 
         template<class U>
         requires (std::is_convertible_v<U, T>)
         constexpr HeldData<std::optional<T>>& operator=(const U& other) {
-            emplace<U>(other);
+            ParentType::template emplace<U>(other);
             return *this;
         }
     };
@@ -234,7 +234,7 @@ namespace QUC {
         constexpr explicit(false) HeldData(TArgs&&... arg) : ParentType(std::forward<TArgs>(arg)...) {}
 
         constexpr HeldData<bool>& operator=(bool other) {
-            emplace(other);
+            ParentType::emplace(other);
             return *this;
         }
 
