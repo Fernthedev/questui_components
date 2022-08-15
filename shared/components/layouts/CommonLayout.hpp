@@ -74,6 +74,8 @@ namespace QUC {
         QUC::RenderHeldData<float> minWidth;
         QUC::RenderHeldData<float> minHeight;
 
+        QUC::RenderHeldData<bool> ignoreLayout;
+
         constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
             UnityEngine::Transform* ret = QUC::detail::renderSingle(layout, ctx);
             auto& layoutElement = data.getData<UnityEngine::UI::LayoutElement*>();
@@ -100,6 +102,10 @@ namespace QUC {
 
             if (minWidth.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
                 layoutElement->set_minWidth(minWidth.getData());
+            }
+
+            if (ignoreLayout.readAndClear<DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
+                layoutElement->set_ignoreLayout(ignoreLayout.getData());
             }
 
             return ret;
