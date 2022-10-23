@@ -9,6 +9,7 @@
     "additionalData": {
       "headersOnly": true,
       "overrideSoName": "libquestui_components.so",
+      "branchName": "version-v2.5.4",
       "compileOptions": {
         "systemIncludes": [
           ""
