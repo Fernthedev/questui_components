@@ -2,7 +2,6 @@
 
 #include "shared/context.hpp"
 #include "shared/state.hpp"
-#include "shared/unity/WeakPtrGO.hpp"
 
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/GameObject.hpp"
@@ -18,11 +17,11 @@ namespace QUC {
         LoadingIndicator(bool enabled = true) : enabled(enabled) {}
 
         static auto buildLoadingIndicator(UnityEngine::Transform* parent) {
-            static QuestUI::WeakPtrGO<UnityEngine::GameObject> loadingTemplate;
+            static SafePtrUnity<UnityEngine::GameObject> loadingTemplate;
 
             if (!loadingTemplate)
                 loadingTemplate = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::GameObject*>().First([](auto& x) { return x->get_name() == "LoadingIndicator"; });
-            UnityEngine::GameObject* loadingIndicator = UnityEngine::Object::Instantiate(loadingTemplate.getInner(), parent, false);
+            UnityEngine::GameObject* loadingIndicator = UnityEngine::Object::Instantiate(loadingTemplate.ptr(), parent, false);
             loadingIndicator->set_name("BSMLLoadingIndicator");
 
             loadingIndicator->AddComponent<UnityEngine::UI::LayoutElement*>();
